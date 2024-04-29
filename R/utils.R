@@ -18,16 +18,20 @@
 
 # This file holds common functions and methods.
 
-#' ggplot2 function providing custom aesthetics and automatic placement of categorical labels.
+#' ggplot2 function providing custom aesthetics and automatic placement of
+#' categorical labels.
 #' For continuous data, a colorbar is implemented.
 #'
 #' @param data SingleCellExperiment or Seurat object.
 #' @param x,y Dimensionality reduction coordinates.
 #' @param color Column metadata to color points by.
-#' @param type \code{"cat"} is categorical, \code{"cont"} is continuous, \code{"NULL"} is generic.
+#' @param type \code{"cat"} is categorical, \code{"cont"} is continuous,
+#' \code{"NULL"} is generic.
 #' @examples
-#' red_dim_plot(data = sce, x = "tsne1", y = "tsne2", color = "cluster", type = "cat")
-#' red_dim_plot(data = seurat, x = "umap1", y = "umap2", color = "nUMI", type = "cont")
+#' red_dim_plot(data = sce, x = "tsne1", y = "tsne2", color = "cluster",
+#' type = "cat")
+#' red_dim_plot(data = seurat, x = "umap1", y = "umap2", color = "nUMI",
+#' type = "cont")
 #'
 red_dim_plot <- function(data, x, y, color, type = NULL) {
 
@@ -40,7 +44,9 @@ red_dim_plot <- function(data, x, y, color, type = NULL) {
   gg_df[[color]] <- factor(gg_df[[color]])
 
   gg <- ggplot(gg_df, aes_string(x, y, col = color)) +
-    geom_point(alpha = 0.35, stroke = 0.05, shape = 21, aes_string(fill = color)) +
+    geom_point(
+      alpha = 0.35, stroke = 0.05, shape = 21, aes_string(fill = color)
+    ) +
     theme_classic() +
     theme(
       legend.position = "right", plot.title = element_text(hjust = 0.5),
@@ -56,7 +62,8 @@ red_dim_plot <- function(data, x, y, color, type = NULL) {
     label_df <- cbind(label_df[[1]], label_df)
     names(label_df) <- c("label", color, x, y)
     gg <- gg + geom_label_repel(
-      data = label_df, max.overlaps = Inf, aes(label = label), show.legend = FALSE
+      data = label_df, max.overlaps = Inf,
+      aes(label = label), show.legend = FALSE
     )
 
   } else if (type == "cont") {
@@ -93,14 +100,18 @@ datatable_download <- function(dt) {
       scrollX = TRUE, dom = "Blfrtip",
       buttons = list(
         "copy", "print",
-        list(extend = "collection", buttons = c("csv", "excel", "pdf"), text = "Download")
+        list(
+          extend = "collection", buttons = c("csv", "excel", "pdf"),
+          text = "Download"
+        )
       )
     ),
     extensions = "Buttons"
   )
 }
 
-#' Adds download buttons, horizontal scrolling, exponential values to \code{"DT::datatable"}.
+#' Adds download buttons, horizontal scrolling, exponential values to
+#' \code{"DT::datatable"}.
 #'
 #' @param dt A data.table object.
 #' @examples
@@ -115,7 +126,10 @@ datatable_download_exp <- function(dt) {
       dom = "Blfrtip",
       buttons = list(
         "copy", "print",
-        list(extend = "collection", buttons = c("csv", "excel", "pdf"), text = "Download")
+        list(
+          extend = "collection", buttons = c("csv", "excel", "pdf"),
+          text = "Download"
+        )
       ),
       rowCallback = JS(
         "function(row, data) {",
@@ -128,29 +142,39 @@ datatable_download_exp <- function(dt) {
   )
 }
 
-#' Pipeline for normalization, dimensionality reduction, and clustering of post-QC scRNA-seq data.
+#' Pipeline for normalization, dimensionality reduction, and clustering of
+#' post-QC scRNA-seq data.
 #'
 #' @param seurat Post-QC Seurat object.
 #' @param cache_dir Directory to save post-processed Seurat object.
 #' @param sub_name Subset level for naming of cache object.
-#' @param protocol Vector with the following elements in this order: \code{"human"} or
-#' \code{"mouse"}. \code{"droplet"} or \code{"smart-seq"}. \code{"single-cell"} or
+#' @param protocol Vector with the following elements in this order:
+#' \code{"human"} or
+#' \code{"mouse"}. \code{"droplet"} or \code{"smart-seq"}.
+#' \code{"single-cell"} or
 #' \code{"single-nuc"}. \code{"umis"} or \code{"reads"}.
-#' @param vars_to_regress Vector of nuisance variables for sctransform to regress out.
+#' @param vars_to_regress Vector of nuisance variables for sctransform to
+#' regress out.
 #' @param parallel_override See function \code{"parallel_plan"}.
 #' @param cc Logical, whether to perform cell-cycle scoring.
-#' @param res_divider, What to divide number of cells by to arrive at clustering resolution.
-#' @param conserve_memory, Logical, whether to use conserve.memory in sctransform.
-#' @param min_cells, Numerical, minimum number of cells to retain a gene in sctransform.
+#' @param res_divider, What to divide number of cells by to arrive at
+#' clustering resolution.
+#' @param conserve_memory, Logical, whether to use conserve.memory in
+#' sctransform.
+#' @param min_cells, Numerical, minimum number of cells to retain a gene in
+#' sctransform.
 #' @examples
 #' cluster_pipeline(
-#'   seurat = seurat, cache_dir = cache_dir, sub_name = "neuronal",
-#'   protocol = protocol, vars_to_regress = "mito_percent", parallel_override = NULL,
-#'   cc = FALSE, res_divider = 1000, conserve.memory = TRUE
+#'   seurat = seurat, cache_dir = cache_dir,
+#'   sub_name = "neuronal", protocol = protocol,
+#'   vars_to_regress = "mito_percent", parallel_override = NULL,
+#'   cc = FALSE, res_divider = 1000,
+#'   conserve.memory = TRUE
 #' )
 cluster_pipeline <- function(
-    seurat, cache_dir, sub_name, protocol, vars_to_regress,
-    parallel_override, cc = TRUE, res_divider = 3000, conserve_memory = FALSE, min_cells = NULL
+    seurat, cache_dir, sub_name, protocol,
+    vars_to_regress, parallel_override, cc = TRUE, res_divider = 3000,
+    conserve_memory = FALSE, min_cells = NULL
 ) {
 
   rds <- file.path(cache_dir, paste0("seurat_", sub_name, ".rds"))
@@ -161,9 +185,7 @@ cluster_pipeline <- function(
 
     if (protocol[4] == "umis") {
       # Run sctransform.
-      # Note that this function produces many iterations of the following benign warning:
-      # Warning in theta.ml(y = y, mu = fit$fitted): iteration limit reached
-      # ---------------------------------------------------------------------------------
+      # ----------------
       parallel_plan(seurat, parallel_override)
       if (conserve_memory == TRUE & !is.null(min_cells)) {
         seurat <- suppressWarnings(
@@ -182,17 +204,19 @@ cluster_pipeline <- function(
       } else if (conserve_memory == FALSE & !is.null(min_cells)) {
         seurat <- suppressWarnings(
           SCTransform(
-            seurat, vars.to.regress = vars_to_regress, vst.flavor = "v2", min_cells = min_cells, verbose = FALSE
+            seurat, vars.to.regress = vars_to_regress, vst.flavor = "v2",
+            min_cells = min_cells, verbose = FALSE
           )
         )
       } else if (conserve_memory == FALSE) {
         seurat <- suppressWarnings(
           SCTransform(
-            seurat, vars.to.regress = vars_to_regress, vst.flavor = "v2", verbose = FALSE
+            seurat, vars.to.regress = vars_to_regress,
+            vst.flavor = "v2", verbose = FALSE
           )
         )
       }
-      # ---------------------------------------------------------------------------------
+      # ----------------
 
       # Perform PCA.
       # ------------
@@ -206,7 +230,7 @@ cluster_pipeline <- function(
       # ------------
 
     } else if (protocol[4] == "reads") {
-      sce <- as.SingleCellExperiment(seurat) # ZINB-WaVE can directly take an SCE but not Seurat.
+      sce <- as.SingleCellExperiment(seurat)
       logcounts(sce) <- NULL
 
       # Use top 1,000 variable features for downstream computations.
@@ -216,8 +240,8 @@ cluster_pipeline <- function(
       sce <- sce[rownames(sce) %in% VariableFeatures(seurat), ]
       # ------------------------------------------------------------
 
-      # Get ENSEMBL annotations for more accurate retrieval of gene length and GC content.
-      # ----------------------------------------------------------------------------------
+      # Get ENSEMBL annotations for retrieval of gene length and GC content.
+      # --------------------------------------------------------------------
       if (protocol[1] == "human") {
         dataset <- "hsapiens_gene_ensembl"
       } else if (protocol[1] == "mouse") {
@@ -226,16 +250,18 @@ cluster_pipeline <- function(
       mart <- useEnsembl("ensembl", dataset)
       attributes <- c("external_gene_name", "ensembl_gene_id")
       gene_anno <- getBM(attributes, "external_gene_name", rownames(sce), mart)
-      # ----------------------------------------------------------------------------------
+      # --------------------------------------------------------------------
 
-      # For gene symbols with multiple ENSEMBL IDs, duplicate the gene symbol to have an identical
-      # row for each ENSEMBL ID.
-      # ------------------------------------------------------------------------------------------
+      # For gene symbols with multiple ENSEMBL IDs, duplicate the gene symbol to
+      # have an identical row for each ENSEMBL ID.
+      # ------------------------------------------------------------------------
       dup <- gene_anno[duplicated(gene_anno$external_gene_name), ]
       for (i in 1:dim(dup)[1]) {
         for (j in 1:dim(gene_anno)[1]) {
           if (dup$ensembl_gene_id[i] == gene_anno$ensembl_gene_id[j]) {
-            gene_anno$external_gene_name[j] <- paste0(gene_anno$external_gene_name[j], "-dup")
+            gene_anno$external_gene_name[j] <- paste0(
+              gene_anno$external_gene_name[j], "-dup"
+            )
           }
         }
       }
@@ -250,32 +276,45 @@ cluster_pipeline <- function(
           }
         }
       }
-      gene_anno <- gene_anno[gene_anno$external_gene_name %in% rownames(new_mat), ]
-      gene_anno <- gene_anno[order(match(gene_anno$external_gene_name, rownames(new_mat))), ]
+      gene_anno <- gene_anno[
+        gene_anno$external_gene_name %in% rownames(new_mat),
+      ]
+      gene_anno <- gene_anno[
+        order(match(gene_anno$external_gene_name, rownames(new_mat))),
+      ]
       rownames(new_mat) <- gene_anno$ensembl_gene_id
-      sce <- SingleCellExperiment(list(counts = new_mat), colData = colData(sce))
-      # ------------------------------------------------------------------------------------------
+      sce <- SingleCellExperiment(
+        list(counts = new_mat), colData = colData(sce)
+      )
+      # ------------------------------------------------------------------------
 
       # Get gene lengths and GC content.
       # --------------------------------
-      row_data <- data.frame(getGeneLengthAndGCContent(rownames(sce), dataset, "biomart"))
-      rowData(sce) <- data.frame(gc_content = row_data$gc, length = row_data$length)
+      row_data <- data.frame(
+        getGeneLengthAndGCContent(rownames(sce), dataset, "biomart")
+      )
+      rowData(sce) <- data.frame(
+        gc_content = row_data$gc, length = row_data$length
+      )
       # --------------------------------
 
       # Run ZINB-WaVE.
       # TODO: Fix hardcoding of `vars_to_regress`.
       # ------------------------------------------
-      counts(sce) <- as.matrix(counts(sce)) # ZINB-WaVE is incompatible with dgCMatrix.
+      counts(sce) <- as.matrix(counts(sce))
       sce <- zinbwave(
-        sce, paste0("~ ", vars_to_regress[1], " + ", vars_to_regress[2]), "~ gc_content + length",
-        10, epsilon = 1e12, BPPARAM = MulticoreParam()
+        sce, paste0("~ ", vars_to_regress[1], " + ", vars_to_regress[2]),
+        "~ gc_content + length", 10,
+        epsilon = 1e12, BPPARAM = MulticoreParam()
       )
 
       zinb <- data.frame(reducedDim(sce, "zinbwave"))
       seurat$zinb1 <- zinb$W1
       seurat$zinb2 <- zinb$W2
       zinb <- as.matrix(zinb)
-      seurat[["zinb"]] <- CreateDimReducObject(zinb, key = "W", assay = DefaultAssay(seurat))
+      seurat[["zinb"]] <- CreateDimReducObject(
+        zinb, key = "W", assay = DefaultAssay(seurat)
+      )
       reduction <- "zinb"
       dims <- 1:10 # Dimensions for downstream computations.
       # ------------------------------------------
@@ -292,7 +331,7 @@ cluster_pipeline <- function(
         g2m_genes <- human_to_mouse_genes(cc.genes.updated.2019$g2m.genes)
       }
       seurat <- CellCycleScoring(seurat, s_genes, g2m_genes)
-      seurat$cc_diff <- seurat$S.Score - seurat$G2M.Score # Combined proliferating cell signal.
+      seurat$cc_diff <- seurat$S.Score - seurat$G2M.Score
     }
     # ---------------------------
 
@@ -317,12 +356,14 @@ cluster_pipeline <- function(
   seurat
 }
 
-#' Set the \code{"plan"} for \code{"future"} based on free memory and object size with the option to
-#' override.
+#' Set the \code{"plan"} for \code{"future"} based on free memory and object
+#' size with the option to override.
 #'
-#' @param object Object to check if \code{"future.globals.maxSize"} large enough to parallelize.
-#' @param parallel_override \code{"NULL"} to calculate plan decision, \code{0} for sequential, a
-#' non-zero integer for multiprocess and to set \code{"future.globals.maxSize"}.
+#' @param object Object to check if \code{"future.globals.maxSize"} large
+#' enough to parallelize.
+#' @param parallel_override \code{"NULL"} to calculate plan decision, \code{0}
+#' for sequential, a non-zero integer for multiprocess and to set
+#' \code{"future.globals.maxSize"}.
 #' @examples
 #' parallel_plan(object = seurat, parallel_override = 5368709120)
 #'
@@ -341,15 +382,15 @@ parallel_plan <- function(object, parallel_override = NULL) {
     mem <- mem / availableCores()
     # -------------------------------------------------------------
 
-    # Enable parallelization only if `object` can fit in `future.globals.maxSize` (plus 1 Gib).
-    # -----------------------------------------------------------------------------------------
+    # Enable parallelization if `object` can fit in `future.globals.maxSize`
+    # ----------------------------------------------------------------------
     if (mem > object.size(object) + 1 * 1024 ^ 3) {
       plan("multisession")
       options(future.globals.maxSize = mem)
     } else {
       plan("sequential")
     }
-    # -----------------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------
 
   } else if (parallel_override == 0) {
     plan("sequential")
