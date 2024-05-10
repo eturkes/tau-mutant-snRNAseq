@@ -33,9 +33,11 @@ RUN apt-get update \
         -e "install.packages('viridis')" \
         -e "install.packages('DT')" \
         -e "install.packages('BiocManager')" \
+        -e "install.packages('remotes')" \
         -e "BiocManager::install('DropletUtils')" \
         -e "BiocManager::install('scDblFinder')" \
         -e "BiocManager::install('glmGamPoi')" \
+        -e "remotes::install_github('immunogenomics/presto')" \
     && apt-get clean \
     && rm -Rf /var/lib/apt/lists/ \
         /tmp/downloaded_packages/ \

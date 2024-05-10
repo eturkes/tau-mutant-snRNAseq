@@ -1,0 +1,346 @@
+---
+title: "Combined Samples - 02 Miscellaneous Analysis"
+author:
+  - name: "Emir Turkes"
+date: '`r strftime(Sys.time(), format = "%B %d, %Y")`'
+link-citations: true
+output:
+  html_document:
+    code_folding: hide
+    number_sections: true
+    theme: lumen
+    highlight: haddock
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(
+    inputFile, encoding = encoding,
+    output_file = file.path(
+      "..", "..", "results", "comb", "comb_02misc.html"
+    ))})
+---
+
+<style type="text/css">
+body {font-size: 16px;}
+h1.title {font-size: 35px;}
+h1 {font-size: 24px;}
+h2 {font-size: 22px;}
+h3 {font-size: 20px;}
+.toc-content {padding-left: 0px; padding-right: 0px;}
+div.tocify {width: 100%;}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em; padding-left: 25px; text-indent: 0;
+}
+.tocify-subheader .tocify-subheader .tocify-item {
+  font-size: 0.95em; padding-left: 35px; text-indent: 0;
+}
+div.main-container {max-width: none; width: 100%;}
+</style>
+
+*This file is a part of [tau-mutant-snRNAseq](https://github.com/eturkes/tau-mutant-snRNAseq).*
+
+The table of contents in the top left is clickable and can be used to quickly navigate the document.
+To toggle the visibility of code, use the `CODE` toggles at the top right of chunks.
+The toggle at the start of the document controls the visibility of all chunks.
+
+```{r}
+#    This file is part of tau-mutant-snRNAseq.
+#    Copyright (C) 2024  Emir Turkes, Naoto Watamura, UK DRI at UCL
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#    Emir Turkes can be contacted at emir.turkes@eturkes.com
+
+# Load required packages, suppressing startup messages.
+# -----------------------------------------------------
+library(conflicted)
+conflicts_prefer(base::intersect, DT::JS, .quiet = TRUE)
+packages <- c(
+  "Seurat", "DT", "dplyr", "scuttle", "ggplot2", "patchwork"
+)
+invisible(
+  suppressPackageStartupMessages(
+    lapply(packages, FUN = library, character.only = TRUE)
+  )
+)
+# -----------------------------------------------------
+
+# Define global settings.
+# -----------------------
+knitr::opts_chunk$set(fig.width = 10, fig.height = 7, dpi = 300)
+# -----------------------
+
+# Define functions.
+# -----------------
+source(file.path("..", "utils.R"))
+# -----------------
+
+# Useful variables.
+# -----------------
+step <- 2
+
+cache_dir <- file.path("..", "..", "cache", "comb", paste0("step", "0", step))
+if (!dir.exists(cache_dir)) {
+  dir.create(cache_dir, recursive = TRUE)
+}
+# -----------------
+
+# Read in data from `01.prep`.
+# ----------------------------
+seurat <- readRDS(file.path(cache_dir, "..", "step01", "seurat_annotated.rds"))
+seurat@active.ident <- seurat$genotype
+seurat <- subset(seurat, idents = c("MAPTKI", "S305N", "P301S"))
+seurat$genotype <- factor(
+  seurat$genotype, levels = c("MAPTKI", "S305N", "P301S")
+)
+seurat@active.ident <- seurat$annotations_short
+seurat$ENT <- factor(ifelse(grepl("ENT", seurat$allen_labels), "ENT", "notENT"))
+# ----------------------------
+```
+
+# Quick Differential Expression
+
+Perform quick differential expression using the Wilcox test in Seurat.
+Note that this approach suffers from pseudoreplication bias.
+
+```{r}
+ctypes <- unique(seurat$annotations_short)
+ctypes <- factor(ctypes[-grep("Unknown", ctypes)])
+
+rds <- file.path(cache_dir, "DEG_list.rds")
+if (file.exists(rds)) {
+  DEG_list <- readRDS(rds)
+} else {
+  DEG_list <- vector("list", length = length(ctypes))
+  names(DEG_list) <- ctypes
+  for (type in ctypes) {
+    seurat_sub <- subset(seurat, idents = type)
+    seurat_sub@active.ident <- factor(seurat_sub$genotype)
+    DEG_list[[type]] <- FindAllMarkers(
+      seurat_sub, only.pos = TRUE, recorrect_umi = FALSE, verbose = FALSE
+    )
+  }
+  saveRDS(DEG_list, file = rds)
+}
+
+seurat@active.ident <- seurat$annotations_short
+for (type in ctypes) {
+  DEG_list[[type]] <- DEG_list[[type]][DEG_list[[type]]$p_val_adj < 0.05, ]
+  DEG_list[[type]] <- DEG_list[[type]] %>% distinct(gene, .keep_all = TRUE)
+  print(datatable_download_exp(DEG_list[[type]]))
+
+  seurat_sub <- subset(seurat, idents = type)
+  seurat_sub@active.ident <- seurat_sub$genotype
+  top <- DEG_list[[type]] %>%
+    group_by(cluster) %>%
+    top_n(n = -1, wt = p_val_adj)
+  top <- DEG_list[[type]] %>%
+    group_by(cluster) %>%
+    top_n(n = -1, wt = avg_log2FC)  
+  print(
+    VlnPlot(seurat_sub, features = top$gene) +
+      plot_annotation(
+        type,
+        theme = theme(
+          plot.title = element_text(hjust = 0.5, size = 18, face = "bold")
+        )
+      )
+  ) 
+}
+
+seurat@active.ident <- seurat$ENT
+seurat_sub <- subset(seurat, ident = "ENT")
+seurat_sub@active.ident <- seurat_sub$genotype
+DEGs <- FindAllMarkers(
+  seurat_sub, only.pos = TRUE, recorrect_umi = FALSE, verbose = FALSE
+)
+datatable_download_exp(DEGs)
+
+top <- DEGs %>%
+  group_by(cluster) %>%
+  top_n(n = -1, wt = p_val_adj)
+top <- DEGs %>%
+  group_by(cluster) %>%
+  top_n(n = -1, wt = avg_log2FC)  
+VlnPlot(seurat_sub, features = top$gene) +
+  plot_annotation(
+    "ENT",
+    theme = theme(
+      plot.title = element_text(hjust = 0.5, size = 18, face = "bold")
+    )
+  )
+```
+
+# Transcript Abundance
+
+Make another seurat object using raw counts to check for differences in transcript abundance.
+
+```{r}
+rds <- file.path(cache_dir, "seurat_merged_raw.rds")
+if (file.exists(rds)) {
+  seurat_raw <- readRDS(rds)
+} else {
+
+  file_list <- list.files(file.path(cache_dir, "..", ".."), recursive = TRUE)
+  file_list <- file_list[grep("seurat_prep.rds", file_list)]
+  files <- vector("list", length(file_list))
+  for (i in seq_along(files)) {
+    files[[i]] <- readRDS(file.path(cache_dir, "..", "..", file_list[i]))
+    DefaultAssay(files[[i]]) <- "RNA"
+  }
+
+  genes <- Reduce(
+    intersect,
+    list(
+      rownames(files[[1]]), rownames(files[[2]]), rownames(files[[3]]),
+      rownames(files[[4]]), rownames(files[[5]]), rownames(files[[6]]),
+      rownames(files[[7]]), rownames(files[[8]]), rownames(files[[9]]),
+      rownames(files[[10]]), rownames(files[[11]]), rownames(files[[12]]),
+      rownames(files[[13]]), rownames(files[[14]]), rownames(files[[15]]),
+      rownames(files[[16]]), rownames(files[[17]]), rownames(files[[18]]),
+      rownames(files[[19]]), rownames(files[[20]]), rownames(files[[21]]),
+      rownames(files[[22]]), rownames(files[[23]]), rownames(files[[24]])
+    )
+  )
+  for (i in seq_along(files)) {
+    files[[i]][["SCT"]] <- NULL
+    files[[i]]@meta.data[grep("SCT", colnames(files[[i]]@meta.data))] <- NULL
+  }
+
+  gc()
+  seurat_raw <- merge(
+    files[[1]], c(files[[2]], files[[3]], files[[4]],
+    files[[5]], files[[6]], files[[7]], files[[8]],
+    files[[9]], files[[10]], files[[11]], files[[12]],
+    files[[13]], files[[14]], files[[15]], files[[16]],
+    files[[17]], files[[18]], files[[19]], files[[20]],
+    files[[21]], files[[22]], files[[23]], files[[24]]
+    )
+  )
+
+  seurat_raw$batch <- factor(
+    c(
+      rep(sub("\\/.*", "", file_list[1]), ncol(files[[1]])),
+      rep(sub("\\/.*", "", file_list[2]), ncol(files[[2]])),
+      rep(sub("\\/.*", "", file_list[3]), ncol(files[[3]])),
+      rep(sub("\\/.*", "", file_list[4]), ncol(files[[4]])),
+      rep(sub("\\/.*", "", file_list[5]), ncol(files[[5]])),
+      rep(sub("\\/.*", "", file_list[6]), ncol(files[[6]])),
+      rep(sub("\\/.*", "", file_list[7]), ncol(files[[7]])),
+      rep(sub("\\/.*", "", file_list[8]), ncol(files[[8]])),
+      rep(sub("\\/.*", "", file_list[9]), ncol(files[[9]])),
+      rep(sub("\\/.*", "", file_list[10]), ncol(files[[10]])),
+      rep(sub("\\/.*", "", file_list[11]), ncol(files[[11]])),
+      rep(sub("\\/.*", "", file_list[12]), ncol(files[[12]])),
+      rep(sub("\\/.*", "", file_list[13]), ncol(files[[13]])),
+      rep(sub("\\/.*", "", file_list[14]), ncol(files[[14]])),
+      rep(sub("\\/.*", "", file_list[15]), ncol(files[[15]])),
+      rep(sub("\\/.*", "", file_list[16]), ncol(files[[16]])),
+      rep(sub("\\/.*", "", file_list[17]), ncol(files[[17]])),
+      rep(sub("\\/.*", "", file_list[18]), ncol(files[[18]])),
+      rep(sub("\\/.*", "", file_list[19]), ncol(files[[19]])),
+      rep(sub("\\/.*", "", file_list[20]), ncol(files[[20]])),
+      rep(sub("\\/.*", "", file_list[21]), ncol(files[[21]])),
+      rep(sub("\\/.*", "", file_list[22]), ncol(files[[22]])),
+      rep(sub("\\/.*", "", file_list[23]), ncol(files[[23]])),
+      rep(sub("\\/.*", "", file_list[24]), ncol(files[[24]]))
+    )
+  )
+  
+  seurat_raw$genotype <- factor(
+    c(
+      rep(strsplit(file_list[1], "/")[[1]][2], ncol(files[[1]])),
+      rep(strsplit(file_list[2], "/")[[1]][2], ncol(files[[2]])),
+      rep(strsplit(file_list[3], "/")[[1]][2], ncol(files[[3]])),
+      rep(strsplit(file_list[4], "/")[[1]][2], ncol(files[[4]])),
+      rep(strsplit(file_list[5], "/")[[1]][2], ncol(files[[5]])),
+      rep(strsplit(file_list[6], "/")[[1]][2], ncol(files[[6]])),
+      rep(strsplit(file_list[7], "/")[[1]][2], ncol(files[[7]])),
+      rep(strsplit(file_list[8], "/")[[1]][2], ncol(files[[8]])),
+      rep(strsplit(file_list[9], "/")[[1]][2], ncol(files[[9]])),
+      rep(strsplit(file_list[10], "/")[[1]][2], ncol(files[[10]])),
+      rep(strsplit(file_list[11], "/")[[1]][2], ncol(files[[11]])),
+      rep(strsplit(file_list[12], "/")[[1]][2], ncol(files[[12]])),
+      rep(strsplit(file_list[13], "/")[[1]][2], ncol(files[[13]])),
+      rep(strsplit(file_list[14], "/")[[1]][2], ncol(files[[14]])),
+      rep(strsplit(file_list[15], "/")[[1]][2], ncol(files[[15]])),
+      rep(strsplit(file_list[16], "/")[[1]][2], ncol(files[[16]])),
+      rep(strsplit(file_list[17], "/")[[1]][2], ncol(files[[17]])),
+      rep(strsplit(file_list[18], "/")[[1]][2], ncol(files[[18]])),
+      rep(strsplit(file_list[19], "/")[[1]][2], ncol(files[[19]])),
+      rep(strsplit(file_list[20], "/")[[1]][2], ncol(files[[20]])),
+      rep(strsplit(file_list[21], "/")[[1]][2], ncol(files[[21]])),
+      rep(strsplit(file_list[22], "/")[[1]][2], ncol(files[[22]])),
+      rep(strsplit(file_list[23], "/")[[1]][2], ncol(files[[23]])),
+      rep(strsplit(file_list[24], "/")[[1]][2], ncol(files[[24]]))
+    )
+  )
+
+  rm(files)
+
+  ribo <- grep("^RP[SL][[:digit:]]", rownames(seurat_raw), ignore.case = TRUE)
+  seurat_raw <- JoinLayers(seurat_raw)
+  sce <- as.SingleCellExperiment(seurat_raw)
+  sce <- addPerCellQC(sce, list(ribo = ribo))
+  seurat_raw$subsets_ribo_percent <- sce$subsets_ribo_percent
+  rm(sce)
+
+  seurat_raw <- seurat_raw[ , colnames(seurat_raw) %in% colnames(seurat)]
+
+  seurat_raw$allen_labels <- seurat$allen_labels
+  seurat_raw$genotype <- seurat$genotype
+  seurat_raw$annotations <- seurat$annotations
+  seurat_raw$annotations_short <- seurat$annotations_short
+  seurat_raw@active.ident <- seurat_raw$annotations_short
+
+  saveRDS(seurat_raw, file = rds)
+}
+
+for (type in ctypes) {
+  seurat_sub <- subset(seurat_raw, idents = type)
+  seurat_sub@active.ident <- factor(seurat_sub$genotype)
+  print(
+    VlnPlot(seurat_sub, features = "nCount_RNA", split.by = "batch") +
+      plot_annotation(
+        type,
+        theme = theme(
+          plot.title = element_text(hjust = 0.5, size = 18, face = "bold")
+        )
+      )
+  )
+}
+
+seurat_raw$ENT <- seurat$ENT
+seurat_raw@active.ident <- seurat_raw$ENT
+seurat_sub <- subset(seurat_raw, ident = "ENT")
+seurat_sub@active.ident <- seurat_sub$genotype
+VlnPlot(seurat_sub, features = "nCount_RNA", split.by = "batch") +
+  plot_annotation(
+    "ENT",
+    theme = theme(
+      plot.title = element_text(hjust = 0.5, size = 18, face = "bold")
+    )
+  )
+```
+
+# References
+
+This is the concluding section of the document, where we output the `sessionInfo`, and create a bibliography for works cited.
+
+```{r}
+sessionInfo()
+```

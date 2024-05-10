@@ -1,0 +1,442 @@
+---
+title: "Combined Samples - 01 Prep"
+author:
+  - name: "Emir Turkes"
+date: '`r strftime(Sys.time(), format = "%B %d, %Y")`'
+link-citations: true
+output:
+  html_document:
+    code_folding: hide
+    number_sections: true
+    theme: lumen
+    highlight: haddock
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(
+    inputFile, encoding = encoding,
+    output_file = file.path(
+      "..", "..", "results", "comb", "comb_01prep.html"
+    ))})
+---
+
+<style type="text/css">
+body {font-size: 16px;}
+h1.title {font-size: 35px;}
+h1 {font-size: 24px;}
+h2 {font-size: 22px;}
+h3 {font-size: 20px;}
+.toc-content {padding-left: 0px; padding-right: 0px;}
+div.tocify {width: 100%;}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em; padding-left: 25px; text-indent: 0;
+}
+.tocify-subheader .tocify-subheader .tocify-item {
+  font-size: 0.95em; padding-left: 35px; text-indent: 0;
+}
+div.main-container {max-width: none; width: 100%;}
+</style>
+
+*This file is a part of [tau-mutant-snRNAseq](https://github.com/eturkes/tau-mutant-snRNAseq).*
+
+The table of contents in the top left is clickable and can be used to quickly navigate the document.
+To toggle the visibility of code, use the `CODE` toggles at the top right of chunks.
+The toggle at the start of the document controls the visibility of all chunks.
+
+```{r}
+#    This file is part of tau-mutant-snRNAseq.
+#    Copyright (C) 2024  Emir Turkes, Naoto Watamura, UK DRI at UCL
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#    Emir Turkes can be contacted at emir.turkes@eturkes.com
+
+# Load required packages, suppressing startup messages.
+# -----------------------------------------------------
+library(conflicted)
+conflicts_prefer(base::intersect, DT::JS, .quiet = TRUE)
+packages <- c(
+  "Seurat", "SingleCellExperiment", "scuttle", "parallelly", "ggplot2",
+  "dplyr", "ggrepel", "viridis", "DT"
+)
+invisible(
+  suppressPackageStartupMessages(
+    lapply(packages, FUN = library, character.only = TRUE)
+  )
+)
+# -----------------------------------------------------
+
+# Define global settings.
+# -----------------------
+knitr::opts_chunk$set(fig.width = 10, fig.height = 7, dpi = 300)
+# -----------------------
+
+# Define functions.
+# -----------------
+source(file.path("..", "utils.R"))
+# -----------------
+
+# Useful variables.
+# -----------------
+step <- 1
+
+cache_dir <- file.path("..", "..", "cache", "comb", paste0("step", "0", step))
+if (!dir.exists(cache_dir)) {
+  dir.create(cache_dir, recursive = TRUE)
+}
+
+# See `cluster_pipeline` in `utils.R`.
+protocol <- c("mouse", "droplet", "single-nuc", "umis")
+vars_to_regress <- NULL
+parallel_override <- NULL
+# -----------------
+
+# Metadata to plot after dimensionality reduction and clustering.
+# Values in list can include "no_legend and/or "no_label" to exclude those.
+# -------------------------------------------------------------------------
+metadata_to_plot <- vector("list", length = 3)
+names(metadata_to_plot) <- c("seurat_clusters", "genotype", "batch")
+metadata_to_plot[[2]] <- "no_label"
+metadata_to_plot[[3]] <- "no_label"
+# -------------------------------------------------------------------------
+```
+
+# Merging
+
+Merge individual samples into a single Seurat object.
+
+```{r}
+rds <- file.path(cache_dir, "merged_seurat.rds")
+if (file.exists(rds)) {
+  seurat <- readRDS(rds)
+} else {
+
+  file_list <- list.files(file.path(cache_dir, "..", ".."), recursive = TRUE)
+  file_list <- file_list[grep("seurat_prep.rds", file_list)]
+  files <- vector("list", length(file_list))
+  for (i in seq_along(files)) {
+    files[[i]] <- readRDS(file.path(cache_dir, "..", "..", file_list[i]))
+  }
+
+  genes <- Reduce(
+    intersect,
+    list(
+      rownames(files[[1]]), rownames(files[[2]]), rownames(files[[3]]),
+      rownames(files[[4]]), rownames(files[[5]]), rownames(files[[6]]),
+      rownames(files[[7]]), rownames(files[[8]]), rownames(files[[9]]),
+      rownames(files[[10]]), rownames(files[[11]]), rownames(files[[12]]),
+      rownames(files[[13]]), rownames(files[[14]]), rownames(files[[15]]),
+      rownames(files[[16]]), rownames(files[[17]]), rownames(files[[18]]),
+      rownames(files[[19]]), rownames(files[[20]]), rownames(files[[21]]),
+      rownames(files[[22]]), rownames(files[[23]]), rownames(files[[24]])
+    )
+  )
+  for (i in seq_along(files)) {
+    files[[i]][["RNA"]] <- NULL
+    files[[i]]@meta.data[grep("SCT", colnames(files[[i]]@meta.data))] <- NULL
+  }
+
+  gc()
+  seurat <- merge(
+    files[[1]], c(files[[2]], files[[3]], files[[4]],
+    files[[5]], files[[6]], files[[7]], files[[8]],
+    files[[9]], files[[10]], files[[11]], files[[12]],
+    files[[13]], files[[14]], files[[15]], files[[16]],
+    files[[17]], files[[18]], files[[19]], files[[20]],
+    files[[21]], files[[22]], files[[23]], files[[24]]
+    )
+  )
+
+  seurat$batch <- factor(
+    c(
+      rep(sub("\\/.*", "", file_list[1]), ncol(files[[1]])),
+      rep(sub("\\/.*", "", file_list[2]), ncol(files[[2]])),
+      rep(sub("\\/.*", "", file_list[3]), ncol(files[[3]])),
+      rep(sub("\\/.*", "", file_list[4]), ncol(files[[4]])),
+      rep(sub("\\/.*", "", file_list[5]), ncol(files[[5]])),
+      rep(sub("\\/.*", "", file_list[6]), ncol(files[[6]])),
+      rep(sub("\\/.*", "", file_list[7]), ncol(files[[7]])),
+      rep(sub("\\/.*", "", file_list[8]), ncol(files[[8]])),
+      rep(sub("\\/.*", "", file_list[9]), ncol(files[[9]])),
+      rep(sub("\\/.*", "", file_list[10]), ncol(files[[10]])),
+      rep(sub("\\/.*", "", file_list[11]), ncol(files[[11]])),
+      rep(sub("\\/.*", "", file_list[12]), ncol(files[[12]])),
+      rep(sub("\\/.*", "", file_list[13]), ncol(files[[13]])),
+      rep(sub("\\/.*", "", file_list[14]), ncol(files[[14]])),
+      rep(sub("\\/.*", "", file_list[15]), ncol(files[[15]])),
+      rep(sub("\\/.*", "", file_list[16]), ncol(files[[16]])),
+      rep(sub("\\/.*", "", file_list[17]), ncol(files[[17]])),
+      rep(sub("\\/.*", "", file_list[18]), ncol(files[[18]])),
+      rep(sub("\\/.*", "", file_list[19]), ncol(files[[19]])),
+      rep(sub("\\/.*", "", file_list[20]), ncol(files[[20]])),
+      rep(sub("\\/.*", "", file_list[21]), ncol(files[[21]])),
+      rep(sub("\\/.*", "", file_list[22]), ncol(files[[22]])),
+      rep(sub("\\/.*", "", file_list[23]), ncol(files[[23]])),
+      rep(sub("\\/.*", "", file_list[24]), ncol(files[[24]]))
+    )
+  )
+  
+  seurat$genotype <- factor(
+    c(
+      rep(strsplit(file_list[1], "/")[[1]][2], ncol(files[[1]])),
+      rep(strsplit(file_list[2], "/")[[1]][2], ncol(files[[2]])),
+      rep(strsplit(file_list[3], "/")[[1]][2], ncol(files[[3]])),
+      rep(strsplit(file_list[4], "/")[[1]][2], ncol(files[[4]])),
+      rep(strsplit(file_list[5], "/")[[1]][2], ncol(files[[5]])),
+      rep(strsplit(file_list[6], "/")[[1]][2], ncol(files[[6]])),
+      rep(strsplit(file_list[7], "/")[[1]][2], ncol(files[[7]])),
+      rep(strsplit(file_list[8], "/")[[1]][2], ncol(files[[8]])),
+      rep(strsplit(file_list[9], "/")[[1]][2], ncol(files[[9]])),
+      rep(strsplit(file_list[10], "/")[[1]][2], ncol(files[[10]])),
+      rep(strsplit(file_list[11], "/")[[1]][2], ncol(files[[11]])),
+      rep(strsplit(file_list[12], "/")[[1]][2], ncol(files[[12]])),
+      rep(strsplit(file_list[13], "/")[[1]][2], ncol(files[[13]])),
+      rep(strsplit(file_list[14], "/")[[1]][2], ncol(files[[14]])),
+      rep(strsplit(file_list[15], "/")[[1]][2], ncol(files[[15]])),
+      rep(strsplit(file_list[16], "/")[[1]][2], ncol(files[[16]])),
+      rep(strsplit(file_list[17], "/")[[1]][2], ncol(files[[17]])),
+      rep(strsplit(file_list[18], "/")[[1]][2], ncol(files[[18]])),
+      rep(strsplit(file_list[19], "/")[[1]][2], ncol(files[[19]])),
+      rep(strsplit(file_list[20], "/")[[1]][2], ncol(files[[20]])),
+      rep(strsplit(file_list[21], "/")[[1]][2], ncol(files[[21]])),
+      rep(strsplit(file_list[22], "/")[[1]][2], ncol(files[[22]])),
+      rep(strsplit(file_list[23], "/")[[1]][2], ncol(files[[23]])),
+      rep(strsplit(file_list[24], "/")[[1]][2], ncol(files[[24]]))
+    )
+  )
+
+  rm(files)
+
+  ribo <- grep("^RP[SL][[:digit:]]", rownames(seurat), ignore.case = TRUE)
+  sce <- as.SingleCellExperiment(seurat)
+  sce <- addPerCellQC(sce, list(ribo = ribo))
+  seurat$subsets_ribo_percent <- sce$subsets_ribo_percent
+  rm(sce)
+
+  saveRDS(seurat, file = rds)
+}
+```
+
+# Cluster Pipeline
+
+Perform dimensionality reduction and clustering using the intersect of SCTransform scaled data between samples.
+
+```{r, fig.width = 15, fig.height = 11}
+rds <- file.path(cache_dir, "processed_merged_seurat.rds")
+if (file.exists(rds)) {
+  seurat <- readRDS(rds)
+} else {
+
+  VariableFeatures(seurat) <- rownames(
+    GetAssayData(seurat, slot = "scale.data")
+  )
+
+  seurat <- RunPCA(seurat, verbose = FALSE)
+  add_df <- data.frame(Embeddings(seurat)[ , 1:2])
+  names(add_df) <- paste0("pca", seq(ncol(add_df)))
+  seurat$pca1 <- add_df$pca1
+  seurat$pca2 <- add_df$pca2
+  reduction <- "pca"
+  dims <- 1:30
+
+  seurat <- RunUMAP(seurat, dims, reduction, verbose = FALSE)
+  add_df <- data.frame(Embeddings(seurat, "umap"))
+  names(add_df) <- paste0("umap", seq(ncol(add_df)))
+  seurat$umap1 <- add_df$umap1
+  seurat$umap2 <- add_df$umap2
+
+  resolution <- ncol(seurat) / 1000000
+  seurat <- FindNeighbors(
+    seurat, reduction, dims, verbose = FALSE
+  )
+  seurat <- FindClusters(
+    seurat, resolution = resolution, verbose = FALSE
+  )
+
+  saveRDS(seurat, file = rds)
+}
+
+seurat
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+```
+
+# Cell-typing
+
+Project annotations from the Allen Brain Atlas to help with cell-typing, then annotate the unbiased clusters.
+
+```{r, fig.width = 15, fig.height = 11}
+rds <- file.path(cache_dir, "markers.rds")
+if (file.exists(rds)) {
+  markers <- readRDS(rds)
+} else {
+  markers <- FindAllMarkers(
+    seurat, only.pos = TRUE, recorrect_umi = FALSE, verbose = FALSE
+  )
+  saveRDS(markers, file = rds)
+}
+
+markers <- markers[markers$p_val_adj < 0.05, ]
+markers <- markers %>% distinct(gene, .keep_all = TRUE)
+top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
+datatable_download_exp(top)
+
+rds <- file.path(cache_dir, "allen_labels.rds")
+if (file.exists(rds)) {
+  allen_labels <- readRDS(rds)
+} else {
+  ref <- readRDS(
+    file.path(cache_dir, "..", "..", "misc", "allen_mouse_hip_ctx_10x.rds")
+  )
+
+  anchors <- FindTransferAnchors(
+    ref, seurat, normalization.method = "SCT",
+    recompute.residuals = FALSE, reference.reduction = "pca", dims = 1:30
+  )
+  predictions <- MapQuery(
+    anchors, seurat, ref,
+    refdata = "subclass_label", reference.reduction = "umap"
+  )
+
+  allen_labels <- predictions$predicted.id
+  rm(ref, anchors, predictions)
+  saveRDS(allen_labels, file = rds)
+}
+
+seurat$allen_labels <- allen_labels
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "allen_labels", type = "cat"
+)
+
+table <- table(seurat$seurat_clusters, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+seurat <- RenameIdents(
+  object = seurat, "0" = "Cortical Glutamatergic 01",
+  "1" = "Oligodendrocyte", "2" = "Cortical Glutamatergic 02",
+  "3" = "Astrocyte", "4" = "GABAergic",
+  "5" = "Microglia", "6" = "Dentate Gyrus Glutamatergic",
+  "7" = "Hippocampal Glutamatergic 01", "8" = "Cortical Glutamatergic 03",
+  "9" = "Endothelial", "10" = "Unknown 01",
+  "11" = "Hippocampal Glutamatergic 02", "12" = "Unknown 02",
+  "13" = "Unknown 03", "14" = "Unknown 04"
+)
+seurat@active.ident <- factor(unfactor(seurat@active.ident))
+seurat$annotations <- seurat@active.ident
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "annotations", type = "cat"
+)
+
+seurat@active.ident <- seurat$seurat_clusters
+seurat <- RenameIdents(
+  object = seurat, "0" = "Cortical Glutamatergic",
+  "1" = "Oligodendrocyte", "2" = "Cortical Glutamatergic",
+  "3" = "Astrocyte", "4" = "GABAergic",
+  "5" = "Microglia", "6" = "Dentate Gyrus Glutamatergic",
+  "7" = "Hippocampal Glutamatergic", "8" = "Cortical Glutamatergic",
+  "9" = "Endothelial", "10" = "Unknown 01",
+  "11" = "Hippocampal Glutamatergic", "12" = "Unknown 02",
+  "13" = "Unknown 03", "14" = "Unknown 04"
+)
+seurat@active.ident <- factor(unfactor(seurat@active.ident))
+seurat$annotations_short <- seurat@active.ident
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "annotations_short", type = "cat"
+)
+
+rds <- file.path(cache_dir, "seurat_annotated.rds")
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+```
+
+# References
+
+This is the concluding section of the document, where we output the `sessionInfo`, and create a bibliography for works cited.
+
+```{r}
+sessionInfo()
+```
