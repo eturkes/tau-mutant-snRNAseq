@@ -107,7 +107,6 @@ if (!dir.exists(cache_dir)) {
   dir.create(cache_dir, recursive = TRUE)
 }
 
-# See `cluster_pipeline` in `utils.R`.
 protocol <- c("mouse", "droplet", "single-nuc", "umis")
 vars_to_regress <- NULL
 parallel_override <- NULL
