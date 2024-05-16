@@ -310,9 +310,22 @@ if (file.exists(rds)) {
   saveRDS(seurat_raw, file = rds)
 }
 
+ncount_list <- vector("list", length = length(ctypes) + 2)
+names(ncount_list) <- c("All Cell-types", levels(ctypes), "Entorhinal Cortex")
+ncount_list[[1]] <- seurat_raw@meta.data
+ncount_list[[1]] <- ncount_list[[1]] %>%
+  group_by(genotype, batch) %>%
+  summarise(across(nCount_RNA, ~ mean(.), .names = "mean_total_RNA_counts"))
+
 for (type in ctypes) {
   seurat_sub <- subset(seurat_raw, idents = type)
   seurat_sub@active.ident <- factor(seurat_sub$genotype)
+
+  ncount_list[[type]] <- seurat_sub@meta.data
+  ncount_list[[type]] <- ncount_list[[type]] %>%
+    group_by(genotype, batch) %>%
+    summarise(across(nCount_RNA, ~ mean(.), .names = "mean_total_RNA_counts"))
+
   print(
     VlnPlot(seurat_sub, features = "nCount_RNA", split.by = "batch") +
       plot_annotation(
@@ -328,6 +341,10 @@ seurat_raw$ENT <- seurat$ENT
 seurat_raw@active.ident <- seurat_raw$ENT
 seurat_sub <- subset(seurat_raw, ident = "ENT")
 seurat_sub@active.ident <- seurat_sub$genotype
+ncount_list[[length(ncount_list)]] <- seurat_sub@meta.data
+ncount_list[[length(ncount_list)]] <- ncount_list[[length(ncount_list)]] %>%
+  group_by(genotype, batch) %>%
+  summarise(across(nCount_RNA, ~ mean(.), .names = "mean_total_RNA_counts"))
 VlnPlot(seurat_sub, features = "nCount_RNA", split.by = "batch") +
   plot_annotation(
     "ENT",
@@ -335,6 +352,13 @@ VlnPlot(seurat_sub, features = "nCount_RNA", split.by = "batch") +
       plot.title = element_text(hjust = 0.5, size = 18, face = "bold")
     )
   )
+
+write.xlsx(
+  ncount_list,
+  file.path(
+    "..", "..", "results", "comb", "Naoto snRNAseq - Mean RNA Counts.xlsx"
+  )
+)
 ```
 
 # References
