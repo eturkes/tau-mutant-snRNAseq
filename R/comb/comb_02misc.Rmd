@@ -70,7 +70,7 @@ The toggle at the start of the document controls the visibility of all chunks.
 library(conflicted)
 conflicts_prefer(base::intersect, DT::JS, .quiet = TRUE)
 packages <- c(
-  "Seurat", "DT", "dplyr", "scuttle", "ggplot2", "patchwork"
+  "Seurat", "DT", "dplyr", "scuttle", "ggplot2", "patchwork", "openxlsx"
 )
 invisible(
   suppressPackageStartupMessages(
