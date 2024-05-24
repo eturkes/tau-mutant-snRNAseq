@@ -70,7 +70,8 @@ The toggle at the start of the document controls the visibility of all chunks.
 library(conflicted)
 conflicts_prefer(base::intersect, DT::JS, .quiet = TRUE)
 packages <- c(
-  "Seurat", "DT", "dplyr", "scuttle", "ggplot2", "patchwork", "openxlsx"
+  "Seurat", "DT", "dplyr", "scuttle", "ggplot2", "patchwork", "openxlsx",
+  "htmltools"
 )
 invisible(
   suppressPackageStartupMessages(
@@ -117,7 +118,7 @@ seurat$ENT <- factor(ifelse(grepl("ENT", seurat$allen_labels), "ENT", "notENT"))
 Perform quick differential expression using the Wilcox test in Seurat.
 Note that this approach suffers from pseudoreplication bias.
 
-```{r}
+```{r, results = "asis"}
 ctypes <- unique(seurat$annotations_short)
 ctypes <- factor(ctypes[-grep("Unknown", ctypes)])
 
@@ -141,7 +142,7 @@ seurat@active.ident <- seurat$annotations_short
 for (type in ctypes) {
   DEG_list[[type]] <- DEG_list[[type]][DEG_list[[type]]$p_val_adj < 0.05, ]
   DEG_list[[type]] <- DEG_list[[type]] %>% distinct(gene, .keep_all = TRUE)
-  print(datatable_download_exp(DEG_list[[type]]))
+  print(tagList(datatable_download_exp(DEG_list[[type]])))
 
   seurat_sub <- subset(seurat, idents = type)
   seurat_sub@active.ident <- seurat_sub$genotype
