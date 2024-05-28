@@ -258,7 +258,7 @@ if (file.exists(rds)) {
   seurat$umap1 <- add_df$umap1
   seurat$umap2 <- add_df$umap2
 
-  resolution <- ncol(seurat) / 1000000
+  resolution <- ncol(seurat) / 4000000
   seurat <- FindNeighbors(
     seurat, reduction, dims, verbose = FALSE
   )

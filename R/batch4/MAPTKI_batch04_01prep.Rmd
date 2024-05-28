@@ -70,7 +70,7 @@ The toggle at the start of the document controls the visibility of all chunks.
 library(conflicted)
 packages <- c(
   "Seurat", "parallelly", "ggplot2", "dplyr", "ggrepel", "viridis",
-  "DropletUtils", "scDblFinder", "BiocParallel", "DT"
+  "DropletUtils", "scDblFinder", "BiocParallel", "DT", "biomaRt"
 )
 invisible(
   suppressPackageStartupMessages(
@@ -96,8 +96,8 @@ batch <- 4
 step <- 1
 
 data_dir <- file.path(
-  "..", "..", "data", "external", "tau-mutant-snRNAseq", "starsolo",
-  "batch3_4", "LogFiles", "NWB4_1Solo.out", "Gene", "raw"
+  "..", "..", "data", "external", "tau-mutant-snRNAseq",
+  "cellranger", "batch3_4", "NWB4_1", "outs", "raw_feature_bc_matrix"
 )
 cache_dir <- file.path(
   "..", "..", "cache",
@@ -125,7 +125,7 @@ names(metadata_to_plot) <- "seurat_clusters"
 We first read in the data and form a Seurat object.
 
 ```{r}
-seurat <- CreateSeuratObject(Read10X(data_dir))
+seurat <- CreateSeuratObject(Read10X(data_dir, gene.column = 1))
 seurat
 ```
 
@@ -187,12 +187,24 @@ We remove cells low in unique features and high in mito/ribo reads.
 Mitochondrial reads themselves are also removed in a snRNAseq experiment.
 
 ```{r}
-seurat[["percent_mt"]] <- PercentageFeatureSet(seurat, pattern = "^mt-")
-seurat[["percent_ribo"]] <- PercentageFeatureSet(
-  seurat, pattern = "^Rp[sl][[:digit:]]"
+mart <- useEnsembl("ensembl", dataset = "mmusculus_gene_ensembl")
+attributes <- c("external_gene_name", "ensembl_gene_id")
+gene_anno <- getBM(
+  attributes, filters = "ensembl_gene_id",
+  values = rownames(seurat), mart = mart
 )
 
-mito <- grep("^MT-", rownames(seurat), ignore.case = TRUE)
+mito <- grep("^mt-", gene_anno$external_gene_name)
+mito <- which(rownames(seurat) %in% gene_anno[mito, ]$ensembl_gene_id)
+seurat[["percent_mt"]] <- PercentageFeatureSet(
+  seurat, features = rownames(seurat)[mito]
+)
+ribo <- grep("^Rp[sl][[:digit:]]", gene_anno$external_gene_name)
+ribo <- which(rownames(seurat) %in% gene_anno[ribo, ]$ensembl_gene_id)
+seurat[["percent_ribo"]] <- PercentageFeatureSet(
+  seurat, features = rownames(seurat)[ribo]
+)
+
 if (length(mito) != 0) {
   if (protocol[3] == "single-nuc") {
     cat(paste0(
@@ -222,7 +234,7 @@ seurat@meta.data %>%
   scale_x_log10() +
   theme_classic() +
   ylab("Cell Density") +
-  geom_vline(xintercept = 475)
+  geom_vline(xintercept = 500)
 
 seurat@meta.data %>%
   ggplot(aes(x = nCount_RNA)) +
@@ -230,12 +242,12 @@ seurat@meta.data %>%
   scale_x_log10() +
   theme_classic() +
   ylab("Cell Density") +
-  geom_vline(xintercept = 550)
+  geom_vline(xintercept = 600)
 
 seurat <- subset(
   seurat,
-  subset = nFeature_RNA >= 475 & nCount_RNA >= 550 & nFeature_RNA < 4000 &
-    nCount_RNA < 10000 & percent_mt < 5 & percent_ribo < 10
+  subset = nFeature_RNA >= 400 & nCount_RNA >= 500 & nFeature_RNA < 6000 &
+    nCount_RNA < 20000 & percent_mt < 5 & percent_ribo < 10
 )
 seurat
 

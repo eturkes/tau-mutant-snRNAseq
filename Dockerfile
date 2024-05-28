@@ -38,6 +38,7 @@ RUN apt-get update \
         -e "BiocManager::install('DropletUtils')" \
         -e "BiocManager::install('scDblFinder')" \
         -e "BiocManager::install('glmGamPoi')" \
+        -e "BiocManager::install('biomaRt')" \
         -e "remotes::install_github('immunogenomics/presto')" \
     && apt-get clean \
     && rm -Rf /var/lib/apt/lists/ \
