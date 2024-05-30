@@ -1,5 +1,5 @@
 ---
-title: "S305N+3 - Batch 04 - 01 Prep"
+title: "NLGF S305N+3 - Batch 02 - 01 Prep"
 author:
   - name: "Emir Turkes"
 date: '`r strftime(Sys.time(), format = "%B %d, %Y")`'
@@ -19,7 +19,7 @@ knit: (function(inputFile, encoding) {
   rmarkdown::render(
     inputFile, encoding = encoding,
     output_file = file.path(
-      "..", "..", "results", "batch4", "S305N_batch04_01prep.html"
+      "..", "..", "results", "batch02", "NLGF_S305N_batch02_01prep.html"
     ))})
 ---
 
@@ -91,13 +91,13 @@ source(file.path("..", "utils.R"))
 
 # Useful variables.
 # -----------------
-genotype <- "S305N"
-batch <- 4
+genotype <- "NLGF_S305N"
+batch <- 2
 step <- 1
 
 data_dir <- file.path(
   "..", "..", "data", "external", "tau-mutant-snRNAseq",
-  "cellranger", "batch3_4", "NWB4_5", "outs", "raw_feature_bc_matrix"
+  "cellranger", "batch2", "S6_2", "outs", "raw_feature_bc_matrix"
 )
 cache_dir <- file.path(
   "..", "..", "cache",
@@ -234,7 +234,7 @@ seurat@meta.data %>%
   scale_x_log10() +
   theme_classic() +
   ylab("Cell Density") +
-  geom_vline(xintercept = 500)
+  geom_vline(xintercept = 400)
 
 seurat@meta.data %>%
   ggplot(aes(x = nCount_RNA)) +
@@ -242,7 +242,7 @@ seurat@meta.data %>%
   scale_x_log10() +
   theme_classic() +
   ylab("Cell Density") +
-  geom_vline(xintercept = 600)
+  geom_vline(xintercept = 500)
 
 seurat <- subset(
   seurat,
@@ -329,7 +329,7 @@ seurat <- cluster_pipeline(
   seurat, cache_dir = cache_dir,
   sub_name = sub_name, protocol = protocol,
   vars_to_regress = vars_to_regress, parallel_override = parallel_override,
-  cc = FALSE, res_divider = 50000
+  cc = FALSE, res_divider = 100000
 )
 seurat
 

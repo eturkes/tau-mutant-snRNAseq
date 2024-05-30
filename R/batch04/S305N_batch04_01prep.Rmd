@@ -1,5 +1,5 @@
 ---
-title: "NLGF MAPT KI - Batch 01 - 01 Prep"
+title: "S305N+3 - Batch 04 - 01 Prep"
 author:
   - name: "Emir Turkes"
 date: '`r strftime(Sys.time(), format = "%B %d, %Y")`'
@@ -19,7 +19,7 @@ knit: (function(inputFile, encoding) {
   rmarkdown::render(
     inputFile, encoding = encoding,
     output_file = file.path(
-      "..", "..", "results", "batch1", "NLGF_MAPTKI_batch01_01prep.html"
+      "..", "..", "results", "batch04", "S305N_batch04_01prep.html"
     ))})
 ---
 
@@ -91,13 +91,13 @@ source(file.path("..", "utils.R"))
 
 # Useful variables.
 # -----------------
-genotype <- "NLGF_MAPTKI"
-batch <- 1
+genotype <- "S305N"
+batch <- 4
 step <- 1
 
 data_dir <- file.path(
   "..", "..", "data", "external", "tau-mutant-snRNAseq",
-  "cellranger", "batch1", "NWR03", "outs", "raw_feature_bc_matrix"
+  "cellranger", "batch3_4", "NWB4_5", "outs", "raw_feature_bc_matrix"
 )
 cache_dir <- file.path(
   "..", "..", "cache",
@@ -329,7 +329,7 @@ seurat <- cluster_pipeline(
   seurat, cache_dir = cache_dir,
   sub_name = sub_name, protocol = protocol,
   vars_to_regress = vars_to_regress, parallel_override = parallel_override,
-  cc = FALSE, res_divider = 50000
+  cc = FALSE, res_divider = 100000
 )
 seurat
 

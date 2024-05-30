@@ -19,7 +19,7 @@ knit: (function(inputFile, encoding) {
   rmarkdown::render(
     inputFile, encoding = encoding,
     output_file = file.path(
-      "..", "..", "results", "batch3", "P301S_batch03_01prep.html"
+      "..", "..", "results", "batch03", "P301S_batch03_01prep.html"
     ))})
 ---
 
@@ -329,7 +329,7 @@ seurat <- cluster_pipeline(
   seurat, cache_dir = cache_dir,
   sub_name = sub_name, protocol = protocol,
   vars_to_regress = vars_to_regress, parallel_override = parallel_override,
-  cc = FALSE, res_divider = 50000
+  cc = FALSE, res_divider = 100000
 )
 seurat
 
