@@ -70,8 +70,7 @@ The toggle at the start of the document controls the visibility of all chunks.
 library(conflicted)
 conflicts_prefer(base::intersect, DT::JS, .quiet = TRUE)
 packages <- c(
-  "Seurat", "SingleCellExperiment", "scuttle", "parallelly", "ggplot2",
-  "dplyr", "ggrepel", "viridis", "DT"
+  "Seurat", "parallelly", "ggplot2", "dplyr", "ggrepel", "viridis", "DT"
 )
 invisible(
   suppressPackageStartupMessages(
@@ -107,10 +106,13 @@ parallel_override <- NULL
 # Metadata to plot after dimensionality reduction and clustering.
 # Values in list can include "no_legend and/or "no_label" to exclude those.
 # -------------------------------------------------------------------------
-metadata_to_plot <- vector("list", length = 3)
-names(metadata_to_plot) <- c("seurat_clusters", "genotype", "batch")
-metadata_to_plot[[2]] <- "no_label"
-metadata_to_plot[[3]] <- "no_label"
+metadata_to_plot <- vector("list", length = 5)
+names(metadata_to_plot) <- c(
+  "broad_annotations", "allen_labels", "seurat_clusters",
+  "genotype", "batch"
+)
+metadata_to_plot[[4]] <- "no_label"
+metadata_to_plot[[5]] <- "no_label"
 # -------------------------------------------------------------------------
 ```
 
@@ -125,7 +127,7 @@ if (file.exists(rds)) {
 } else {
 
   file_list <- list.files(file.path(cache_dir, "..", ".."), recursive = TRUE)
-  file_list <- file_list[grep("seurat_prep.rds", file_list)]
+  file_list <- file_list[grep("seurat_annotated.rds", file_list)]
   files <- vector("list", length(file_list))
   for (i in seq_along(files)) {
     files[[i]] <- readRDS(file.path(cache_dir, "..", "..", file_list[i]))
@@ -159,6 +161,8 @@ if (file.exists(rds)) {
     files[[21]], files[[22]], files[[23]], files[[24]]
     )
   )
+  seurat$allen_labels <- factor(seurat$allen_labels)
+  seurat$broad_annotations <- factor(seurat$broad_annotations)
 
   seurat$batch <- factor(
     c(
@@ -219,13 +223,6 @@ if (file.exists(rds)) {
   )
 
   rm(files)
-
-  ribo <- grep("^RP[SL][[:digit:]]", rownames(seurat), ignore.case = TRUE)
-  sce <- as.SingleCellExperiment(seurat)
-  sce <- addPerCellQC(sce, list(ribo = ribo))
-  seurat$subsets_ribo_percent <- sce$subsets_ribo_percent
-  rm(sce)
-
   saveRDS(seurat, file = rds)
 }
 ```
@@ -240,6 +237,7 @@ if (file.exists(rds)) {
   seurat <- readRDS(rds)
 } else {
 
+  gc()
   VariableFeatures(seurat) <- rownames(
     GetAssayData(seurat, slot = "scale.data")
   )
@@ -340,96 +338,6 @@ red_dim_plot(
 red_dim_plot(
   seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
 ) + ggtitle("percent_ribo")
-```
-
-# Cell-typing
-
-Project annotations from the Allen Brain Atlas to help with cell-typing, then annotate the unbiased clusters.
-
-```{r, fig.width = 15, fig.height = 11}
-rds <- file.path(cache_dir, "markers.rds")
-if (file.exists(rds)) {
-  markers <- readRDS(rds)
-} else {
-  markers <- FindAllMarkers(
-    seurat, only.pos = TRUE, recorrect_umi = FALSE, verbose = FALSE
-  )
-  saveRDS(markers, file = rds)
-}
-
-markers <- markers[markers$p_val_adj < 0.05, ]
-markers <- markers %>% distinct(gene, .keep_all = TRUE)
-top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
-datatable_download_exp(top)
-
-rds <- file.path(cache_dir, "allen_labels.rds")
-if (file.exists(rds)) {
-  allen_labels <- readRDS(rds)
-} else {
-  ref <- readRDS(
-    file.path(cache_dir, "..", "..", "misc", "allen_mouse_hip_ctx_10x.rds")
-  )
-
-  anchors <- FindTransferAnchors(
-    ref, seurat, normalization.method = "SCT",
-    recompute.residuals = FALSE, reference.reduction = "pca", dims = 1:30
-  )
-  predictions <- MapQuery(
-    anchors, seurat, ref,
-    refdata = "subclass_label", reference.reduction = "umap"
-  )
-
-  allen_labels <- predictions$predicted.id
-  rm(ref, anchors, predictions)
-  saveRDS(allen_labels, file = rds)
-}
-
-seurat$allen_labels <- allen_labels
-red_dim_plot(
-  seurat, x = "umap1", y = "umap2", color = "allen_labels", type = "cat"
-)
-
-table <- table(seurat$seurat_clusters, seurat$allen_labels)
-max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
-max
-
-seurat <- RenameIdents(
-  object = seurat, "0" = "Cortical Glutamatergic 01",
-  "1" = "Oligodendrocyte", "2" = "Cortical Glutamatergic 02",
-  "3" = "Astrocyte", "4" = "GABAergic",
-  "5" = "Microglia", "6" = "Dentate Gyrus Glutamatergic",
-  "7" = "Hippocampal Glutamatergic 01", "8" = "Cortical Glutamatergic 03",
-  "9" = "Endothelial", "10" = "Unknown 01",
-  "11" = "Hippocampal Glutamatergic 02", "12" = "Unknown 02",
-  "13" = "Unknown 03", "14" = "Unknown 04"
-)
-seurat@active.ident <- factor(unfactor(seurat@active.ident))
-seurat$annotations <- seurat@active.ident
-red_dim_plot(
-  seurat, x = "umap1", y = "umap2", color = "annotations", type = "cat"
-)
-
-seurat@active.ident <- seurat$seurat_clusters
-seurat <- RenameIdents(
-  object = seurat, "0" = "Cortical Glutamatergic",
-  "1" = "Oligodendrocyte", "2" = "Cortical Glutamatergic",
-  "3" = "Astrocyte", "4" = "GABAergic",
-  "5" = "Microglia", "6" = "Dentate Gyrus Glutamatergic",
-  "7" = "Hippocampal Glutamatergic", "8" = "Cortical Glutamatergic",
-  "9" = "Endothelial", "10" = "Unknown 01",
-  "11" = "Hippocampal Glutamatergic", "12" = "Unknown 02",
-  "13" = "Unknown 03", "14" = "Unknown 04"
-)
-seurat@active.ident <- factor(unfactor(seurat@active.ident))
-seurat$annotations_short <- seurat@active.ident
-red_dim_plot(
-  seurat, x = "umap1", y = "umap2", color = "annotations_short", type = "cat"
-)
-
-rds <- file.path(cache_dir, "seurat_annotated.rds")
-if (!file.exists(rds)) {
-  saveRDS(seurat, file = rds)
-}
 ```
 
 # References

@@ -70,8 +70,7 @@ The toggle at the start of the document controls the visibility of all chunks.
 library(conflicted)
 conflicts_prefer(base::intersect, DT::JS, .quiet = TRUE)
 packages <- c(
-  "Seurat", "DT", "dplyr", "scuttle", "ggplot2", "patchwork", "openxlsx",
-  "htmltools"
+  "Seurat", "DT", "dplyr", "ggplot2", "patchwork", "openxlsx", "htmltools"
 )
 invisible(
   suppressPackageStartupMessages(
@@ -102,13 +101,15 @@ if (!dir.exists(cache_dir)) {
 
 # Read in data from `01.prep`.
 # ----------------------------
-seurat <- readRDS(file.path(cache_dir, "..", "step01", "seurat_annotated.rds"))
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step01", "processed_merged_seurat.rds")
+)
 seurat@active.ident <- seurat$genotype
 seurat <- subset(seurat, idents = c("MAPTKI", "S305N", "P301S"))
 seurat$genotype <- factor(
   seurat$genotype, levels = c("MAPTKI", "S305N", "P301S")
 )
-seurat@active.ident <- seurat$annotations_short
+seurat@active.ident <- seurat$broad_annotations
 seurat$ENT <- factor(ifelse(grepl("ENT", seurat$allen_labels), "ENT", "notENT"))
 # ----------------------------
 ```
@@ -119,7 +120,7 @@ Perform quick differential expression using the Wilcox test in Seurat.
 Note that this approach suffers from pseudoreplication bias.
 
 ```{r, results = "asis"}
-ctypes <- unique(seurat$annotations_short)
+ctypes <- unique(seurat$broad_annotations)
 ctypes <- factor(ctypes[-grep("Unknown", ctypes)])
 
 rds <- file.path(cache_dir, "DEG_list.rds")
@@ -130,7 +131,7 @@ if (file.exists(rds)) {
   names(DEG_list) <- ctypes
   for (type in ctypes) {
     seurat_sub <- subset(seurat, idents = type)
-    seurat_sub@active.ident <- factor(seurat_sub$genotype)
+    seurat_sub@active.ident <- seurat_sub$genotype
     DEG_list[[type]] <- FindAllMarkers(
       seurat_sub, only.pos = TRUE, recorrect_umi = FALSE, verbose = FALSE
     )
@@ -138,7 +139,7 @@ if (file.exists(rds)) {
   saveRDS(DEG_list, file = rds)
 }
 
-seurat@active.ident <- seurat$annotations_short
+seurat@active.ident <- seurat$broad_annotations
 for (type in ctypes) {
   DEG_list[[type]] <- DEG_list[[type]][DEG_list[[type]]$p_val_adj < 0.05, ]
   DEG_list[[type]] <- DEG_list[[type]] %>% distinct(gene, .keep_all = TRUE)
@@ -160,7 +161,7 @@ for (type in ctypes) {
           plot.title = element_text(hjust = 0.5, size = 18, face = "bold")
         )
       )
-  ) 
+  )
 }
 
 seurat@active.ident <- seurat$ENT
@@ -261,7 +262,7 @@ if (file.exists(rds)) {
       rep(sub("\\/.*", "", file_list[24]), ncol(files[[24]]))
     )
   )
-  
+
   seurat_raw$genotype <- factor(
     c(
       rep(strsplit(file_list[1], "/")[[1]][2], ncol(files[[1]])),
@@ -291,23 +292,13 @@ if (file.exists(rds)) {
     )
   )
 
-  rm(files)
-
-  ribo <- grep("^RP[SL][[:digit:]]", rownames(seurat_raw), ignore.case = TRUE)
-  seurat_raw <- JoinLayers(seurat_raw)
-  sce <- as.SingleCellExperiment(seurat_raw)
-  sce <- addPerCellQC(sce, list(ribo = ribo))
-  seurat_raw$subsets_ribo_percent <- sce$subsets_ribo_percent
-  rm(sce)
-
   seurat_raw <- seurat_raw[ , colnames(seurat_raw) %in% colnames(seurat)]
-
   seurat_raw$allen_labels <- seurat$allen_labels
   seurat_raw$genotype <- seurat$genotype
-  seurat_raw$annotations <- seurat$annotations
-  seurat_raw$annotations_short <- seurat$annotations_short
-  seurat_raw@active.ident <- seurat_raw$annotations_short
+  seurat_raw$broad_annotations <- seurat$broad_annotations
+  seurat_raw@active.ident <- seurat_raw$broad_annotations
 
+  rm(files)
   saveRDS(seurat_raw, file = rds)
 }
 
@@ -325,7 +316,7 @@ ggplot(
 
 for (type in ctypes) {
   seurat_sub <- subset(seurat_raw, idents = type)
-  seurat_sub@active.ident <- factor(seurat_sub$genotype)
+  seurat_sub@active.ident <- seurat_sub$genotype
 
   ncount_list[[type]] <- seurat_sub@meta.data
   ncount_list[[type]] <- ncount_list[[type]] %>%
