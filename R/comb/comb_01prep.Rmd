@@ -139,7 +139,7 @@ if (file.exists(rds)) {
 
   for (i in seq_along(files)) {
     files[[i]][["RNA"]] <- NULL
-    files[[i]]@meta.data[grep("SCT", colnames(files[[i]]@meta.data))] <- NULL
+    files[[i]]@meta.data[grep("snn", colnames(files[[i]]@meta.data))] <- NULL
   }
 
   gc()
@@ -213,6 +213,10 @@ if (file.exists(rds)) {
     )
   )
 
+  seurat$genotype_batch <- factor(
+    paste(seurat$genotype, seurat$batch, sep = "_")
+  )
+
   rm(files)
   saveRDS(seurat, file = rds)
 }
@@ -228,11 +232,6 @@ if (file.exists(rds)) {
   seurat <- readRDS(rds)
 } else {
 
-  seurat[["RNA"]] <- seurat[["SCT"]]
-  gc()
-  seurat <- PrepSCTFindMarkers(seurat)
-  seurat[["RNA"]] <- NULL
-  gc()
   VariableFeatures(seurat) <- rownames(
     GetAssayData(seurat, slot = "scale.data")
   )

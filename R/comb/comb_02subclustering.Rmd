@@ -327,6 +327,8 @@ red_dim_plot(
   col = "subcluster_annotations", type = "cat"
 )
 
+seurat_orig <- PrepSCTFindMarkers(seurat_orig)
+
 rds <- file.path(cache_dir, "annotated_seurat.rds")
 if (!file.exists(rds)) {
   saveRDS(seurat_orig, file = rds)
