@@ -329,7 +329,7 @@ red_dim_plot(
 
 rds <- file.path(cache_dir, "annotated_seurat.rds")
 if (!file.exists(rds)) {
-  saveRDS(seurat, file = rds)
+  saveRDS(seurat_orig, file = rds)
 }
 ```
 
