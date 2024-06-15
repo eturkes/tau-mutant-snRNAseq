@@ -301,6 +301,36 @@ rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
 if (!file.exists(rds)) {
   saveRDS(seurat, file = rds)
 }
+
+ctx_subclusters <- as.character(seurat$subcluster_annotations)
+names(ctx_subclusters) <- names(seurat$subcluster_annotations)
+```
+
+# Add Annotations
+
+```{r}
+seurat_orig <- readRDS(
+  file.path(cache_dir, "..", "step01", "final_seurat.rds")
+)
+
+seurat_orig$subcluster_annotations <- as.character(
+  seurat_orig$broad_annotations
+)
+names(seurat_orig$subcluster_annotations) <- names(
+  seurat_orig$broad_annotations
+)
+seurat_orig$subcluster_annotations[names(ctx_subclusters)] <- ctx_subclusters
+seurat_orig$subcluster_annotations <- factor(seurat_orig$subcluster_annotations)
+
+red_dim_plot(
+  seurat_orig, x = "umap1", y = "umap2",
+  col = "subcluster_annotations", type = "cat"
+)
+
+rds <- file.path(cache_dir, paste0("annotated_seurat.rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
 ```
 
 # References
