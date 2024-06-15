@@ -1,0 +1,312 @@
+---
+title: "Combined Samples - 02 Subclustering"
+author:
+  - name: "Emir Turkes"
+date: '`r strftime(Sys.time(), format = "%B %d, %Y")`'
+link-citations: true
+output:
+  html_document:
+    code_folding: hide
+    number_sections: true
+    theme: lumen
+    highlight: haddock
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(
+    inputFile, encoding = encoding,
+    output_file = file.path(
+      "..", "..", "results", "comb", "comb_02subclustering.html"
+    ))})
+---
+
+<style type="text/css">
+body {font-size: 16px;}
+h1.title {font-size: 35px;}
+h1 {font-size: 24px;}
+h2 {font-size: 22px;}
+h3 {font-size: 20px;}
+.toc-content {padding-left: 0px; padding-right: 0px;}
+div.tocify {width: 100%;}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em; padding-left: 25px; text-indent: 0;
+}
+.tocify-subheader .tocify-subheader .tocify-item {
+  font-size: 0.95em; padding-left: 35px; text-indent: 0;
+}
+div.main-container {max-width: none; width: 100%;}
+</style>
+
+*This file is a part of [tau-mutant-snRNAseq](https://github.com/eturkes/tau-mutant-snRNAseq).*
+
+The table of contents in the top left is clickable and can be used to quickly navigate the document.
+To toggle the visibility of code, use the `CODE` toggles at the top right of chunks.
+The toggle at the start of the document controls the visibility of all chunks.
+
+```{r}
+#    This file is part of tau-mutant-snRNAseq.
+#    Copyright (C) 2024  Emir Turkes, Naoto Watamura, UK DRI at UCL
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#    Emir Turkes can be contacted at emir.turkes@eturkes.com
+
+# Load required packages, suppressing startup messages.
+# -----------------------------------------------------
+library(conflicted)
+packages <- c(
+  "Seurat", "parallelly", "ggplot2", "dplyr", "ggrepel", "viridis", "DT",
+  "biomaRt"
+)
+invisible(
+  suppressPackageStartupMessages(
+    lapply(packages, FUN = library, character.only = TRUE)
+  )
+)
+# -----------------------------------------------------
+
+# Define global settings.
+# -----------------------
+knitr::opts_chunk$set(fig.width = 10, fig.height = 7, dpi = 300)
+# -----------------------
+
+# Define functions.
+# -----------------
+source(file.path("..", "utils.R"))
+# -----------------
+
+# Useful variables.
+# -----------------
+step <- 2
+
+data_dir <- file.path("..", "..", "data")
+cache_dir <- file.path("..", "..", "cache", "comb", paste0("step", "0", step))
+if (!dir.exists(cache_dir)) {
+  dir.create(cache_dir, recursive = TRUE)
+}
+
+protocol <- c("mouse", "droplet", "single-nuc", "umis")
+vars_to_regress <- NULL
+parallel_override <- NULL
+# -----------------
+
+# Metadata to plot after dimensionality reduction and clustering.
+# Values in list can include "no_legend and/or "no_label" to exclude those.
+# -------------------------------------------------------------------------
+metadata_to_plot <- vector("list", length = 5)
+names(metadata_to_plot) <- c(
+  "broad_annotations", "allen_labels", "seurat_clusters",
+  "genotype", "batch"
+)
+metadata_to_plot[[4]] <- "no_label"
+metadata_to_plot[[5]] <- "no_label"
+# -------------------------------------------------------------------------
+```
+
+# Cortical Glutamatergic
+
+```{r}
+ctype <- "Cortical Glutamatergic"
+sub_name <- "ctx"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step01", "final_seurat.rds")
+)
+geneids <- data.frame(
+  geneids = seurat@misc, ensembl = rownames(seurat[["RNA"]])
+)
+seurat@active.ident <- seurat$broad_annotations
+seurat <- subset(seurat, idents = ctype)
+
+gc()
+seurat <- cluster_pipeline(
+  seurat, cache_dir = cache_dir,
+  sub_name = sub_name, protocol = protocol,
+  vars_to_regress = vars_to_regress, parallel_override = parallel_override,
+  cc = FALSE, res_divider = 250000, conserve_memory = TRUE
+)
+gc()
+seurat
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+
+geneids <- geneids[geneids$ensembl %in% rownames(seurat), ]
+seurat_geneids <- GetAssayData(seurat)
+rownames(seurat_geneids) <- geneids$geneids
+seurat_geneids <- CreateSeuratObject(
+  counts = seurat_geneids, data = seurat_geneids,
+  assay = "SCT", meta.data = seurat@meta.data
+)
+seurat_geneids[["pca"]] <- seurat[["pca"]]
+seurat_geneids[["umap"]] <- seurat[["umap"]]
+seurat_geneids@active.ident <- seurat_geneids$seurat_clusters
+
+rds <- file.path(cache_dir, paste0("markers_", sub_name, ".rds"))
+if (file.exists(rds)) {
+  markers <- readRDS(rds)
+} else {
+  gc()
+  markers <- FindAllMarkers(seurat_geneids, only.pos = TRUE, verbose = FALSE)
+  gc()
+  saveRDS(markers, file = rds)
+}
+
+markers <- markers[markers$p_val_adj < 0.05, ]
+markers <- markers %>% distinct(gene, .keep_all = TRUE)
+top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
+datatable_download(top)
+
+rds <- file.path(cache_dir, paste0("allen_labels_", sub_name, ".rds"))
+if (file.exists(rds)) {
+  allen_labels <- readRDS(rds)
+} else {
+  gc()
+  ref <- readRDS(
+    file.path(
+      cache_dir, "..", "..", "misc", "allen_mouse_hip_ctx_10x.rds"
+    )
+  )
+  anchors <- FindTransferAnchors(
+    ref, seurat_geneids, normalization.method = "SCT",
+    recompute.residuals = FALSE, reference.reduction = "pca", dims = 1:30
+  )
+  predictions <- MapQuery(
+    anchors, seurat_geneids, ref,
+    refdata = "subclass_label", reference.reduction = "umap"
+  )
+  allen_labels <- predictions$predicted.id
+  rm(ref, anchors, predictions)
+  gc()
+  saveRDS(allen_labels, file = rds)
+}
+
+seurat$allen_labels <- factor(allen_labels)
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "allen_labels", type = "cat"
+)
+
+table <- table(seurat$seurat_clusters, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+seurat <- RenameIdents(
+  object = seurat, "0" = "Unknown 01",
+  "1" = "L2/3 IT CTX 01", "2" = "L4/5 IT CTX 01",
+  "3" = "Unknown 02", "4" = "L6 CT CTX 01",
+  "5" = "L2/3 IT CTX 02", "6" = "L6b/CT ENT 01",
+  "7" = "L6 IT CTX 01", "8" = "L2/3 IT PPP 01",
+  "9" = "L5/6 IT TPE-ENT 01", "10" = "L3 IT ENT 01",
+  "11" = "Unknown 03", "12" = "L5/6 NP CTX 01",
+  "13" = "L2/3 IT PPP 02", "14" = "L5 PT CTX 01",
+  "15" = "Unknown 04", "16" = "L2/3 IT PPP 03",
+  "17" = "L2 IT ENT 01", "18" = "Unknown 05",
+  "19" = "Unknown 06", "20" = "Unknown 07",
+  "21" = "Car3 01", "22" = "L2/3 IT PPP 04",
+  "23" = "L5 IT CTX 01", "24" = "CR 01",
+  "25" = "L2/3 IT PPP 05", "26" = "L4 RSP-ACA 01",
+  "27" = "NP PPP 01", "28" = "Unknown 08",
+  "29" = "Unknown 09", "30" = "Unknown 10"
+)
+
+seurat@active.ident <- factor(as.character(seurat@active.ident))
+seurat$subcluster_annotations <- seurat@active.ident
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2",
+  color = "subcluster_annotations", type = "cat"
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+```
+
+# References
+
+This is the concluding section of the document, where we output the `sessionInfo`, and create a bibliography for works cited.
+
+```{r}
+sessionInfo()
+```
