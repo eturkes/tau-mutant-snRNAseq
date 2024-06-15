@@ -137,20 +137,6 @@ if (file.exists(rds)) {
     files[[i]] <- readRDS(file.path(cache_dir, "..", "..", file_list[i]))
   }
 
-
-  genes <- Reduce(
-    intersect,
-    list(
-      rownames(files[[1]]), rownames(files[[2]]), rownames(files[[3]]),
-      rownames(files[[4]]), rownames(files[[5]]), rownames(files[[6]]),
-      rownames(files[[7]]), rownames(files[[8]]), rownames(files[[9]]),
-      rownames(files[[10]]), rownames(files[[11]]), rownames(files[[12]]),
-      rownames(files[[13]]), rownames(files[[14]]), rownames(files[[15]]),
-      rownames(files[[16]]), rownames(files[[17]]), rownames(files[[18]]),
-      rownames(files[[19]]), rownames(files[[20]]), rownames(files[[21]]),
-      rownames(files[[22]]), rownames(files[[23]]), rownames(files[[24]])
-    )
-  )
   for (i in seq_along(files)) {
     files[[i]][["RNA"]] <- NULL
     files[[i]]@meta.data[grep("SCT", colnames(files[[i]]@meta.data))] <- NULL
