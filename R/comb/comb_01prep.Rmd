@@ -93,6 +93,10 @@ source(file.path("..", "utils.R"))
 # -----------------
 step <- 1
 
+data_dir <- file.path(
+  "..", "..", "data", "external", "tau-mutant-snRNAseq",
+  "cellranger", "batch1", "NWR01", "outs", "raw_feature_bc_matrix"
+)
 cache_dir <- file.path("..", "..", "cache", "comb", paste0("step", "0", step))
 if (!dir.exists(cache_dir)) {
   dir.create(cache_dir, recursive = TRUE)
@@ -132,6 +136,7 @@ if (file.exists(rds)) {
   for (i in seq_along(files)) {
     files[[i]] <- readRDS(file.path(cache_dir, "..", "..", file_list[i]))
   }
+
 
   genes <- Reduce(
     intersect,
@@ -237,6 +242,10 @@ if (file.exists(rds)) {
   seurat <- readRDS(rds)
 } else {
 
+  seurat[["RNA"]] <- seurat[["SCT"]]
+  gc()
+  seurat <- PrepSCTFindMarkers(seurat)
+  seurat[["RNA"]] <- NULL
   gc()
   VariableFeatures(seurat) <- rownames(
     GetAssayData(seurat, slot = "scale.data")
@@ -338,6 +347,68 @@ red_dim_plot(
 red_dim_plot(
   seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
 ) + ggtitle("percent_ribo")
+```
+
+# Misc Data
+
+Add in raw counts and gene symbols.
+
+```{r}
+rds <- file.path(cache_dir, "final_seurat.rds")
+if (file.exists(rds)) {
+  seurat <- readRDS(rds)
+} else {
+
+  file_list <- list.files(file.path(cache_dir, "..", ".."), recursive = TRUE)
+  file_list <- file_list[grep("seurat_prep.rds", file_list)]
+  files <- vector("list", length(file_list))
+  for (i in seq_along(files)) {
+    files[[i]] <- readRDS(file.path(cache_dir, "..", "..", file_list[i]))
+    DefaultAssay(files[[i]]) <- "RNA"
+  }
+
+  for (i in seq_along(files)) {
+    files[[i]][["SCT"]] <- NULL
+    files[[i]]@meta.data[grep("SCT", colnames(files[[i]]@meta.data))] <- NULL
+  }
+
+  gc()
+  seurat_raw <- merge(
+    files[[1]], c(files[[2]], files[[3]], files[[4]],
+    files[[5]], files[[6]], files[[7]], files[[8]],
+    files[[9]], files[[10]], files[[11]], files[[12]],
+    files[[13]], files[[14]], files[[15]], files[[16]],
+    files[[17]], files[[18]], files[[19]], files[[20]],
+    files[[21]], files[[22]], files[[23]], files[[24]]
+    )
+  )
+  rm(files)
+  gc()
+  seurat_raw <- JoinLayers(seurat_raw)
+  seurat[["RNA"]] <- CreateAssay5Object(
+    GetAssayData(seurat_raw, layer = "counts")
+  )
+  rm(seurat_raw)
+
+  geneids <- read.delim(file.path(data_dir, "features.tsv.gz"), header = FALSE)
+  geneids <- geneids[geneids$V1 %in% rownames(seurat[["RNA"]]), ]
+  dup <- geneids[
+    duplicated(geneids$V2) | duplicated(geneids$V2, fromLast = TRUE),
+  ]
+  for (i in seq(nrow(dup))) {
+    for (j in seq(nrow(geneids))) {
+      if (dup$V1[i] == geneids$V1[j]) {
+        geneids$V2[j] <- paste(geneids$V2[j], geneids$V1[j], sep = "-")
+      }
+    }
+  }
+  seurat@misc <- list(geneids = geneids$V2)
+
+  rm(geneids)
+  saveRDS(seurat, file = rds)
+}
+
+seurat
 ```
 
 # References
