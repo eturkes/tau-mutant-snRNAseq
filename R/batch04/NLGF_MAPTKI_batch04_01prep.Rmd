@@ -234,7 +234,7 @@ seurat@meta.data %>%
   scale_x_log10() +
   theme_classic() +
   ylab("Cell Density") +
-  geom_vline(xintercept = 400)
+  geom_vline(xintercept = 700)
 
 seurat@meta.data %>%
   ggplot(aes(x = nCount_RNA)) +
@@ -242,11 +242,11 @@ seurat@meta.data %>%
   scale_x_log10() +
   theme_classic() +
   ylab("Cell Density") +
-  geom_vline(xintercept = 500)
+  geom_vline(xintercept = 800)
 
 seurat <- subset(
   seurat,
-  subset = nFeature_RNA >= 400 & nCount_RNA >= 500 & nFeature_RNA < 6000 &
+  subset = nFeature_RNA >= 700 & nCount_RNA >= 800 & nFeature_RNA < 6000 &
     nCount_RNA < 20000 & percent_mt < 5 & percent_ribo < 10
 )
 seurat
@@ -329,7 +329,7 @@ seurat <- cluster_pipeline(
   seurat, cache_dir = cache_dir,
   sub_name = sub_name, protocol = protocol,
   vars_to_regress = vars_to_regress, parallel_override = parallel_override,
-  cc = FALSE, res_divider = 50000
+  cc = FALSE, res_divider = 25000
 )
 seurat
 

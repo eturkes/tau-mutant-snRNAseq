@@ -187,19 +187,21 @@ max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
 max
 
 seurat <- RenameIdents(
-  object = seurat, "0" = "Cortical Glutamatergic",
-  "1" = "Oligodendrocyte", "2" = "Cortical Glutamatergic",
-  "3" = "Astrocyte", "4" = "Microglia",
+  object = seurat, "0" = "Oligodendrocyte",
+  "1" = "Oligodendrocyte", "2" = "Astrocyte",
+  "3" = "Cortical Glutamatergic", "4" = "Hippocampal Glutamatergic",
   "5" = "Hippocampal Glutamatergic", "6" = "Cortical Glutamatergic",
-  "7" = "Oligodendrocyte", "8" = "Hippocampal Glutamatergic",
-  "9" = "Hippocampal Glutamatergic", "10" = "Vascular",
-  "11" = "Cortical Glutamatergic", "12" = "GABAergic",
-  "13" = "Unknown", "14" = "OPC",
-  "15" = "GABAergic", "16" = "Hippocampal Glutamatergic",
-  "17" = "Cortical Glutamatergic", "18" = "Hippocampal Glutamatergic",
-  "19" = "Cortical Glutamatergic", "20" = "Vascular",
-  "21" = "Vascular", "22" = "Cortical Glutamatergic",
-  "23" = "Unknown", "24" = "Unknown"
+  "7" = "Microglia", "8" = "Cortical Glutamatergic",
+  "9" = "Unknown", "10" = "GABAergic",
+  "11" = "Vascular", "12" = "OPC",
+  "13" = "Unknown", "14" = "Hippocampal Glutamatergic",
+  "15" = "Cortical Glutamatergic", "16" = "GABAergic",
+  "17" = "Cortical Glutamatergic", "18" = "Cortical Glutamatergic",
+  "19" = "Cortical Glutamatergic", "20" = "Microglia",
+  "21" = "Unknown", "22" = "Unknown",
+  "23" = "GABAergic", "24" = "Unknown",
+  "25" = "Unknown", "26" = "Cortical Glutamatergic",
+  "27" = "Unknown", "28" = "Unknown"
 )
 seurat@active.ident <- factor(as.character(seurat@active.ident))
 seurat$broad_annotations <- seurat@active.ident
