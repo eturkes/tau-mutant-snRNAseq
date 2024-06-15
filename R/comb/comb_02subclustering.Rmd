@@ -327,7 +327,7 @@ red_dim_plot(
   col = "subcluster_annotations", type = "cat"
 )
 
-rds <- file.path(cache_dir, paste0("annotated_seurat.rds"))
+rds <- file.path(cache_dir, "annotated_seurat.rds")
 if (!file.exists(rds)) {
   saveRDS(seurat, file = rds)
 }
