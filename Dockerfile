@@ -39,6 +39,8 @@ RUN apt-get update \
         -e "BiocManager::install('scDblFinder')" \
         -e "BiocManager::install('glmGamPoi')" \
         -e "BiocManager::install('biomaRt')" \
+        -e "BiocManager::install('GSEABase')" \
+        -e "BiocManager::install('GSVA')" \
         -e "remotes::install_github('immunogenomics/presto')" \
     && apt-get clean \
     && rm -Rf /var/lib/apt/lists/ \

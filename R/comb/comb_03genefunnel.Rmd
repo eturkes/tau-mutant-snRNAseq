@@ -1,0 +1,275 @@
+---
+title: "Combined Samples - 03 GeneFunnel"
+author:
+  - name: "Emir Turkes"
+date: '`r strftime(Sys.time(), format = "%B %d, %Y")`'
+link-citations: true
+output:
+  html_document:
+    code_folding: hide
+    number_sections: true
+    theme: lumen
+    highlight: haddock
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(
+    inputFile, encoding = encoding,
+    output_file = file.path(
+      "..", "..", "results", "comb", "comb_03genefunnel.html"
+    ))})
+---
+
+<style type="text/css">
+body {font-size: 16px;}
+h1.title {font-size: 35px;}
+h1 {font-size: 24px;}
+h2 {font-size: 22px;}
+h3 {font-size: 20px;}
+.toc-content {padding-left: 0px; padding-right: 0px;}
+div.tocify {width: 100%;}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em; padding-left: 25px; text-indent: 0;
+}
+.tocify-subheader .tocify-subheader .tocify-item {
+  font-size: 0.95em; padding-left: 35px; text-indent: 0;
+}
+div.main-container {max-width: none; width: 100%;}
+</style>
+
+*This file is a part of [tau-mutant-snRNAseq](https://github.com/eturkes/tau-mutant-snRNAseq).*
+
+The table of contents in the top left is clickable and can be used to quickly navigate the document.
+To toggle the visibility of code, use the `CODE` toggles at the top right of chunks.
+The toggle at the start of the document controls the visibility of all chunks.
+
+```{r}
+#    This file is part of tau-mutant-snRNAseq.
+#    Copyright (C) 2024  Emir Turkes, Naoto Watamura, UK DRI at UCL
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#    Emir Turkes can be contacted at emir.turkes@eturkes.com
+
+# Load required packages, suppressing startup messages.
+# -----------------------------------------------------
+library(conflicted)
+conflicts_prefer(base::intersect, .quiet = TRUE)
+packages <- c("GSEABase", "GSVA", "Seurat", "biomaRt", "Rcpp")
+invisible(
+  suppressPackageStartupMessages(
+    lapply(packages, FUN = library, character.only = TRUE)
+  )
+)
+# -----------------------------------------------------
+
+# Define global settings.
+# -----------------------
+knitr::opts_chunk$set(fig.width = 10, fig.height = 7, dpi = 300)
+# -----------------------
+
+# Define functions.
+# -----------------
+source(file.path("..", "utils.R"))
+sourceCpp(file.path("..", "..", "src", "calculateScores.cpp"))
+
+`%notin%` <- Negate(`%in%`)
+# -----------------
+
+# Useful variables.
+# -----------------
+step <- 3
+
+cache_dir <- file.path("..", "..", "cache", "comb", paste0("step", "0", step))
+if (!dir.exists(cache_dir)) {
+  dir.create(cache_dir, recursive = TRUE)
+}
+# -----------------
+```
+
+# GeneFunnel Scoring
+
+```{r}
+rds <- file.path(cache_dir, "filtered_gene_sets_mmusculus.rds")
+if (file.exists(rds)) {
+  gene_sets <- readRDS(rds)
+} else {
+
+  gene_sets <- getGmt(
+    file.path(
+      "..", "..", "data",
+      "gprofiler_mmusculus_ENSG_2024_06_15", "mmusculus.GO.comb.ENSG.gmt"
+    )
+  )
+  keep <- filterGeneSets(gene_sets, min.sz = 2, max.sz = 1000)
+  gene_sets <- gene_sets[names(gene_sets) %in% names(keep)]
+
+  for (i in seq(length(gene_sets@.Data))) {
+    go_id <- gene_sets[[i]]@setName
+    suppressWarnings(gene_sets[[i]]@setName <- gene_sets[[i]]@shortDescription)
+    suppressWarnings(gene_sets[[i]]@shortDescription <- go_id)
+  }
+
+  remove <- grep("regulation of", names(gene_sets))
+  if (length(remove) > 0) {
+    gene_sets <- gene_sets[-remove]
+  }
+
+  overlap <- computeGeneSetsOverlapMax(
+    gene_sets, uniqGenes = unique(unlist(geneIds(gene_sets)))
+  )
+  tmp <- rowSums(overlap)
+  tmp <- tmp[order(tmp, decreasing = TRUE)]
+  gene_sets_sorted <- gene_sets[match(names(tmp), names(gene_sets))]
+
+  overlap <- computeGeneSetsOverlapMax(
+    gene_sets_sorted, uniqGenes = unique(unlist(geneIds(gene_sets_sorted)))
+  )
+  overlap[upper.tri(overlap)] <- 0
+  diag(overlap) <- 0
+  keep <- apply(overlap, MARGIN = 1, FUN = max)
+  keep <- keep[keep <= 0.25]
+  gene_sets <- gene_sets[names(gene_sets) %in% names(keep)]
+
+  rm(overlap, gene_sets_sorted)
+  saveRDS(gene_sets, file = rds)
+}
+
+rds <- file.path(cache_dir, "seurat_cleaned.rds")
+rds2 <- file.path(cache_dir, "gene_anno.rds")
+if (file.exists(rds) & file.exists(rds2)) {
+  seurat <- readRDS(rds)
+  gene_anno <- readRDS(rds2)
+} else {
+
+  seurat <- readRDS(
+    file.path(cache_dir, "..", "step02", "annotated_seurat.rds")
+  )
+  seurat@active.ident <- seurat$subcluster_annotations
+  seurat_sub <- subset(seurat, idents = c("L2 IT ENT 01", "L3 IT ENT 01"))
+
+  mart <- useEnsembl("ensembl", "mmusculus_gene_ensembl")
+  attributes <- c("external_gene_name", "ensembl_gene_id")
+  gene_anno <- getBM(
+    attributes, filters = "ensembl_gene_id",
+    values = unique(unlist(geneIds(gene_sets))), mart = mart
+  )
+  add <- which(gene_anno$external_gene_name == "")
+  for (idx in add) {
+    gene_anno[idx, 1] <- gene_anno[idx, 2]
+  }
+
+  dup <- gene_anno[
+    duplicated(gene_anno$external_gene_name) |
+      duplicated(gene_anno$external_gene_name, fromLast = TRUE),
+  ]
+  if (nrow(dup) > 0) {
+    for (i in seq(nrow(dup))) {
+      for (j in seq(nrow(gene_anno))) {
+        if (dup$ensembl_gene_id[i] == gene_anno$ensembl_gene_id[j]) {
+          gene_anno$external_gene_name[j] <- paste(
+            gene_anno$external_gene_name[j], gene_anno$ensembl_gene_id[j],
+            sep = "-"
+          )
+        }
+      }
+    }
+  }
+
+  gene_anno_sub <- gene_anno[
+    gene_anno$ensembl_gene_id %in% rownames(seurat_sub),
+  ]
+
+  counts_mat <- GetAssayData(seurat_sub, layer = "counts")
+  counts_mat <- counts_mat[
+    rownames(counts_mat) %in% gene_anno_sub$ensembl_gene_id,
+  ]
+  gene_anno_sub <- gene_anno_sub[
+    match(rownames(counts_mat), gene_anno_sub$ensembl_gene_id),
+  ]
+
+  data_mat <- GetAssayData(seurat_sub)
+  data_mat <- data_mat[rownames(data_mat) %in% gene_anno_sub$ensembl_gene_id, ]
+  gene_anno_sub <- gene_anno_sub[
+    match(rownames(data_mat), gene_anno_sub$ensembl_gene_id),
+  ]
+
+  add <- unique(
+    gene_anno$ensembl_gene_id[
+      which(gene_anno$ensembl_gene_id %notin% rownames(counts_mat))
+    ]
+  )
+  counts_null_mat <- matrix(0, nrow = length(add), ncol = ncol(counts_mat))
+  rownames(counts_null_mat) <- add
+  colnames(counts_null_mat) <- colnames(counts_mat)
+  data_null_mat <- counts_null_mat
+
+  set.seed(1)
+  col <- sample(seq(ncol(counts_null_mat)), size = length(add), replace = TRUE)
+  for (i in seq_along(add)) {
+    counts_null_mat[i, col[i]] <- 0
+    data_null_mat[i, col[i]] <- log1p(0)
+  }
+
+  counts_mat <- rbind(counts_mat, counts_null_mat)
+  data_mat <- rbind(data_mat, data_null_mat)
+  seurat <- CreateSeuratObject(
+    counts = counts_mat, data = data_mat,
+    assay = "RNA", meta.data = seurat_sub[[]]
+  )
+  seurat[["pca"]] <- seurat_sub[["pca"]]
+  seurat[["umap"]] <- seurat_sub[["umap"]]
+  gene_anno <- gene_anno[match(rownames(seurat), gene_anno$ensembl_gene_id), ]
+
+  rm(
+    counts_mat, data_mat, counts_null_mat, data_null_mat,
+    mart, dup, gene_anno_sub, seurat_sub
+  )
+
+  saveRDS(gene_anno, file = rds2)
+  saveRDS(seurat, file = rds)
+}
+
+rds <- file.path(cache_dir, "scores.rds")
+if (file.exists(rds)) {
+  scores <- readRDS(rds)
+} else {
+  scores <- calculateScores(
+    GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
+  )
+  saveRDS(scores, file = rds)
+}
+
+rownames(scores) <- names(gene_sets)
+colnames(scores) <- colnames(seurat)
+
+seurat[["GF"]] <- CreateAssay5Object(scores, data = log1p(scores))
+DefaultAssay(seurat) <- "GF"
+
+rds <- file.path(cache_dir, "genefunnel_seurat.rds")
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+```
+
+# References
+
+This is the concluding section of the document, where we output the `sessionInfo`, and create a bibliography for works cited.
+
+```{r}
+sessionInfo()
+```
