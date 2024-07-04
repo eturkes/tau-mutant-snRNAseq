@@ -234,7 +234,7 @@ seurat@meta.data %>%
   scale_x_log10() +
   theme_classic() +
   ylab("Cell Density") +
-  geom_vline(xintercept = 400)
+  geom_vline(xintercept = 375)
 
 seurat@meta.data %>%
   ggplot(aes(x = nCount_RNA)) +
@@ -242,12 +242,12 @@ seurat@meta.data %>%
   scale_x_log10() +
   theme_classic() +
   ylab("Cell Density") +
-  geom_vline(xintercept = 500)
+  geom_vline(xintercept = 425)
 
 seurat <- subset(
   seurat,
-  subset = nFeature_RNA >= 400 & nCount_RNA >= 500 & nFeature_RNA < 6000 &
-    nCount_RNA < 20000 & percent_mt < 5 & percent_ribo < 10
+  subset = nFeature_RNA >= 375 & nCount_RNA >= 425 &
+    percent_mt < 5 & percent_ribo < 10
 )
 seurat
 
