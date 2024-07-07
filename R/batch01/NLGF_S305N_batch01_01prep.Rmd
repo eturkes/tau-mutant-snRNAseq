@@ -70,7 +70,8 @@ The toggle at the start of the document controls the visibility of all chunks.
 library(conflicted)
 packages <- c(
   "Seurat", "parallelly", "ggplot2", "dplyr", "ggrepel", "viridis",
-  "DropletUtils", "scDblFinder", "BiocParallel", "DT", "biomaRt"
+  "DropletUtils", "scDblFinder", "BiocParallel", "DT", "biomaRt",
+  "SoupX"
 )
 invisible(
   suppressPackageStartupMessages(
@@ -126,6 +127,7 @@ We first read in the data and form a Seurat object.
 
 ```{r}
 seurat <- CreateSeuratObject(Read10X(data_dir, gene.column = 1))
+raw <- seurat
 seurat
 ```
 
@@ -195,11 +197,16 @@ gene_anno <- getBM(
 )
 
 mito <- grep("^mt-", gene_anno$external_gene_name)
+datatable_download(gene_anno[mito, ])
+
 mito <- which(rownames(seurat) %in% gene_anno[mito, ]$ensembl_gene_id)
 seurat[["percent_mt"]] <- PercentageFeatureSet(
   seurat, features = rownames(seurat)[mito]
 )
+
 ribo <- grep("^Rp[sl][[:digit:]]", gene_anno$external_gene_name)
+datatable_download(gene_anno[ribo, ])
+
 ribo <- which(rownames(seurat) %in% gene_anno[ribo, ]$ensembl_gene_id)
 seurat[["percent_ribo"]] <- PercentageFeatureSet(
   seurat, features = rownames(seurat)[ribo]
@@ -211,6 +218,7 @@ if (length(mito) != 0) {
       "Removed ", length(mito), " mitochondrial genes:"), rownames(seurat)[mito]
     )
     seurat <- seurat[-mito, ]
+    raw <- raw[-mito, ]
     seurat
   } else {
     cat(
@@ -242,11 +250,11 @@ seurat@meta.data %>%
   scale_x_log10() +
   theme_classic() +
   ylab("Cell Density") +
-  geom_vline(xintercept = 300)
+  geom_vline(xintercept = 275)
 
 seurat <- subset(
   seurat,
-  subset = nFeature_RNA >= 250 & nCount_RNA >= 300 &
+  subset = nFeature_RNA >= 250 & nCount_RNA >= 275 &
     percent_mt < 5 & percent_ribo < 10
 )
 seurat
@@ -288,6 +296,7 @@ if (protocol[2] == "droplet") {
     saveRDS(doublets, file = rds)
   }
 
+  length(which(doublets == "doublet"))
   seurat <- seurat[ , doublets == "singlet"]
   seurat
 
@@ -325,6 +334,46 @@ We run a pipeline that applies normalization and scaling, dimensionality reducti
 
 ```{r}
 sub_name <- "prep"
+seurat <- cluster_pipeline(
+  seurat, cache_dir = cache_dir,
+  sub_name = sub_name, protocol = protocol,
+  vars_to_regress = vars_to_regress, parallel_override = parallel_override,
+  cc = FALSE, res_divider = 50000
+)
+seurat
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", col = "seurat_clusters", type = "cat"
+)
+```
+
+We remove ambient RNA using SoupX.
+
+```{r}
+rds <- file.path(cache_dir, "ambient_rna.rds")
+rds2 <- file.path(cache_dir, "soup.rds")
+if (file.exists(rds)) {
+  seurat <- readRDS(rds)
+  soup <- readRDS(rds2)
+} else {
+  soup <- SoupChannel(GetAssayData(raw), GetAssayData(seurat, assay = "RNA"))
+  meta <- seurat@meta.data
+  umap <- seurat@reductions$umap@cell.embeddings
+  soup  <- setClusters(soup, setNames(meta$seurat_clusters, rownames(meta)))
+  soup  <- setDR(soup, umap)
+  soup  <- autoEstCont(soup, doPlot = FALSE)
+  seurat[["RNA"]] <- CreateAssay5Object(adjustCounts(soup, roundToInt = TRUE))
+  saveRDS(seurat, file = rds)
+  saveRDS(soup, file = rds2)
+}
+soup  <- autoEstCont(soup)
+```
+
+And then run the pipeline again.
+
+```{r}
+rm(soup, raw)
+sub_name <- "final"
 seurat <- cluster_pipeline(
   seurat, cache_dir = cache_dir,
   sub_name = sub_name, protocol = protocol,
