@@ -70,8 +70,7 @@ The toggle at the start of the document controls the visibility of all chunks.
 library(conflicted)
 packages <- c(
   "Seurat", "parallelly", "ggplot2", "dplyr", "ggrepel", "viridis",
-  "DropletUtils", "scDblFinder", "BiocParallel", "DT", "biomaRt",
-  "SoupX"
+  "DropletUtils", "scDblFinder", "BiocParallel", "DT"
 )
 invisible(
   suppressPackageStartupMessages(
@@ -126,8 +125,15 @@ names(metadata_to_plot) <- "seurat_clusters"
 We first read in the data and form a Seurat object.
 
 ```{r}
+gene_anno <- data.frame(external_gene_name = rownames(Read10X(data_dir)))
 seurat <- CreateSeuratObject(Read10X(data_dir, gene.column = 1))
-raw <- seurat
+gene_anno$ensembl_gene_id <- rownames(seurat)
+
+ambient <- estimateAmbience(
+  GetAssayData(seurat), lower = 20, round = FALSE,
+  good.turing = TRUE, BPPARAM = MulticoreParam(availableCores())
+)
+
 seurat
 ```
 
@@ -145,7 +151,7 @@ if (protocol[2] == "droplet") {
     set.seed(1)
     empty_drops <- emptyDrops(
       GetAssayData(seurat), BPPARAM = MulticoreParam(availableCores()),
-      lower = 20
+      lower = 20, round = FALSE
     )
     saveRDS(empty_drops, file = rds)
   }
@@ -186,18 +192,13 @@ if (protocol[2] == "droplet") {
 ```
 
 We remove cells low in unique features and total counts and calculate percentage of mitochondrial and ribosomal reads and other genes commonly used as indicators of low-quality cells.
+We also use mitochondrial reads as a proxy for ambient RNA contamination, removing genes determined to be 100% contaminated as well as all mitochondrial genes
 
 ```{r}
-mart <- useEnsembl("ensembl", dataset = "mmusculus_gene_ensembl")
-attributes <- c("external_gene_name", "ensembl_gene_id")
-gene_anno <- getBM(
-  attributes, filters = "ensembl_gene_id",
-  values = rownames(seurat), mart = mart
-)
-
 mito <- grep("^mt-", gene_anno$external_gene_name)
 datatable_download(gene_anno[mito, ])
 
+is_mito <- rownames(seurat) %in% gene_anno[mito, ]$ensembl_gene_id
 mito <- which(rownames(seurat) %in% gene_anno[mito, ]$ensembl_gene_id)
 seurat[["percent_mt"]] <- PercentageFeatureSet(
   seurat, features = rownames(seurat)[mito]
@@ -215,6 +216,40 @@ seurat[["percent_malat1"]] <- PercentageFeatureSet(
   seurat, features = "ENSMUSG00000092341"
 )
 
+contam <- controlAmbience(
+  rowSums(GetAssayData(seurat)), ambient = ambient,
+  features = is_mito, mode = "proportion"
+)
+rm(ambient)
+
+plot(
+  log10(rowSums(GetAssayData(seurat)) + 1), contam * 100,
+  col = ifelse(is_mito, "red", "grey"), pch = 16,
+  xlab = "Log-nuclei expression", ylab = "Contamination (%)"
+)
+
+if (length(mito) != 0) {
+  if (protocol[3] == "single-nuc") {
+    print(paste0("Removed ", length(mito), " mitochondrial genes:"))
+    seurat <- seurat[-mito, ]
+    contam <- contam[-mito, ]
+  } else {
+    print(
+      paste0("Found but did not remove ", length(mito), " mitochondrial genes:")
+    )
+  }
+}
+
+contam_genes <- names(contam)[which(contam == 1)]
+contam_genes <- gene_anno[gene_anno$ensembl_gene_id %in% contam_genes, ]
+remove <- which(rownames(seurat) %in% contam_genes$ensembl_gene_id)
+seurat <- seurat[-remove, ]
+contam <- contam[-remove]
+seurat[["RNA"]][[]] <- data.frame(percent_contamination = contam)
+rm(contam)
+seurat
+datatable_download(contam_genes)
+
 VlnPlot(
   seurat,
   features = c(
@@ -229,7 +264,7 @@ seurat@meta.data %>%
   scale_x_log10() +
   theme_classic() +
   ylab("Cell Density") +
-  geom_vline(xintercept = 200)
+  geom_vline(xintercept = 175)
 
 seurat@meta.data %>%
   ggplot(aes(x = nCount_RNA)) +
@@ -237,7 +272,7 @@ seurat@meta.data %>%
   scale_x_log10() +
   theme_classic() +
   ylab("Cell Density") +
-  geom_vline(xintercept = 225)
+  geom_vline(xintercept = 200)
 
 seurat@meta.data %>%
   ggplot(aes(x = percent_mt)) +
@@ -257,7 +292,8 @@ seurat@meta.data %>%
   theme_classic() +
   ylab("Cell Density")
 
-seurat <- subset(seurat, subset = nFeature_RNA >= 200 & nCount_RNA >= 225)
+seurat <- subset(seurat, subset = nFeature_RNA >= 175 & nCount_RNA >= 200)
+seurat <- seurat[which(rowSums(GetAssayData(seurat)) > 0), ]
 seurat
 
 VlnPlot(
@@ -319,97 +355,9 @@ if (protocol[2] == "droplet") {
 
   print(length(which(doublets == "doublet")))
   seurat <- seurat[ , doublets == "singlet"]
+  seurat <- seurat[which(rowSums(GetAssayData(seurat)) > 0), ]
   seurat
 }
-```
-
-We apply filtering for high mitochondrial and ribosomal gene percentage, as well as other genes commonly used as indicators of low-quality cells.
-
-```{r}
-VlnPlot(
-  seurat,
-  features = c(
-    "nFeature_RNA", "nCount_RNA", "percent_mt", "percent_ribo", "percent_malat1"
-  ),
-  ncol = 5
-)
-
-seurat@meta.data %>%
-  ggplot(aes(x = nFeature_RNA)) +
-  geom_density(alpha = 0.2) +
-  scale_x_log10() +
-  theme_classic() +
-  ylab("Cell Density")
-
-seurat@meta.data %>%
-  ggplot(aes(x = nCount_RNA)) +
-  geom_density(alpha = 0.2) +
-  scale_x_log10() +
-  theme_classic() +
-  ylab("Cell Density")
-
-seurat@meta.data %>%
-  ggplot(aes(x = percent_mt)) +
-  geom_density(alpha = 0.2) +
-  theme_classic() +
-  ylab("Cell Density")
-
-seurat@meta.data %>%
-  ggplot(aes(x = percent_ribo)) +
-  geom_density(alpha = 0.2) +
-  theme_classic() +
-  ylab("Cell Density")
-
-seurat@meta.data %>%
-  ggplot(aes(x = percent_malat1)) +
-  geom_density(alpha = 0.2) +
-  theme_classic() +
-  ylab("Cell Density")
-
-seurat <- subset(
-  seurat, subset = percent_mt < 5 & percent_ribo < 10 & percent_malat1 < 20
-)
-seurat
-
-VlnPlot(
-  seurat,
-  features = c(
-    "nFeature_RNA", "nCount_RNA", "percent_mt", "percent_ribo", "percent_malat1"
-  ),
-  ncol = 5
-)
-
-seurat@meta.data %>%
-  ggplot(aes(x = nFeature_RNA)) +
-  geom_density(alpha = 0.2) +
-  scale_x_log10() +
-  theme_classic() +
-  ylab("Cell Density")
-
-seurat@meta.data %>%
-  ggplot(aes(x = nCount_RNA)) +
-  geom_density(alpha = 0.2) +
-  scale_x_log10() +
-  theme_classic() +
-  ylab("Cell Density")
-
-seurat@meta.data %>%
-  ggplot(aes(x = percent_mt)) +
-  geom_density(alpha = 0.2) +
-  theme_classic() +
-  ylab("Cell Density")
-
-seurat@meta.data %>%
-  ggplot(aes(x = percent_ribo)) +
-  geom_density(alpha = 0.2) +
-  theme_classic() +
-  ylab("Cell Density")
-
-seurat@meta.data %>%
-  ggplot(aes(x = percent_malat1)) +
-  geom_density(alpha = 0.2) +
-  theme_classic() +
-  ylab("Cell Density")
 ```
 
 # Cluster Pipeline
@@ -423,66 +371,6 @@ seurat <- cluster_pipeline(
   sub_name = sub_name, protocol = protocol,
   vars_to_regress = vars_to_regress, parallel_override = parallel_override,
   cc = FALSE, res_divider = 100000
-)
-seurat
-
-red_dim_plot(
-  seurat, x = "umap1", y = "umap2", col = "seurat_clusters", type = "cat"
-)
-```
-
-We remove ambient RNA using SoupX.
-Mitochondrial reads are also removed completely in an snRNAseq experiment.
-
-```{r}
-rds <- file.path(cache_dir, "seurat_ambient.rds")
-rds2 <- file.path(cache_dir, "soup.rds")
-if (file.exists(rds)) {
-  seurat <- readRDS(rds)
-  soup <- readRDS(rds2)
-} else {
-  soup <- SoupChannel(GetAssayData(raw), GetAssayData(seurat, assay = "RNA"))
-  meta <- seurat@meta.data
-  umap <- seurat@reductions$umap@cell.embeddings
-  soup <- setClusters(soup, setNames(meta$seurat_clusters, rownames(meta)))
-  soup <- setDR(soup, umap)
-  soup <- autoEstCont(soup, doPlot = FALSE)
-  seurat[["RNA_ORIG"]] <- CreateAssay5Object(
-    GetAssayData(seurat, assay = "RNA")
-  )
-  seurat[["RNA"]] <- CreateAssay5Object(adjustCounts(soup, roundToInt = TRUE))
-  DefaultAssay(seurat) <- "RNA"
-  seurat[["SCT"]] <- NULL
-  seurat@meta.data[grep("snn", colnames(seurat@meta.data))] <- NULL
-  saveRDS(seurat, file = rds)
-  saveRDS(soup, file = rds2)
-}
-seurat
-soup  <- autoEstCont(soup)
-
-if (length(mito) != 0) {
-  if (protocol[3] == "single-nuc") {
-    print(paste0("Removed ", length(mito), " mitochondrial genes:"))
-    seurat <- seurat[-mito, ]
-    seurat
-  } else {
-    print(
-      paste0("Found but did not remove ", length(mito), " mitochondrial genes:")
-    )
-  }
-}
-```
-
-And then run the pipeline again.
-
-```{r}
-rm(soup, raw)
-sub_name <- "final"
-seurat <- cluster_pipeline(
-  seurat, cache_dir = cache_dir,
-  sub_name = sub_name, protocol = protocol,
-  vars_to_regress = vars_to_regress, parallel_override = parallel_override,
-  cc = FALSE, res_divider = 50000
 )
 seurat
 
