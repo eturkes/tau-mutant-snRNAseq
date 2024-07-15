@@ -165,7 +165,7 @@ if (protocol[2] == "droplet") {
   )
 
   seurat <- seurat[ , which(empty_drops$FDR <= 0.001)]
-  seurat
+  print(seurat)
 
   bcrank <- barcodeRanks(GetAssayData(seurat), lower = 20)
   uniq <- !duplicated(bcrank$rank)
@@ -185,8 +185,7 @@ if (protocol[2] == "droplet") {
 }
 ```
 
-We remove cells low in unique features and high in mito/ribo reads.
-Mitochondrial reads themselves are also removed in a snRNAseq experiment.
+We remove cells low in unique features and total counts and calculate percentage of mitochondrial and ribosomal reads and other genes commonly used as indicators of low-quality cells.
 
 ```{r}
 mart <- useEnsembl("ensembl", dataset = "mmusculus_gene_ensembl")
@@ -212,28 +211,16 @@ seurat[["percent_ribo"]] <- PercentageFeatureSet(
   seurat, features = rownames(seurat)[ribo]
 )
 
-if (length(mito) != 0) {
-  if (protocol[3] == "single-nuc") {
-    cat(paste0(
-      "Removed ", length(mito), " mitochondrial genes:"), rownames(seurat)[mito]
-    )
-    seurat <- seurat[-mito, ]
-    raw <- raw[-mito, ]
-    seurat
-  } else {
-    cat(
-      paste0(
-        "Found but did not remove ", length(mito), " mitochondrial genes:"
-      ),
-      rownames(seurat)[mito]
-    )
-  }
-}
+seurat[["percent_malat1"]] <- PercentageFeatureSet(
+  seurat, features = "ENSMUSG00000092341"
+)
 
 VlnPlot(
   seurat,
-  features = c("nFeature_RNA", "nCount_RNA", "percent_mt", "percent_ribo"),
-  ncol = 4
+  features = c(
+    "nFeature_RNA", "nCount_RNA", "percent_mt", "percent_ribo", "percent_malat1"
+  ),
+  ncol = 5
 )
 
 seurat@meta.data %>%
@@ -252,17 +239,33 @@ seurat@meta.data %>%
   ylab("Cell Density") +
   geom_vline(xintercept = 675)
 
-seurat <- subset(
-  seurat,
-  subset = nFeature_RNA >= 575 & nCount_RNA >= 675 &
-    percent_mt < 5 & percent_ribo < 10
-)
+seurat@meta.data %>%
+  ggplot(aes(x = percent_mt)) +
+  geom_density(alpha = 0.2) +
+  theme_classic() +
+  ylab("Cell Density")
+
+seurat@meta.data %>%
+  ggplot(aes(x = percent_ribo)) +
+  geom_density(alpha = 0.2) +
+  theme_classic() +
+  ylab("Cell Density")
+
+seurat@meta.data %>%
+  ggplot(aes(x = percent_malat1)) +
+  geom_density(alpha = 0.2) +
+  theme_classic() +
+  ylab("Cell Density")
+
+seurat <- subset(seurat, subset = nFeature_RNA >= 575 & nCount_RNA >= 675)
 seurat
 
 VlnPlot(
   seurat,
-  features = c("nFeature_RNA", "nCount_RNA", "percent_mt", "percent_ribo"),
-  ncol = 4
+  features = c(
+    "nFeature_RNA", "nCount_RNA", "percent_mt", "percent_ribo", "percent_malat1"
+  ),
+  ncol = 5
 )
 
 seurat@meta.data %>%
@@ -276,6 +279,24 @@ seurat@meta.data %>%
   ggplot(aes(x = nCount_RNA)) +
   geom_density(alpha = 0.2) +
   scale_x_log10() +
+  theme_classic() +
+  ylab("Cell Density")
+
+seurat@meta.data %>%
+  ggplot(aes(x = percent_mt)) +
+  geom_density(alpha = 0.2) +
+  theme_classic() +
+  ylab("Cell Density")
+
+seurat@meta.data %>%
+  ggplot(aes(x = percent_ribo)) +
+  geom_density(alpha = 0.2) +
+  theme_classic() +
+  ylab("Cell Density")
+
+seurat@meta.data %>%
+  ggplot(aes(x = percent_malat1)) +
+  geom_density(alpha = 0.2) +
   theme_classic() +
   ylab("Cell Density")
 ```
@@ -296,36 +317,99 @@ if (protocol[2] == "droplet") {
     saveRDS(doublets, file = rds)
   }
 
-  length(which(doublets == "doublet"))
+  print(length(which(doublets == "doublet")))
   seurat <- seurat[ , doublets == "singlet"]
   seurat
-
-  print(
-    VlnPlot(
-      seurat,
-      features = c("nFeature_RNA", "nCount_RNA", "percent_mt", "percent_ribo"),
-      ncol = 4
-    )
-  )
-
-  print(
-    seurat@meta.data %>%
-      ggplot(aes(x = nFeature_RNA)) +
-      geom_density(alpha = 0.2) +
-      scale_x_log10() +
-      theme_classic() +
-      ylab("Cell Density")
-  )
-
-  print(
-    seurat@meta.data %>%
-      ggplot(aes(x = nCount_RNA)) +
-      geom_density(alpha = 0.2) +
-      scale_x_log10() +
-      theme_classic() +
-      ylab("Cell Density")
-  )
 }
+```
+
+We apply filtering for high mitochondrial and ribosomal gene percentage, as well as other genes commonly used as indicators of low-quality cells.
+
+```{r}
+VlnPlot(
+  seurat,
+  features = c(
+    "nFeature_RNA", "nCount_RNA", "percent_mt", "percent_ribo", "percent_malat1"
+  ),
+  ncol = 5
+)
+
+seurat@meta.data %>%
+  ggplot(aes(x = nFeature_RNA)) +
+  geom_density(alpha = 0.2) +
+  scale_x_log10() +
+  theme_classic() +
+  ylab("Cell Density")
+
+seurat@meta.data %>%
+  ggplot(aes(x = nCount_RNA)) +
+  geom_density(alpha = 0.2) +
+  scale_x_log10() +
+  theme_classic() +
+  ylab("Cell Density")
+
+seurat@meta.data %>%
+  ggplot(aes(x = percent_mt)) +
+  geom_density(alpha = 0.2) +
+  theme_classic() +
+  ylab("Cell Density")
+
+seurat@meta.data %>%
+  ggplot(aes(x = percent_ribo)) +
+  geom_density(alpha = 0.2) +
+  theme_classic() +
+  ylab("Cell Density")
+
+seurat@meta.data %>%
+  ggplot(aes(x = percent_malat1)) +
+  geom_density(alpha = 0.2) +
+  theme_classic() +
+  ylab("Cell Density")
+
+seurat <- subset(
+  seurat, subset = percent_mt < 5 & percent_ribo < 10 & percent_malat1 < 20
+)
+seurat
+
+VlnPlot(
+  seurat,
+  features = c(
+    "nFeature_RNA", "nCount_RNA", "percent_mt", "percent_ribo", "percent_malat1"
+  ),
+  ncol = 5
+)
+
+seurat@meta.data %>%
+  ggplot(aes(x = nFeature_RNA)) +
+  geom_density(alpha = 0.2) +
+  scale_x_log10() +
+  theme_classic() +
+  ylab("Cell Density")
+
+seurat@meta.data %>%
+  ggplot(aes(x = nCount_RNA)) +
+  geom_density(alpha = 0.2) +
+  scale_x_log10() +
+  theme_classic() +
+  ylab("Cell Density")
+
+seurat@meta.data %>%
+  ggplot(aes(x = percent_mt)) +
+  geom_density(alpha = 0.2) +
+  theme_classic() +
+  ylab("Cell Density")
+
+seurat@meta.data %>%
+  ggplot(aes(x = percent_ribo)) +
+  geom_density(alpha = 0.2) +
+  theme_classic() +
+  ylab("Cell Density")
+
+seurat@meta.data %>%
+  ggplot(aes(x = percent_malat1)) +
+  geom_density(alpha = 0.2) +
+  theme_classic() +
+  ylab("Cell Density")
 ```
 
 # Cluster Pipeline
@@ -338,7 +422,7 @@ seurat <- cluster_pipeline(
   seurat, cache_dir = cache_dir,
   sub_name = sub_name, protocol = protocol,
   vars_to_regress = vars_to_regress, parallel_override = parallel_override,
-  cc = FALSE, res_divider = 50000
+  cc = FALSE, res_divider = 100000
 )
 seurat
 
@@ -348,9 +432,10 @@ red_dim_plot(
 ```
 
 We remove ambient RNA using SoupX.
+Mitochondrial reads are also removed completely in an snRNAseq experiment.
 
 ```{r}
-rds <- file.path(cache_dir, "ambient_rna.rds")
+rds <- file.path(cache_dir, "seurat_ambient.rds")
 rds2 <- file.path(cache_dir, "soup.rds")
 if (file.exists(rds)) {
   seurat <- readRDS(rds)
@@ -359,14 +444,33 @@ if (file.exists(rds)) {
   soup <- SoupChannel(GetAssayData(raw), GetAssayData(seurat, assay = "RNA"))
   meta <- seurat@meta.data
   umap <- seurat@reductions$umap@cell.embeddings
-  soup  <- setClusters(soup, setNames(meta$seurat_clusters, rownames(meta)))
-  soup  <- setDR(soup, umap)
-  soup  <- autoEstCont(soup, doPlot = FALSE)
+  soup <- setClusters(soup, setNames(meta$seurat_clusters, rownames(meta)))
+  soup <- setDR(soup, umap)
+  soup <- autoEstCont(soup, doPlot = FALSE)
+  seurat[["RNA_ORIG"]] <- CreateAssay5Object(
+    GetAssayData(seurat, assay = "RNA")
+  )
   seurat[["RNA"]] <- CreateAssay5Object(adjustCounts(soup, roundToInt = TRUE))
+  DefaultAssay(seurat) <- "RNA"
+  seurat[["SCT"]] <- NULL
+  seurat@meta.data[grep("snn", colnames(seurat@meta.data))] <- NULL
   saveRDS(seurat, file = rds)
   saveRDS(soup, file = rds2)
 }
+seurat
 soup  <- autoEstCont(soup)
+
+if (length(mito) != 0) {
+  if (protocol[3] == "single-nuc") {
+    print(paste0("Removed ", length(mito), " mitochondrial genes:"))
+    seurat <- seurat[-mito, ]
+    seurat
+  } else {
+    print(
+      paste0("Found but did not remove ", length(mito), " mitochondrial genes:")
+    )
+  }
+}
 ```
 
 And then run the pipeline again.
