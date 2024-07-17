@@ -125,9 +125,11 @@ names(metadata_to_plot) <- "seurat_clusters"
 We first read in the data and form a Seurat object.
 
 ```{r}
-gene_anno <- data.frame(external_gene_name = rownames(Read10X(data_dir)))
 seurat <- CreateSeuratObject(Read10X(data_dir, gene.column = 1))
-gene_anno$ensembl_gene_id <- rownames(seurat)
+
+gene_anno <- read.delim(file.path(data_dir, "features.tsv.gz"), header = FALSE)
+gene_anno <- gene_anno[ , c(1:2)]
+colnames(gene_anno) <- c("ensembl_gene_id", "external_gene_name")
 
 ambient <- estimateAmbience(
   GetAssayData(seurat), lower = 20, round = FALSE,
