@@ -81,7 +81,7 @@ invisible(
 
 # Define global settings.
 # -----------------------
-knitr::opts_chunk$set(fig.width = 10, fig.height = 7, dpi = 300)
+knitr::opts_chunk$set(fig.width = 12, fig.height = 7, dpi = 300)
 # -----------------------
 
 # Define functions.
@@ -108,7 +108,7 @@ if (!dir.exists(cache_dir)) {
 }
 
 protocol <- c("mouse", "droplet", "single-nuc", "umis")
-vars_to_regress <- NULL
+vars_to_regress <- "percent_mt"
 parallel_override <- NULL
 # -----------------
 
@@ -150,8 +150,8 @@ if (protocol[2] == "droplet") {
   } else {
     set.seed(1)
     empty_drops <- emptyDrops(
-      GetAssayData(seurat), BPPARAM = MulticoreParam(availableCores()),
-      lower = 20, round = FALSE
+      GetAssayData(seurat), lower = 20, round = FALSE, 
+      test.ambient = TRUE, BPPARAM = MulticoreParam(availableCores())
     )
     saveRDS(empty_drops, file = rds)
   }
@@ -171,7 +171,7 @@ if (protocol[2] == "droplet") {
   )
 
   seurat <- seurat[ , which(empty_drops$FDR <= 0.001)]
-  print(seurat)
+  seurat
 
   bcrank <- barcodeRanks(GetAssayData(seurat), lower = 20)
   uniq <- !duplicated(bcrank$rank)
@@ -185,6 +185,13 @@ if (protocol[2] == "droplet") {
     "bottomleft", legend = c("Inflection", "Knee"),
     col = c("darkgreen", "dodgerblue"),
     lty = 2, cex = 1.2
+  )
+
+  hist(
+    empty_drops$PValue[empty_drops$Total <= 20 & empty_drops$Total > 0],
+    xlab = "P-value",
+    main = "",
+    col = "grey80"
   )
 
   rm(bcrank, empty_drops)
@@ -220,7 +227,6 @@ contam <- controlAmbience(
   rowSums(GetAssayData(seurat)), ambient = ambient,
   features = is_mito, mode = "proportion"
 )
-rm(ambient)
 
 plot(
   log10(rowSums(GetAssayData(seurat)) + 1), contam * 100,
@@ -228,11 +234,18 @@ plot(
   xlab = "Log-nuclei expression", ylab = "Contamination (%)"
 )
 
+contam <- rownames(contam)[which(contam == 1)]
+contam <- gene_anno[gene_anno$ensembl_gene_id %in% contam, ]
+datatable_download(contam)
+
+seurat[["percent_contam"]] <- PercentageFeatureSet(
+  seurat, features = contam$ensembl_gene_id
+)
+
 if (length(mito) != 0) {
   if (protocol[3] == "single-nuc") {
     print(paste0("Removed ", length(mito), " mitochondrial genes:"))
     seurat <- seurat[-mito, ]
-    contam <- contam[-mito, ]
   } else {
     print(
       paste0("Found but did not remove ", length(mito), " mitochondrial genes:")
@@ -240,34 +253,17 @@ if (length(mito) != 0) {
   }
 }
 
-contam_genes <- names(contam)[which(contam == 1)]
-contam_genes <- gene_anno[gene_anno$ensembl_gene_id %in% contam_genes, ]
-remove <- which(rownames(seurat) %in% contam_genes$ensembl_gene_id)
-seurat <- seurat[-remove, ]
-contam <- contam[-remove]
-seurat[["RNA"]][[]] <- data.frame(percent_contamination = contam)
-rm(contam)
-seurat
-datatable_download(contam_genes)
-
 VlnPlot(
   seurat,
   features = c(
-    "nFeature_RNA", "nCount_RNA", "percent_mt", "percent_ribo", "percent_malat1"
+    "nFeature_RNA", "nCount_RNA", "percent_mt",
+    "percent_ribo", "percent_malat1", "percent_contam"
   ),
-  ncol = 5
+  ncol = 6
 )
 
 seurat@meta.data %>%
   ggplot(aes(x = nFeature_RNA)) +
-  geom_density(alpha = 0.2) +
-  scale_x_log10() +
-  theme_classic() +
-  ylab("Cell Density") +
-  geom_vline(xintercept = 175)
-
-seurat@meta.data %>%
-  ggplot(aes(x = nCount_RNA)) +
   geom_density(alpha = 0.2) +
   scale_x_log10() +
   theme_classic() +
@@ -275,6 +271,14 @@ seurat@meta.data %>%
   geom_vline(xintercept = 200)
 
 seurat@meta.data %>%
+  ggplot(aes(x = nCount_RNA)) +
+  geom_density(alpha = 0.2) +
+  scale_x_log10() +
+  theme_classic() +
+  ylab("Cell Density") +
+  geom_vline(xintercept = 225)
+
+seurat@meta.data %>%
   ggplot(aes(x = percent_mt)) +
   geom_density(alpha = 0.2) +
   theme_classic() +
@@ -292,16 +296,22 @@ seurat@meta.data %>%
   theme_classic() +
   ylab("Cell Density")
 
-seurat <- subset(seurat, subset = nFeature_RNA >= 175 & nCount_RNA >= 200)
-seurat <- seurat[which(rowSums(GetAssayData(seurat)) > 0), ]
+seurat@meta.data %>%
+  ggplot(aes(x = percent_contam)) +
+  geom_density(alpha = 0.2) +
+  theme_classic() +
+  ylab("Cell Density")
+
+seurat <- subset(seurat, subset = nFeature_RNA >= 200 & nCount_RNA >= 225)
 seurat
 
 VlnPlot(
   seurat,
   features = c(
-    "nFeature_RNA", "nCount_RNA", "percent_mt", "percent_ribo", "percent_malat1"
+    "nFeature_RNA", "nCount_RNA", "percent_mt",
+    "percent_ribo", "percent_malat1", "percent_contam"
   ),
-  ncol = 5
+  ncol = 6
 )
 
 seurat@meta.data %>%
@@ -332,6 +342,12 @@ seurat@meta.data %>%
 
 seurat@meta.data %>%
   ggplot(aes(x = percent_malat1)) +
+  geom_density(alpha = 0.2) +
+  theme_classic() +
+  ylab("Cell Density")
+
+seurat@meta.data %>%
+  ggplot(aes(x = percent_contam)) +
   geom_density(alpha = 0.2) +
   theme_classic() +
   ylab("Cell Density")
@@ -353,9 +369,7 @@ if (protocol[2] == "droplet") {
     saveRDS(doublets, file = rds)
   }
 
-  print(length(which(doublets == "doublet")))
-  seurat <- seurat[ , doublets == "singlet"]
-  seurat <- seurat[which(rowSums(GetAssayData(seurat)) > 0), ]
+  seurat$doublets <- ifelse(doublets == "doublet", yes = 1, no = 0)
   seurat
 }
 ```
@@ -443,6 +457,159 @@ red_dim_plot(
 red_dim_plot(
   seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
 ) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+FeaturePlot(seurat, features = "doublets")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+contam_clusters <- vector(length = length(unique(seurat$seurat_clusters)))
+for (i in seq_along(contam_clusters)) {
+  sub_seurat <- subset(seurat, idents = `i` - 1)
+  contam_clusters[i] <- median(sub_seurat$percent_contam)
+}
+rm(sub_seurat)
+remove <- which.max(contam_clusters) - 1
+print(paste0("Remove most contaminated cluster: ", remove))
+seurat <- subset(seurat, idents = remove, invert = TRUE)
+seurat
+
+remove <- which(seurat$doublets == 1)
+print(paste0("Remove doublets: ", length(remove)))
+seurat <- seurat[ , -remove]
+seurat
+
+sub_name <- "final"
+seurat <- cluster_pipeline(
+  seurat, cache_dir = cache_dir,
+  sub_name = sub_name, protocol = protocol,
+  vars_to_regress = vars_to_regress, parallel_override = parallel_override,
+  cc = FALSE, res_divider = 100000
+)
+seurat
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+FeaturePlot(seurat, features = "doublets")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
 ```
 
 # References
