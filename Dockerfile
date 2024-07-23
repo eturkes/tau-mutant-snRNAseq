@@ -33,7 +33,6 @@ RUN apt-get update \
         -e "install.packages('viridis')" \
         -e "install.packages('DT')" \
         -e "install.packages('openxlsx')" \
-        -e "install.packages('SoupX')" \
         -e "install.packages('BiocManager')" \
         -e "install.packages('remotes')" \
         -e "BiocManager::install('DropletUtils')" \

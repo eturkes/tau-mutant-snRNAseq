@@ -183,6 +183,10 @@ cluster_pipeline <- function(
     return(seurat)
   } else {
 
+    DefaultAssay(seurat) <- "RNA"
+    seurat[["SCT"]] <- NULL
+    seurat@meta.data[grep("SCT", colnames(seurat@meta.data))] <- NULL
+
     if (protocol[4] == "umis") {
       # Run sctransform.
       # ----------------
@@ -324,11 +328,31 @@ cluster_pipeline <- function(
     # ---------------------------
     if (cc == TRUE) {
       if (protocol[1] == "human") {
-        s_genes <- cc.genes.updated.2019$s.genes
-        g2m_genes <- cc.genes.updated.2019$g2m.genes
+        s_genes <- read.csv(
+          file.path(
+            "..", "..", "storage", "data", "cell_cycle_genes", "s_genes.csv"
+          )
+        )
+        s_genes <- s_genes$initial_ensg
+        g2m_genes <- read.csv(
+          file.path(
+            "..", "..", "storage", "data", "cell_cycle_genes", "g2m_genes.csv"
+          )
+        )
+        g2m_genes <- g2m_genes$initial_ensg
       } else if (protocol[1] == "mouse") {
-        s_genes <- human_to_mouse_genes(cc.genes.updated.2019$s.genes)
-        g2m_genes <- human_to_mouse_genes(cc.genes.updated.2019$g2m.genes)
+        s_genes <- read.csv(
+          file.path(
+            "..", "..", "storage", "data", "cell_cycle_genes", "s_genes.csv"
+          )
+        )
+        s_genes <- s_genes$ortholog_ensg
+        g2m_genes <- read.csv(
+          file.path(
+            "..", "..", "storage", "data", "cell_cycle_genes", "g2m_genes.csv"
+          )
+        )
+        g2m_genes <- g2m_genes$ortholog_ensg
       }
       seurat <- CellCycleScoring(seurat, s_genes, g2m_genes)
       seurat$cc_diff <- seurat$S.Score - seurat$G2M.Score
