@@ -28,7 +28,6 @@ body {font-size: 16px;}
 h1.title {font-size: 35px;}
 h1 {font-size: 24px;}
 h2 {font-size: 22px;}
-h3 {font-size: 20px;}
 .toc-content {padding-left: 0px; padding-right: 0px;}
 div.tocify {width: 100%;}
 .tocify-subheader .tocify-item {
@@ -104,18 +103,21 @@ if (!dir.exists(cache_dir)) {
 
 protocol <- c("mouse", "droplet", "single-nuc", "umis")
 vars_to_regress <- NULL
-parallel_override <- NULL
+parallel_override <- 0
 # -----------------
 
 # Metadata to plot after dimensionality reduction and clustering.
 # Values in list can include "no_legend and/or "no_label" to exclude those.
 # -------------------------------------------------------------------------
-metadata_to_plot <- vector("list", length = 5)
+metadata_to_plot <- vector("list", length = 7)
 names(metadata_to_plot) <- c(
-  "broad_annotations", "allen_labels", "seurat_clusters", "genotype", "batch"
+  "broad_annotations", "allen_labels", "seurat_clusters", "genotype",
+  "batch", "sex", "Phase"
 )
 metadata_to_plot[[4]] <- "no_label"
 metadata_to_plot[[5]] <- "no_label"
+metadata_to_plot[[6]] <- "no_label"
+metadata_to_plot[[7]] <- "no_label"
 # -------------------------------------------------------------------------
 ```
 
@@ -131,15 +133,10 @@ if (file.exists(rds)) {
 
   file_list <- list.files(file.path(cache_dir, "..", ".."), recursive = TRUE)
   file_list <- file_list[grep("seurat_prep.rds", file_list)]
-  remove <- grep("batch01/NLGF_MAPTKI|batch01/NLGF_P301S", x = file_list)
-  file_list <- file_list[-remove]
   files <- vector("list", length(file_list))
   for (i in seq_along(files)) {
     files[[i]] <- readRDS(file.path(cache_dir, "..", "..", file_list[i]))
     DefaultAssay(files[[i]]) <- "RNA"
-  }
-
-  for (i in seq_along(files)) {
     files[[i]][["SCT"]] <- NULL
     files[[i]]@meta.data[grep("SCT", colnames(files[[i]]@meta.data))] <- NULL
   }
@@ -156,22 +153,22 @@ if (file.exists(rds)) {
   )
   gc()
   seurat <- JoinLayers(seurat)
+  seurat <- seurat[which(rowSums(GetAssayData(seurat)) > 0), ]
 
-  geneids <- read.delim(file.path(data_dir, "features.tsv.gz"), header = FALSE)
-  geneids <- geneids[geneids$V1 %in% rownames(seurat[["RNA"]]), ]
-  dup <- geneids[
-    duplicated(geneids$V2) | duplicated(geneids$V2, fromLast = TRUE),
+  gene_anno <- read.delim(file.path(data_dir, "features.tsv.gz"), header = FALSE)
+  gene_anno <- gene_anno[gene_anno$V1 %in% rownames(seurat[["RNA"]]), ]
+  dup <- gene_anno[
+    duplicated(gene_anno$V2) | duplicated(gene_anno$V2, fromLast = TRUE),
   ]
   for (i in seq(nrow(dup))) {
-    for (j in seq(nrow(geneids))) {
-      if (dup$V1[i] == geneids$V1[j]) {
-        geneids$V2[j] <- paste(geneids$V2[j], geneids$V1[j], sep = "-")
+    for (j in seq(nrow(gene_anno))) {
+      if (dup$V1[i] == gene_anno$V1[j]) {
+        gene_anno$V2[j] <- paste(gene_anno$V2[j], gene_anno$V1[j], sep = "-")
       }
     }
   }
-  seurat@misc <- list(geneids = geneids$V2)
-
-  rm(geneids)
+  seurat@misc <- list(geneids = gene_anno$V2)
+  rm(gene_anno)
 
   seurat$batch <- factor(
     c(
@@ -240,6 +237,8 @@ if (file.exists(rds)) {
   rm(files)
   saveRDS(seurat, file = rds)
 }
+
+seurat
 ```
 
 # Cluster Pipeline
@@ -249,12 +248,13 @@ Perform dimensionality reduction and clustering using the intersect of SCTransfo
 ```{r, fig.width = 15, fig.height = 11}
 rds <- file.path(cache_dir, "processed_merged_seurat.rds")
 if (file.exists(rds)) {
+  rm(seurat)
+  gc()
   seurat <- readRDS(rds)
 } else {
 
   seurat <- SCTransform(
-    seurat, vst.flavor = "v2", vars.to.regress = c("batch", "sex"),
-    conserve.memory = TRUE, verbose = FALSE
+    seurat, vst.flavor = "v2", conserve.memory = TRUE, verbose = FALSE
   )
 
   seurat <- RunPCA(seurat, verbose = FALSE)
@@ -265,23 +265,27 @@ if (file.exists(rds)) {
   reduction <- "pca"
   dims <- 1:30
 
-  seurat <- RunUMAP(seurat, dims, reduction, verbose = FALSE)
-  add_df <- data.frame(Embeddings(seurat, "umap"))
+  seurat <- RunUMAP(seurat, dims = dims, reduction = reduction, verbose = FALSE)
+  add_df <- data.frame(Embeddings(seurat, reduction = "umap"))
   names(add_df) <- paste0("umap", seq(ncol(add_df)))
   seurat$umap1 <- add_df$umap1
   seurat$umap2 <- add_df$umap2
 
-  resolution <- 0.01
-  seurat <- FindNeighbors(seurat, reduction, dims, verbose = FALSE)
+  resolution <- 0.004
+  seurat <- FindNeighbors(
+    seurat, reduction = reduction, dims = dims, verbose = FALSE
+  )
   seurat <- FindClusters(seurat, resolution = resolution, verbose = FALSE)
 
   seurat_geneids <- GetAssayData(seurat)
   gene_anno <- data.frame(
-    geneids = seurat@misc$geneids,
-    ensembl = rownames(GetAssayData(seurat, assay = "RNA"))
+    external_gene_name = unlist(seurat@misc$geneids),
+    ensembl_gene_id = rownames(GetAssayData(seurat, assay = "RNA"))
   )
-  gene_anno <- gene_anno[gene_anno$ensembl %in% rownames(seurat_geneids), ]
-  rownames(seurat_geneids) <- gene_anno$geneids
+  gene_anno <- gene_anno[
+    gene_anno$ensembl_gene_id %in% rownames(seurat_geneids),
+  ]
+  rownames(seurat_geneids) <- gene_anno$external_gene_name
   rm(gene_anno)
   seurat_geneids <- CreateSeuratObject(
     counts = seurat_geneids, data = seurat_geneids,
@@ -291,6 +295,7 @@ if (file.exists(rds)) {
   seurat_geneids[["umap"]] <- seurat[["umap"]]
   seurat_geneids@active.ident <- seurat_geneids$seurat_clusters
 
+  gc()
   ref <- readRDS(
     file.path(
       cache_dir, "..", "..", "misc", "allen_mouse_hip_ctx_10x.rds"
@@ -313,10 +318,11 @@ if (file.exists(rds)) {
     object = seurat, "0" = "Neuronal",
     "1" = "Oligodendrocyte", "2" = "Microglia",
     "3" = "Astrocyte", "4" = "Vascular",
-    "5" = "OPC", "6" = "Unknown"
+    "5" = "OPC"
   )
   seurat@active.ident <- factor(as.character(seurat@active.ident))
   seurat$broad_annotations <- seurat@active.ident
+  seurat@active.ident <- seurat$broad_annotations
 
   saveRDS(seurat, file = rds)
 }
@@ -392,6 +398,80 @@ red_dim_plot(
 red_dim_plot(
   seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
 ) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+```
+
+# Per-sample SCTransform
+
+We add back per-sample SCTransform data and perform `PrepSCTFindMarkers()` to make samples comparable for differential expression.
+
+```{r}
+rds <- file.path(cache_dir, "final_seurat.rds")
+if (file.exists(rds)) {
+  rm(seurat)
+  gc()
+  seurat <- readRDS(rds)
+} else {
+
+  file_list <- list.files(file.path(cache_dir, "..", ".."), recursive = TRUE)
+  file_list <- file_list[grep("seurat_prep.rds", file_list)]
+  files <- vector("list", length(file_list))
+  for (i in seq_along(files)) {
+    files[[i]] <- readRDS(file.path(cache_dir, "..", "..", file_list[i]))
+    files[[i]][["RNA"]] <- NULL
+    files[[i]]@meta.data[grep("SCT", colnames(files[[i]]@meta.data))] <- NULL
+  }
+
+  gc()
+  sct_seurat <- merge(
+    files[[1]], c(files[[2]], files[[3]], files[[4]],
+    files[[5]], files[[6]], files[[7]], files[[8]],
+    files[[9]], files[[10]], files[[11]], files[[12]],
+    files[[13]], files[[14]], files[[15]], files[[16]],
+    files[[17]], files[[18]], files[[19]], files[[20]],
+    files[[21]], files[[22]]
+    )
+  )
+  gc()
+
+  sct_seurat[["RNA"]] <- CreateAssay5Object(GetAssayData(seurat, assay = "RNA"))
+  sct_seurat <- PrepSCTFindMarkers(sct_seurat)
+  seurat[["SCT_NORM"]] <- CreateAssay5Object(GetAssayData(sct_seurat))
+
+  rm(files, sct_seurat)
+  saveRDS(seurat, file = rds)
+}
+
+seurat
+
+VlnPlot(seurat, features = "nCount_SCT", group.by = "genotype_batch")
+VlnPlot(seurat, features = "nCount_SCT_NORM", group.by = "genotype_batch")
 ```
 
 # References
