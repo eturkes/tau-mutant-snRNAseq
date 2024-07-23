@@ -275,3 +275,24 @@ xfun::Rscript_call(
     envir = new.env()
   )
 )
+
+xfun::Rscript_call(
+  rmarkdown::render,
+  list(
+    file.path("comb", "comb_01prep.Rmd"),
+    output_file = file.path(
+      "..", "..", "results", "comb", "comb_01prep.html"
+    ),
+    envir = new.env()
+  )
+)
+xfun::Rscript_call(
+  rmarkdown::render,
+  list(
+    file.path("comb", "comb_02subclustering.Rmd"),
+    output_file = file.path(
+      "..", "..", "results", "comb", "comb_02subclustering.html"
+    ),
+    envir = new.env()
+  )
+)
