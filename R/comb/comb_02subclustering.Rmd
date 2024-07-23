@@ -28,7 +28,6 @@ body {font-size: 16px;}
 h1.title {font-size: 35px;}
 h1 {font-size: 24px;}
 h2 {font-size: 22px;}
-h3 {font-size: 20px;}
 .toc-content {padding-left: 0px; padding-right: 0px;}
 div.tocify {width: 100%;}
 .tocify-subheader .tocify-item {
@@ -69,8 +68,7 @@ The toggle at the start of the document controls the visibility of all chunks.
 # -----------------------------------------------------
 library(conflicted)
 packages <- c(
-  "Seurat", "parallelly", "ggplot2", "dplyr", "ggrepel", "viridis", "DT",
-  "biomaRt"
+  "Seurat", "parallelly", "ggplot2", "dplyr", "ggrepel", "viridis", "DT"
 )
 invisible(
   suppressPackageStartupMessages(
@@ -107,40 +105,92 @@ parallel_override <- NULL
 # Metadata to plot after dimensionality reduction and clustering.
 # Values in list can include "no_legend and/or "no_label" to exclude those.
 # -------------------------------------------------------------------------
-metadata_to_plot <- vector("list", length = 5)
+metadata_to_plot <- vector("list", length = 7)
 names(metadata_to_plot) <- c(
-  "broad_annotations", "allen_labels", "seurat_clusters",
-  "genotype", "batch"
+  "subcluster_annotations", "allen_labels", "seurat_clusters", "Phase",
+  "genotype", "batch", "sex"
 )
 metadata_to_plot[[4]] <- "no_label"
 metadata_to_plot[[5]] <- "no_label"
+metadata_to_plot[[6]] <- "no_label"
+metadata_to_plot[[7]] <- "no_label"
 # -------------------------------------------------------------------------
 ```
 
-# Cortical Glutamatergic
+# Prep
 
 ```{r}
-ctype <- "Cortical Glutamatergic"
-sub_name <- "ctx"
+level1_subclusters <- vector("list", length = 6)
+level2_subclusters <- vector("list", length = 22)
+```
+
+# Neuronal
+
+```{r}
+ctype <- "Neuronal"
+sub_name <- "neuronal"
 
 seurat <- readRDS(
   file.path(cache_dir, "..", "step01", "final_seurat.rds")
 )
-geneids <- data.frame(
-  geneids = seurat@misc, ensembl = rownames(seurat[["RNA"]])
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
 )
-seurat@active.ident <- seurat$broad_annotations
 seurat <- subset(seurat, idents = ctype)
 
-gc()
 seurat <- cluster_pipeline(
   seurat, cache_dir = cache_dir,
   sub_name = sub_name, protocol = protocol,
   vars_to_regress = vars_to_regress, parallel_override = parallel_override,
-  cc = FALSE, res_divider = 250000, conserve_memory = TRUE
+  cc = FALSE, res_divider = 1000000
 )
-gc()
 seurat
+
+seurat <- RenameIdents(
+  object = seurat, "0" = "Glutamatergic 01",
+  "1" = "Glutamatergic 01", "2" = "Glutamatergic 01",
+  "3" = "Glutamatergic 02", "4" = "Glutamatergic 01",
+  "5" = "GABAergic 01", "6" = "Glutamatergic 01",
+  "7" = "Glutamatergic 01", "8" = "GABAergic 01",
+  "9" = "Glutamatergic 01", "10" = "Glutamatergic 01",
+  "11" = "Glutamatergic 01", "12" = "GABAergic 01",
+  "13" = "Glutamatergic 01", "14" = "Glutamatergic 01",
+  "15" = "Glutamatergic 03", "16" = "Glutamatergic 01",
+  "17" = "Glutamatergic 01", "18" = "Glutamatergic 04",
+  "19" = "Glutamatergic 01", "20" = "Glutamatergic 01",
+  "21" = "Glutamatergic 01", "22" = "Glutamatergic 05"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+rds <- file.path(cache_dir, paste0("markers_", sub_name, ".rds"))
+if (file.exists(rds)) {
+  markers <- readRDS(rds)
+} else {
+  markers <- FindAllMarkers(seurat, only.pos = TRUE, verbose = FALSE)
+  saveRDS(markers, file = rds)
+}
+
+markers <- markers[markers$p_val_adj < 0.05, ]
+dup <- markers[
+  duplicated(markers$gene) | duplicated(markers$gene, fromLast = TRUE),
+]
+dup <- which(markers$gene %in% dup$gene)
+markers <- markers[-dup, ]
+top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
+top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
+gene_anno <- gene_anno[gene_anno$ensembl_gene_id %in% top$gene, ]
+gene_anno <- gene_anno[match(top$gene, gene_anno$ensembl_gene_id), ]
+rownames(top) <- gene_anno$external_gene_name
+datatable_download(top)
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
 
 for (i in seq_along(metadata_to_plot)) {
   if (
@@ -211,90 +261,32 @@ red_dim_plot(
 red_dim_plot(
   seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
 ) + ggtitle("percent_ribo")
-
-geneids <- geneids[geneids$ensembl %in% rownames(seurat), ]
-seurat_geneids <- GetAssayData(seurat)
-rownames(seurat_geneids) <- geneids$geneids
-seurat_geneids <- CreateSeuratObject(
-  counts = seurat_geneids, data = seurat_geneids,
-  assay = "SCT", meta.data = seurat@meta.data
-)
-seurat_geneids[["pca"]] <- seurat[["pca"]]
-seurat_geneids[["umap"]] <- seurat[["umap"]]
-seurat_geneids@active.ident <- seurat_geneids$seurat_clusters
-
-rds <- file.path(cache_dir, paste0("markers_", sub_name, ".rds"))
-if (file.exists(rds)) {
-  markers <- readRDS(rds)
-} else {
-  gc()
-  markers <- FindAllMarkers(seurat_geneids, only.pos = TRUE, verbose = FALSE)
-  gc()
-  saveRDS(markers, file = rds)
-}
-
-markers <- markers[markers$p_val_adj < 0.05, ]
-markers <- markers %>% distinct(gene, .keep_all = TRUE)
-top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
-datatable_download(top)
-
-rds <- file.path(cache_dir, paste0("allen_labels_", sub_name, ".rds"))
-if (file.exists(rds)) {
-  allen_labels <- readRDS(rds)
-} else {
-  gc()
-  ref <- readRDS(
-    file.path(
-      cache_dir, "..", "..", "misc", "allen_mouse_hip_ctx_10x.rds"
-    )
-  )
-  anchors <- FindTransferAnchors(
-    ref, seurat_geneids, normalization.method = "SCT",
-    recompute.residuals = FALSE, reference.reduction = "pca", dims = 1:30
-  )
-  predictions <- MapQuery(
-    anchors, seurat_geneids, ref,
-    refdata = "subclass_label", reference.reduction = "umap"
-  )
-  allen_labels <- predictions$predicted.id
-  rm(ref, anchors, predictions)
-  gc()
-  saveRDS(allen_labels, file = rds)
-}
-
-seurat$allen_labels <- factor(allen_labels)
 red_dim_plot(
-  seurat, x = "umap1", y = "umap2", color = "allen_labels", type = "cat"
-)
-
-table <- table(seurat$seurat_clusters, seurat$allen_labels)
-max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
-max
-
-seurat <- RenameIdents(
-  object = seurat, "0" = "Unknown 01",
-  "1" = "L2/3 IT CTX 01", "2" = "L4/5 IT CTX 01",
-  "3" = "Unknown 02", "4" = "L6 CT CTX 01",
-  "5" = "L2/3 IT CTX 02", "6" = "L6b/CT ENT 01",
-  "7" = "L6 IT CTX 01", "8" = "L2/3 IT PPP 01",
-  "9" = "L5/6 IT TPE-ENT 01", "10" = "L3 IT ENT 01",
-  "11" = "Unknown 03", "12" = "L5/6 NP CTX 01",
-  "13" = "L2/3 IT PPP 02", "14" = "L5 PT CTX 01",
-  "15" = "Unknown 04", "16" = "L2/3 IT PPP 03",
-  "17" = "L2 IT ENT 01", "18" = "Unknown 05",
-  "19" = "Unknown 06", "20" = "Unknown 07",
-  "21" = "Car3 01", "22" = "L2/3 IT PPP 04",
-  "23" = "L5 IT CTX 01", "24" = "CR 01",
-  "25" = "L2/3 IT PPP 05", "26" = "L4 RSP-ACA 01",
-  "27" = "NP PPP 01", "28" = "Unknown 08",
-  "29" = "Unknown 09", "30" = "Unknown 10"
-)
-
-seurat@active.ident <- factor(as.character(seurat@active.ident))
-seurat$subcluster_annotations <- seurat@active.ident
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
 red_dim_plot(
-  seurat, x = "umap1", y = "umap2",
-  color = "subcluster_annotations", type = "cat"
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
 )
 
 rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
@@ -302,36 +294,4121 @@ if (!file.exists(rds)) {
   saveRDS(seurat, file = rds)
 }
 
-ctx_subclusters <- as.character(seurat$subcluster_annotations)
-names(ctx_subclusters) <- names(seurat$subcluster_annotations)
+level1_subclusters[[1]] <- as.character(seurat$subcluster_annotations)
+names(level1_subclusters[[1]]) <- names(seurat$subcluster_annotations)
+```
+
+## Glutamatergic 01
+
+```{r}
+ctype <- "Glutamatergic 01"
+sub_name <- "glut01"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step02", "annotated_neuronal.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- cluster_pipeline(
+  seurat, cache_dir = cache_dir,
+  sub_name = sub_name, protocol = protocol,
+  vars_to_regress = vars_to_regress, parallel_override = parallel_override,
+  cc = FALSE, res_divider = 500000
+)
+seurat
+
+seurat <- RenameIdents(
+  object = seurat, "0" = "Glut DG 01",
+  "1" = "Glut 01", "2" = "Glut L2/3 Cortex 01",
+  "3" = "Glut CA1 01", "4" = "Glut L4/5 Cortex 01",
+  "5" = "Glut L5/6 Cortex 01", "6" = "Glut CA3 01",
+  "7" = "Glut 02", "8" = "Glut L2/3 ENT 01",
+  "9" = "Glut L3 ENT 01", "10" = "Glut 03",
+  "11" = "Glut L2/3 PPP 03", "12" = "Glut L2/3 PPP 02",
+  "13" = "Glut Subiculum 01", "14" = "Glut L5/6 Cortex 03",
+  "15" = "Glut L2 ENT 01", "16" = "Glut L2/3 PPP 04",
+  "17" = "Glut L2/3 PPP 01", "18" = "Glut 04",
+  "19" = "Glut DG 02", "20" = "Glut Cajal-Retzius 01",
+  "21" = "Glut L5/6 Cortex 02"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+rds <- file.path(cache_dir, paste0("markers_", sub_name, ".rds"))
+if (file.exists(rds)) {
+  markers <- readRDS(rds)
+} else {
+  markers <- FindAllMarkers(seurat, only.pos = TRUE, verbose = FALSE)
+  saveRDS(markers, file = rds)
+}
+
+markers <- markers[markers$p_val_adj < 0.05, ]
+dup <- markers[
+  duplicated(markers$gene) | duplicated(markers$gene, fromLast = TRUE),
+]
+dup <- which(markers$gene %in% dup$gene)
+markers <- markers[-dup, ]
+top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
+top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
+gene_anno <- gene_anno[gene_anno$ensembl_gene_id %in% top$gene, ]
+gene_anno <- gene_anno[match(top$gene, gene_anno$ensembl_gene_id), ]
+rownames(top) <- gene_anno$external_gene_name
+datatable_download(top)
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level2_subclusters[[1]] <- as.character(seurat$subcluster_annotations)
+names(level2_subclusters[[1]]) <- names(seurat$subcluster_annotations)
+```
+
+## Glutamatergic 02
+
+```{r}
+ctype <- "Glutamatergic 02"
+sub_name <- "glut02"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step02", "annotated_neuronal.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- cluster_pipeline(
+  seurat, cache_dir = cache_dir,
+  sub_name = sub_name, protocol = protocol,
+  vars_to_regress = vars_to_regress, parallel_override = parallel_override,
+  cc = FALSE, res_divider = 500000
+)
+seurat
+
+seurat <- RenameIdents(
+  object = seurat, "0" = "Glut L6 Cortex 01",
+  "1" = "Glut L6 ENT 01", "2" = "Glut Subiculum 02",
+  "3" = "Glut L6 PPP 01"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+rds <- file.path(cache_dir, paste0("markers_", sub_name, ".rds"))
+if (file.exists(rds)) {
+  markers <- readRDS(rds)
+} else {
+  markers <- FindAllMarkers(seurat, only.pos = TRUE, verbose = FALSE)
+  saveRDS(markers, file = rds)
+}
+
+markers <- markers[markers$p_val_adj < 0.05, ]
+dup <- markers[
+  duplicated(markers$gene) | duplicated(markers$gene, fromLast = TRUE),
+]
+dup <- which(markers$gene %in% dup$gene)
+markers <- markers[-dup, ]
+top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
+top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
+gene_anno <- gene_anno[gene_anno$ensembl_gene_id %in% top$gene, ]
+gene_anno <- gene_anno[match(top$gene, gene_anno$ensembl_gene_id), ]
+rownames(top) <- gene_anno$external_gene_name
+datatable_download(top)
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level2_subclusters[[2]] <- as.character(seurat$subcluster_annotations)
+names(level2_subclusters[[2]]) <- names(seurat$subcluster_annotations)
+```
+
+## Glutamatergic 03
+
+```{r}
+ctype <- "Glutamatergic 03"
+sub_name <- "glut03"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step02", "annotated_neuronal.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- cluster_pipeline(
+  seurat, cache_dir = cache_dir,
+  sub_name = sub_name, protocol = protocol,
+  vars_to_regress = vars_to_regress, parallel_override = parallel_override,
+  cc = FALSE, res_divider = 100000
+)
+seurat
+
+seurat <- RenameIdents(
+  object = seurat, "0" = "Glut L5/6 Cortex 04",
+  "1" = "Glut Subiculum 03"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+rds <- file.path(cache_dir, paste0("markers_", sub_name, ".rds"))
+if (file.exists(rds)) {
+  markers <- readRDS(rds)
+} else {
+  markers <- FindAllMarkers(seurat, only.pos = TRUE, verbose = FALSE)
+  saveRDS(markers, file = rds)
+}
+
+markers <- markers[markers$p_val_adj < 0.05, ]
+dup <- markers[
+  duplicated(markers$gene) | duplicated(markers$gene, fromLast = TRUE),
+]
+dup <- which(markers$gene %in% dup$gene)
+markers <- markers[-dup, ]
+top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
+top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
+gene_anno <- gene_anno[gene_anno$ensembl_gene_id %in% top$gene, ]
+gene_anno <- gene_anno[match(top$gene, gene_anno$ensembl_gene_id), ]
+rownames(top) <- gene_anno$external_gene_name
+datatable_download(top)
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level2_subclusters[[3]] <- as.character(seurat$subcluster_annotations)
+names(level2_subclusters[[3]]) <- names(seurat$subcluster_annotations)
+```
+
+## Glutamatergic 04
+
+```{r}
+ctype <- "Glutamatergic 04"
+sub_name <- "glut04"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step02", "annotated_neuronal.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- RenameIdents(
+  object = seurat, "Glutamatergic 04" = "Glut Car3 01"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level2_subclusters[[4]] <- as.character(seurat$subcluster_annotations)
+names(level2_subclusters[[4]]) <- names(seurat$subcluster_annotations)
+```
+
+## Glutamatergic 05
+
+```{r}
+ctype <- "Glutamatergic 05"
+sub_name <- "glut05"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step02", "annotated_neuronal.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- RenameIdents(
+  object = seurat, "Glutamatergic 05" = "Glut Retrosplenial 01"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level2_subclusters[[5]] <- as.character(seurat$subcluster_annotations)
+names(level2_subclusters[[5]]) <- names(seurat$subcluster_annotations)
+```
+
+## GABAergic 01
+
+```{r}
+ctype <- "GABAergic 01"
+sub_name <- "gaba01"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step02", "annotated_neuronal.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- cluster_pipeline(
+  seurat, cache_dir = cache_dir,
+  sub_name = sub_name, protocol = protocol,
+  vars_to_regress = vars_to_regress, parallel_override = parallel_override,
+  cc = FALSE, res_divider = 200000
+)
+seurat
+
+seurat <- RenameIdents(
+  object = seurat, "0" = "GABA Pvalb 01",
+  "1" = "GABA Sst 01", "2" = "GABA Vip 01",
+  "3" = "GABA 01", "4" = "GABA 02",
+  "5" = "GABA Lamp5 01", "6" = "GABA Sncg 01",
+  "7" = "GABA Lamp5 02", "8" = "GABA 03",
+  "9" = "GABA Pvalb 02", "10" = "GABA 05",
+  "11" = "GABA 04"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+rds <- file.path(cache_dir, paste0("markers_", sub_name, ".rds"))
+if (file.exists(rds)) {
+  markers <- readRDS(rds)
+} else {
+  markers <- FindAllMarkers(seurat, only.pos = TRUE, verbose = FALSE)
+  saveRDS(markers, file = rds)
+}
+
+markers <- markers[markers$p_val_adj < 0.05, ]
+dup <- markers[
+  duplicated(markers$gene) | duplicated(markers$gene, fromLast = TRUE),
+]
+dup <- which(markers$gene %in% dup$gene)
+markers <- markers[-dup, ]
+top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
+top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
+gene_anno <- gene_anno[gene_anno$ensembl_gene_id %in% top$gene, ]
+gene_anno <- gene_anno[match(top$gene, gene_anno$ensembl_gene_id), ]
+rownames(top) <- gene_anno$external_gene_name
+datatable_download(top)
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level2_subclusters[[6]] <- as.character(seurat$subcluster_annotations)
+names(level2_subclusters[[6]]) <- names(seurat$subcluster_annotations)
+```
+
+# Microglia
+
+```{r}
+ctype <- "Microglia"
+sub_name <- "micro"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step01", "final_seurat.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- cluster_pipeline(
+  seurat, cache_dir = cache_dir,
+  sub_name = sub_name, protocol = protocol,
+  vars_to_regress = vars_to_regress, parallel_override = parallel_override,
+  cc = FALSE, res_divider = 1000000
+)
+seurat
+
+seurat <- RenameIdents(
+  object = seurat, "0" = "Microglia 01",
+  "1" = "Microglia 03", "2" = "Microglia 04",
+  "3" = "Microglia 02"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+rds <- file.path(cache_dir, paste0("markers_", sub_name, ".rds"))
+if (file.exists(rds)) {
+  markers <- readRDS(rds)
+} else {
+  markers <- FindAllMarkers(seurat, only.pos = TRUE, verbose = FALSE)
+  saveRDS(markers, file = rds)
+}
+
+markers <- markers[markers$p_val_adj < 0.05, ]
+dup <- markers[
+  duplicated(markers$gene) | duplicated(markers$gene, fromLast = TRUE),
+]
+dup <- which(markers$gene %in% dup$gene)
+markers <- markers[-dup, ]
+top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
+top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
+gene_anno <- gene_anno[gene_anno$ensembl_gene_id %in% top$gene, ]
+gene_anno <- gene_anno[match(top$gene, gene_anno$ensembl_gene_id), ]
+rownames(top) <- gene_anno$external_gene_name
+datatable_download(top)
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level1_subclusters[[2]] <- as.character(seurat$subcluster_annotations)
+names(level1_subclusters[[2]]) <- names(seurat$subcluster_annotations)
+```
+
+## Microglia 01
+
+```{r}
+ctype <- "Microglia 01"
+sub_name <- "micro01"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step02", "annotated_micro.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- cluster_pipeline(
+  seurat, cache_dir = cache_dir,
+  sub_name = sub_name, protocol = protocol,
+  vars_to_regress = vars_to_regress, parallel_override = parallel_override,
+  cc = FALSE, res_divider = 120000
+)
+seurat
+
+file_list <- list.files(file.path(data_dir, "DAM_genes"))
+DAM_list <- vector("list", length = length(file_list))
+names(DAM_list) <- sapply(file_list, function(x) sub("_.*", "", x))
+for (i in seq_along(DAM_list)) {
+  DAM_list[[i]] <- read.delim(
+    file.path(data_dir, "DAM_genes", file_list[i]), header = FALSE
+  )
+  gene_anno_sub <- gene_anno[
+    tolower(gene_anno$external_gene_name) %in% tolower(DAM_list[[i]]$V1),
+  ]
+  DAM_list[[i]] <- gene_anno_sub$ensembl_gene_id
+}
+
+seurat <- AddModuleScore(seurat, features = DAM_list, name = "DAM_genes")
+for (i in seq_along(DAM_list)) {
+  print(
+    FeaturePlot(
+      seurat, features = paste0("DAM_genes", i),
+      order = TRUE, cols = c("lightgrey", "red")
+    ) + ggtitle(names(DAM_list)[i])
+  )
+}
+
+seurat <- RenameIdents(
+  object = seurat, "0" = "Microglia Homeostatic 01",
+  "1" = "Microglia Homeostatic 02", "2" = "Microglia DAM 01",
+  "3" = "Microglia DAM 02", "4" = "Microglia DAM 03",
+  "5" = "Microglia 01", "6" = "Microglia 02",
+  "7" = "Microglia 03", "8" = "Microglia 04"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+rds <- file.path(cache_dir, paste0("markers_", sub_name, ".rds"))
+if (file.exists(rds)) {
+  markers <- readRDS(rds)
+} else {
+  markers <- FindAllMarkers(seurat, only.pos = TRUE, verbose = FALSE)
+  saveRDS(markers, file = rds)
+}
+
+markers <- markers[markers$p_val_adj < 0.05, ]
+dup <- markers[
+  duplicated(markers$gene) | duplicated(markers$gene, fromLast = TRUE),
+]
+dup <- which(markers$gene %in% dup$gene)
+markers <- markers[-dup, ]
+top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
+top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
+gene_anno <- gene_anno[gene_anno$ensembl_gene_id %in% top$gene, ]
+gene_anno <- gene_anno[match(top$gene, gene_anno$ensembl_gene_id), ]
+rownames(top) <- gene_anno$external_gene_name
+datatable_download(top)
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level2_subclusters[[7]] <- as.character(seurat$subcluster_annotations)
+names(level2_subclusters[[7]]) <- names(seurat$subcluster_annotations)
+```
+
+## Microglia 02
+
+```{r}
+ctype <- "Microglia 02"
+sub_name <- "micro02"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step02", "annotated_micro.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- RenameIdents(
+  object = seurat, "Microglia 02" = "Microglia 05"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level2_subclusters[[8]] <- as.character(seurat$subcluster_annotations)
+names(level2_subclusters[[8]]) <- names(seurat$subcluster_annotations)
+```
+
+## Microglia 03
+
+```{r}
+ctype <- "Microglia 03"
+sub_name <- "micro03"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step02", "annotated_micro.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- RenameIdents(
+  object = seurat, "Microglia 03" = "Microglia T-cell 01"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level2_subclusters[[9]] <- as.character(seurat$subcluster_annotations)
+names(level2_subclusters[[9]]) <- names(seurat$subcluster_annotations)
+```
+
+## Microglia 04
+
+```{r}
+ctype <- "Microglia 04"
+sub_name <- "micro04"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step02", "annotated_micro.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- RenameIdents(
+  object = seurat, "Microglia 04" = "Microglia 06"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level2_subclusters[[10]] <- as.character(seurat$subcluster_annotations)
+names(level2_subclusters[[10]]) <- names(seurat$subcluster_annotations)
+```
+
+# Astrocyte
+
+```{r}
+ctype <- "Astrocyte"
+sub_name <- "astro"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step01", "final_seurat.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- cluster_pipeline(
+  seurat, cache_dir = cache_dir,
+  sub_name = sub_name, protocol = protocol,
+  vars_to_regress = vars_to_regress, parallel_override = parallel_override,
+  cc = FALSE, res_divider = 800000
+)
+seurat
+
+seurat <- RenameIdents(
+  object = seurat, "0" = "Astrocyte 01",
+  "1" = "Astrocyte 02", "2" = "Astrocyte 03",
+  "3" = "Astrocyte 04", "4" = "Astrocyte 05",
+  "5" = "Astrocyte 06"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+rds <- file.path(cache_dir, paste0("markers_", sub_name, ".rds"))
+if (file.exists(rds)) {
+  markers <- readRDS(rds)
+} else {
+  markers <- FindAllMarkers(seurat, only.pos = TRUE, verbose = FALSE)
+  saveRDS(markers, file = rds)
+}
+
+markers <- markers[markers$p_val_adj < 0.05, ]
+dup <- markers[
+  duplicated(markers$gene) | duplicated(markers$gene, fromLast = TRUE),
+]
+dup <- which(markers$gene %in% dup$gene)
+markers <- markers[-dup, ]
+top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
+top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
+gene_anno <- gene_anno[gene_anno$ensembl_gene_id %in% top$gene, ]
+gene_anno <- gene_anno[match(top$gene, gene_anno$ensembl_gene_id), ]
+rownames(top) <- gene_anno$external_gene_name
+datatable_download(top)
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level1_subclusters[[3]] <- as.character(seurat$subcluster_annotations)
+names(level1_subclusters[[3]]) <- names(seurat$subcluster_annotations)
+```
+
+## Astrocyte 01
+
+```{r}
+ctype <- "Astrocyte 01"
+sub_name <- "astro01"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step02", "annotated_astro.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- cluster_pipeline(
+  seurat, cache_dir = cache_dir,
+  sub_name = sub_name, protocol = protocol,
+  vars_to_regress = vars_to_regress, parallel_override = parallel_override,
+  cc = FALSE, res_divider = 200000
+)
+seurat
+
+seurat <- RenameIdents(
+  object = seurat, "0" = "Astrocyte Homeostatic 01",
+  "1" = "Astrocyte DAA 01", "2" = "Astrocyte 01",
+  "3" = "Astrocyte 02", "4" = "Astrocyte 03",
+  "5" = "Astrocyte 04"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+rds <- file.path(cache_dir, paste0("markers_", sub_name, ".rds"))
+if (file.exists(rds)) {
+  markers <- readRDS(rds)
+} else {
+  markers <- FindAllMarkers(seurat, only.pos = TRUE, verbose = FALSE)
+  saveRDS(markers, file = rds)
+}
+
+markers <- markers[markers$p_val_adj < 0.05, ]
+dup <- markers[
+  duplicated(markers$gene) | duplicated(markers$gene, fromLast = TRUE),
+]
+dup <- which(markers$gene %in% dup$gene)
+markers <- markers[-dup, ]
+top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
+top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
+gene_anno <- gene_anno[gene_anno$ensembl_gene_id %in% top$gene, ]
+gene_anno <- gene_anno[match(top$gene, gene_anno$ensembl_gene_id), ]
+rownames(top) <- gene_anno$external_gene_name
+datatable_download(top)
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level2_subclusters[[11]] <- as.character(seurat$subcluster_annotations)
+names(level2_subclusters[[11]]) <- names(seurat$subcluster_annotations)
+```
+
+## Astrocyte 02
+
+```{r}
+ctype <- "Astrocyte 02"
+sub_name <- "astro02"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step02", "annotated_astro.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- RenameIdents(
+  object = seurat, "Astrocyte 02" = "Astrocyte 05"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level2_subclusters[[12]] <- as.character(seurat$subcluster_annotations)
+names(level2_subclusters[[12]]) <- names(seurat$subcluster_annotations)
+```
+
+## Astrocyte 03
+
+```{r}
+ctype <- "Astrocyte 03"
+sub_name <- "astro03"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step02", "annotated_astro.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- RenameIdents(
+  object = seurat, "Astrocyte 03" = "Astrocyte 06"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level2_subclusters[[13]] <- as.character(seurat$subcluster_annotations)
+names(level2_subclusters[[13]]) <- names(seurat$subcluster_annotations)
+```
+
+## Astrocyte 04
+
+```{r}
+ctype <- "Astrocyte 04"
+sub_name <- "astro04"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step02", "annotated_astro.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- RenameIdents(
+  object = seurat, "Astrocyte 04" = "Astrocyte 07"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level2_subclusters[[14]] <- as.character(seurat$subcluster_annotations)
+names(level2_subclusters[[14]]) <- names(seurat$subcluster_annotations)
+```
+
+## Astrocyte 05
+
+```{r}
+ctype <- "Astrocyte 05"
+sub_name <- "astro05"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step02", "annotated_astro.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- RenameIdents(
+  object = seurat, "Astrocyte 05" = "Astrocyte 07"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level2_subclusters[[15]] <- as.character(seurat$subcluster_annotations)
+names(level2_subclusters[[15]]) <- names(seurat$subcluster_annotations)
+```
+
+## Astrocyte 06
+
+```{r}
+ctype <- "Astrocyte 06"
+sub_name <- "astro06"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step02", "annotated_astro.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- RenameIdents(
+  object = seurat, "Astrocyte 06" = "Astrocyte 08"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level2_subclusters[[16]] <- as.character(seurat$subcluster_annotations)
+names(level2_subclusters[[16]]) <- names(seurat$subcluster_annotations)
+```
+
+# Vascular
+
+```{r}
+ctype <- "Vascular"
+sub_name <- "vasc"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step01", "final_seurat.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- cluster_pipeline(
+  seurat, cache_dir = cache_dir,
+  sub_name = sub_name, protocol = protocol,
+  vars_to_regress = vars_to_regress, parallel_override = parallel_override,
+  cc = FALSE, res_divider = 500000
+)
+seurat
+
+seurat <- RenameIdents(
+  object = seurat, "0" = "Vascular 01",
+  "1" = "Vascular 01", "2" = "Vascular 01",
+  "3" = "Vascular 01", "4" = "Vascular 02",
+  "5" = "Vascular 03"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+rds <- file.path(cache_dir, paste0("markers_", sub_name, ".rds"))
+if (file.exists(rds)) {
+  markers <- readRDS(rds)
+} else {
+  markers <- FindAllMarkers(seurat, only.pos = TRUE, verbose = FALSE)
+  saveRDS(markers, file = rds)
+}
+
+markers <- markers[markers$p_val_adj < 0.05, ]
+dup <- markers[
+  duplicated(markers$gene) | duplicated(markers$gene, fromLast = TRUE),
+]
+dup <- which(markers$gene %in% dup$gene)
+markers <- markers[-dup, ]
+top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
+top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
+gene_anno <- gene_anno[gene_anno$ensembl_gene_id %in% top$gene, ]
+gene_anno <- gene_anno[match(top$gene, gene_anno$ensembl_gene_id), ]
+rownames(top) <- gene_anno$external_gene_name
+datatable_download(top)
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level1_subclusters[[4]] <- as.character(seurat$subcluster_annotations)
+names(level1_subclusters[[4]]) <- names(seurat$subcluster_annotations)
+```
+
+## Vascular 01
+
+```{r}
+ctype <- "Vascular 01"
+sub_name <- "vasc01"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step02", "annotated_vasc.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- cluster_pipeline(
+  seurat, cache_dir = cache_dir,
+  sub_name = sub_name, protocol = protocol,
+  vars_to_regress = vars_to_regress, parallel_override = parallel_override,
+  cc = FALSE, res_divider = 1200000
+)
+seurat
+
+seurat <- RenameIdents(
+  object = seurat, "0" = "Vascular Endothelial 01",
+  "1" = "Vascular 01", "2" = "Vascular Mural 01"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+rds <- file.path(cache_dir, paste0("markers_", sub_name, ".rds"))
+if (file.exists(rds)) {
+  markers <- readRDS(rds)
+} else {
+  markers <- FindAllMarkers(seurat, only.pos = TRUE, verbose = FALSE)
+  saveRDS(markers, file = rds)
+}
+
+markers <- markers[markers$p_val_adj < 0.05, ]
+dup <- markers[
+  duplicated(markers$gene) | duplicated(markers$gene, fromLast = TRUE),
+]
+dup <- which(markers$gene %in% dup$gene)
+markers <- markers[-dup, ]
+top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
+top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
+gene_anno <- gene_anno[gene_anno$ensembl_gene_id %in% top$gene, ]
+gene_anno <- gene_anno[match(top$gene, gene_anno$ensembl_gene_id), ]
+rownames(top) <- gene_anno$external_gene_name
+datatable_download(top)
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level2_subclusters[[17]] <- as.character(seurat$subcluster_annotations)
+names(level2_subclusters[[17]]) <- names(seurat$subcluster_annotations)
+```
+
+## Vascular 02
+
+```{r}
+ctype <- "Vascular 02"
+sub_name <- "vasc02"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step02", "annotated_vasc.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- cluster_pipeline(
+  seurat, cache_dir = cache_dir,
+  sub_name = sub_name, protocol = protocol,
+  vars_to_regress = vars_to_regress, parallel_override = parallel_override,
+  cc = FALSE, res_divider = 50000
+)
+seurat
+
+seurat <- RenameIdents(
+  object = seurat, "0" = "Vascular 02",
+  "1" = "Vascular 03"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+rds <- file.path(cache_dir, paste0("markers_", sub_name, ".rds"))
+if (file.exists(rds)) {
+  markers <- readRDS(rds)
+} else {
+  markers <- FindAllMarkers(seurat, only.pos = TRUE, verbose = FALSE)
+  saveRDS(markers, file = rds)
+}
+
+markers <- markers[markers$p_val_adj < 0.05, ]
+dup <- markers[
+  duplicated(markers$gene) | duplicated(markers$gene, fromLast = TRUE),
+]
+dup <- which(markers$gene %in% dup$gene)
+markers <- markers[-dup, ]
+top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
+top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
+gene_anno <- gene_anno[gene_anno$ensembl_gene_id %in% top$gene, ]
+gene_anno <- gene_anno[match(top$gene, gene_anno$ensembl_gene_id), ]
+rownames(top) <- gene_anno$external_gene_name
+datatable_download(top)
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level2_subclusters[[18]] <- as.character(seurat$subcluster_annotations)
+names(level2_subclusters[[18]]) <- names(seurat$subcluster_annotations)
+```
+
+## Vascular 03
+
+```{r}
+ctype <- "Vascular 03"
+sub_name <- "vasc03"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step02", "annotated_vasc.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- RenameIdents(
+  object = seurat, "Vascular 03" = "Vascular 04"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level2_subclusters[[19]] <- as.character(seurat$subcluster_annotations)
+names(level2_subclusters[[19]]) <- names(seurat$subcluster_annotations)
+```
+
+# Oligodendrocyte
+
+```{r}
+ctype <- "Oligodendrocyte"
+sub_name <- "oligo"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step01", "final_seurat.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- cluster_pipeline(
+  seurat, cache_dir = cache_dir,
+  sub_name = sub_name, protocol = protocol,
+  vars_to_regress = vars_to_regress, parallel_override = parallel_override,
+  cc = FALSE, res_divider = 2000000
+)
+seurat
+
+seurat <- RenameIdents(
+  object = seurat, "0" = "Oligodendrocyte 01",
+  "1" = "Oligodendrocyte 02"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+rds <- file.path(cache_dir, paste0("markers_", sub_name, ".rds"))
+if (file.exists(rds)) {
+  markers <- readRDS(rds)
+} else {
+  markers <- FindAllMarkers(seurat, only.pos = TRUE, verbose = FALSE)
+  saveRDS(markers, file = rds)
+}
+
+markers <- markers[markers$p_val_adj < 0.05, ]
+dup <- markers[
+  duplicated(markers$gene) | duplicated(markers$gene, fromLast = TRUE),
+]
+dup <- which(markers$gene %in% dup$gene)
+markers <- markers[-dup, ]
+top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
+top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
+gene_anno <- gene_anno[gene_anno$ensembl_gene_id %in% top$gene, ]
+gene_anno <- gene_anno[match(top$gene, gene_anno$ensembl_gene_id), ]
+rownames(top) <- gene_anno$external_gene_name
+datatable_download(top)
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level1_subclusters[[5]] <- as.character(seurat$subcluster_annotations)
+names(level1_subclusters[[5]]) <- names(seurat$subcluster_annotations)
+```
+
+## Oligodendrocyte 01
+
+```{r}
+ctype <- "Oligodendrocyte 01"
+sub_name <- "oligo01"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step02", "annotated_oligo.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- cluster_pipeline(
+  seurat, cache_dir = cache_dir,
+  sub_name = sub_name, protocol = protocol,
+  vars_to_regress = vars_to_regress, parallel_override = parallel_override,
+  cc = FALSE, res_divider = 400000
+)
+seurat
+
+seurat <- RenameIdents(
+  object = seurat, "0" = "Oligodendrocyte Homeostatic 01",
+  "1" = "Oligodendrocyte DAO 01", "2" = "Oligodendrocyte 01",
+  "3" = "Oligodendrocyte Homeostatic 02", "4" = "Oligodendrocyte 02",
+  "5" = "Oligodendrocyte 03", "6" = "Oligodendrocyte 04"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+rds <- file.path(cache_dir, paste0("markers_", sub_name, ".rds"))
+if (file.exists(rds)) {
+  markers <- readRDS(rds)
+} else {
+  markers <- FindAllMarkers(seurat, only.pos = TRUE, verbose = FALSE)
+  saveRDS(markers, file = rds)
+}
+
+markers <- markers[markers$p_val_adj < 0.05, ]
+dup <- markers[
+  duplicated(markers$gene) | duplicated(markers$gene, fromLast = TRUE),
+]
+dup <- which(markers$gene %in% dup$gene)
+markers <- markers[-dup, ]
+top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
+top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
+gene_anno <- gene_anno[gene_anno$ensembl_gene_id %in% top$gene, ]
+gene_anno <- gene_anno[match(top$gene, gene_anno$ensembl_gene_id), ]
+rownames(top) <- gene_anno$external_gene_name
+datatable_download(top)
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level2_subclusters[[20]] <- as.character(seurat$subcluster_annotations)
+names(level2_subclusters[[20]]) <- names(seurat$subcluster_annotations)
+```
+
+## Oligodendrocyte 02
+
+```{r}
+ctype <- "Oligodendrocyte 02"
+sub_name <- "oligo02"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step02", "annotated_oligo.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- RenameIdents(
+  object = seurat, "Oligodendrocyte 02" = "Oligodendrocyte 05"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level2_subclusters[[21]] <- as.character(seurat$subcluster_annotations)
+names(level2_subclusters[[21]]) <- names(seurat$subcluster_annotations)
+```
+
+# OPC
+
+```{r}
+ctype <- "OPC"
+sub_name <- "opc"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step01", "final_seurat.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- cluster_pipeline(
+  seurat, cache_dir = cache_dir,
+  sub_name = sub_name, protocol = protocol,
+  vars_to_regress = vars_to_regress, parallel_override = parallel_override,
+  cc = FALSE, res_divider = 10000000
+)
+seurat
+
+seurat <- RenameIdents(
+  object = seurat, "0" = "OPC 01"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level1_subclusters[[6]] <- as.character(seurat$subcluster_annotations)
+names(level1_subclusters[[6]]) <- names(seurat$subcluster_annotations)
+```
+
+## OPC 01
+
+```{r}
+ctype <- "OPC 01"
+sub_name <- "opc01"
+
+seurat <- readRDS(
+  file.path(cache_dir, "..", "step02", "annotated_opc.rds")
+)
+DefaultAssay(seurat) <- "RNA"
+seurat[["SCT"]] <- NULL
+seurat[["SCT_NORM"]] <- NULL
+gene_anno <- data.frame(
+  external_gene_name = unlist(seurat@misc),
+  ensembl_gene_id = rownames(seurat[["RNA"]])
+)
+seurat <- subset(seurat, idents = ctype)
+
+seurat <- RenameIdents(
+  object = seurat, "OPC 01" = "OPC 01"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+table <- table(seurat$subcluster_annotations, seurat$allen_labels)
+max <- colnames(table)[apply(table, MARGIN = 1, FUN = which.max)]
+max
+
+for (i in seq_along(metadata_to_plot)) {
+  if (
+    "no_legend" %in% metadata_to_plot[[i]] &&
+      "no_label" %in% metadata_to_plot[[i]]
+  ) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_legend" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        NoLegend() +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else if ("no_label" %in% metadata_to_plot[[i]]) {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2", color = names(metadata_to_plot)[i]
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  } else {
+    print(
+      red_dim_plot(
+        seurat, x = "umap1", y = "umap2",
+        color = names(metadata_to_plot)[i], type = "cat"
+      ) +
+        ggtitle(names(metadata_to_plot)[i])
+    )
+  }
+}
+
+if (protocol[4] == "umis") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_SCT", type = "cont"
+    ) + ggtitle("nFeature_SCT")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_SCT", type = "cont"
+    ) + ggtitle("nCount_SCT")
+  )
+} else if (protocol[4] == "reads") {
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nFeature_RNA", type = "cont"
+    ) + ggtitle("nFeature_RNA")
+  )
+  print(
+    red_dim_plot(
+      seurat, x = "umap1", y = "umap2", color = "nCount_RNA", type = "cont"
+    ) + ggtitle("nCount_RNA")
+  )
+}
+
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_mt", type = "cont"
+) + ggtitle("percent_mt")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_ribo")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_ribo", type = "cont"
+) + ggtitle("percent_malat1")
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", color = "percent_contam", type = "cont"
+) + ggtitle("percent_contam")
+
+VlnPlot(
+  seurat,
+  features = c("nFeature_RNA", "nCount_RNA"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("nFeature_SCT", "nCount_SCT"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_mt", "percent_ribo"),
+  ncol = 2
+)
+VlnPlot(
+  seurat,
+  features = c("percent_malat1", "percent_contam"),
+  ncol = 2
+)
+
+rds <- file.path(cache_dir, paste0("annotated_", sub_name, ".rds"))
+if (!file.exists(rds)) {
+  saveRDS(seurat, file = rds)
+}
+
+level2_subclusters[[22]] <- as.character(seurat$subcluster_annotations)
+names(level2_subclusters[[22]]) <- names(seurat$subcluster_annotations)
 ```
 
 # Add Annotations
 
 ```{r}
-seurat_orig <- readRDS(
+seurat <- readRDS(
   file.path(cache_dir, "..", "step01", "final_seurat.rds")
 )
 
-seurat_orig$subcluster_annotations <- as.character(
-  seurat_orig$broad_annotations
+seurat$level1_subclusters <- as.character(
+  seurat$broad_annotations
 )
-names(seurat_orig$subcluster_annotations) <- names(
-  seurat_orig$broad_annotations
+names(seurat$level1_subclusters) <- names(
+  seurat$broad_annotations
 )
-seurat_orig$subcluster_annotations[names(ctx_subclusters)] <- ctx_subclusters
-seurat_orig$subcluster_annotations <- factor(seurat_orig$subcluster_annotations)
+seurat$level2_subclusters <- seurat$level1_subclusters
 
+for (i in seq_along(level1_subclusters)) {
+  seurat$level1_subclusters[names(level1_subclusters[[i]])] <-
+    level1_subclusters[[i]]
+}
+seurat$level1_subclusters <- factor(seurat$level1_subclusters)
+
+for (i in seq_along(level2_subclusters)) {
+  seurat$level2_subclusters[names(level2_subclusters[[i]])] <-
+    level2_subclusters[[i]]
+}
+seurat$level2_subclusters <- factor(seurat$level2_subclusters)
+```
+
+```{r, fig.width = 12}
 red_dim_plot(
-  seurat_orig, x = "umap1", y = "umap2",
-  col = "subcluster_annotations", type = "cat"
+  seurat, x = "umap1", y = "umap2", col = "level1_subclusters", type = "cat"
 )
+```
 
-seurat_orig <- PrepSCTFindMarkers(seurat_orig)
+```{r, fig.width = 15}
+red_dim_plot(
+  seurat, x = "umap1", y = "umap2", col = "level2_subclusters", type = "cat"
+)
+```
 
+```{r}
 rds <- file.path(cache_dir, "annotated_seurat.rds")
 if (!file.exists(rds)) {
-  saveRDS(seurat_orig, file = rds)
+  saveRDS(seurat, file = rds)
 }
 ```
 
