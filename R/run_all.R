@@ -45,16 +45,6 @@ xfun::Rscript_call(
 xfun::Rscript_call(
   rmarkdown::render,
   list(
-    file.path("batch01", "NLGF_MAPTKI_batch01_01prep.Rmd"),
-    output_file = file.path(
-      "..", "..", "results", "batch01", "NLGF_MAPTKI_batch01_01prep.html"
-    ),
-    envir = new.env()
-  )
-)
-xfun::Rscript_call(
-  rmarkdown::render,
-  list(
     file.path("batch01", "S305N_batch01_01prep.Rmd"),
     output_file = file.path(
       "..", "..", "results", "batch01", "S305N_batch01_01prep.html"
@@ -78,16 +68,6 @@ xfun::Rscript_call(
     file.path("batch01", "P301S_batch01_01prep.Rmd"),
     output_file = file.path(
       "..", "..", "results", "batch01", "P301S_batch01_01prep.html"
-    ),
-    envir = new.env()
-  )
-)
-xfun::Rscript_call(
-  rmarkdown::render,
-  list(
-    file.path("batch01", "NLGF_P301S_batch01_01prep.Rmd"),
-    output_file = file.path(
-      "..", "..", "results", "batch01", "NLGF_P301S_batch01_01prep.html"
     ),
     envir = new.env()
   )
