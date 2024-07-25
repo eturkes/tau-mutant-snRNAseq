@@ -173,7 +173,7 @@ if (protocol[2] == "droplet") {
   )
 
   seurat <- seurat[ , which(empty_drops$FDR <= 0.001)]
-  seurat
+  print(seurat)
 
   bcrank <- barcodeRanks(GetAssayData(seurat), lower = 20)
   uniq <- !duplicated(bcrank$rank)
@@ -385,7 +385,7 @@ if (protocol[2] == "droplet") {
     )
   }
 
-  seurat
+  print(seurat)
   FeaturePlot(seurat, features = "doublets")
 }
 ```
