@@ -115,8 +115,9 @@ parallel_override <- NULL
 # Metadata to plot after dimensionality reduction and clustering.
 # Values in list can include "no_legend and/or "no_label" to exclude those.
 # -------------------------------------------------------------------------
-metadata_to_plot <- vector("list", length = 1)
-names(metadata_to_plot) <- "seurat_clusters"
+metadata_to_plot <- vector("list", length = 2)
+names(metadata_to_plot) <- c("seurat_clusters", "Phase")
+metadata_to_plot[[2]] <- "no_label"
 # -------------------------------------------------------------------------
 ```
 
@@ -367,7 +368,7 @@ if (protocol[2] == "droplet") {
       seurat, cache_dir = cache_dir,
       sub_name = sub_name, protocol = protocol,
       vars_to_regress = vars_to_regress, parallel_override = parallel_override,
-      cc = FALSE, res_divider = 100000
+      res_divider = 100000
     )
   } else {
     sce <- SingleCellExperiment(list(counts = GetAssayData(seurat)))
@@ -381,7 +382,7 @@ if (protocol[2] == "droplet") {
       seurat, cache_dir = cache_dir,
       sub_name = sub_name, protocol = protocol,
       vars_to_regress = vars_to_regress, parallel_override = parallel_override,
-      cc = FALSE, res_divider = 100000
+      res_divider = 100000
     )
   }
 
@@ -410,7 +411,7 @@ seurat <- cluster_pipeline(
   seurat, cache_dir = cache_dir,
   sub_name = sub_name, protocol = protocol,
   vars_to_regress = vars_to_regress, parallel_override = parallel_override,
-  cc = TRUE, res_divider = 100000
+  cc = FALSE, res_divider = 100000, min_cells = 0
 )
 seurat
 
@@ -452,10 +453,6 @@ for (i in seq_along(metadata_to_plot)) {
     )
   }
 }
-
-red_dim_plot(
-  seurat, x = "umap1", y = "umap2", color = "Phase"
-) + ggtitle("Phase")
 
 if (protocol[4] == "umis") {
   print(
