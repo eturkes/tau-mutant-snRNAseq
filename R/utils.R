@@ -198,6 +198,17 @@ cluster_pipeline <- function(
             conserve.memory = TRUE, min_cells = min_cells, verbose = FALSE
           )
         )
+
+        counts <- GetAssayData(seurat)
+        counts[is.na(counts)] <- 0
+        seurat <- SetAssayData(seurat, new.data = counts)
+        counts <- GetAssayData(seurat, slot = "counts")
+        counts[is.na(counts)] <- 0
+        seurat <- SetAssayData(seurat, slot = "counts", new.data = counts)
+
+        seurat$nCount_SCT <- colSums(seurat, slot = "counts")
+        seurat$nFeature_SCT <- colSums(counts > 0)
+
       } else if (conserve_memory == TRUE) {
         seurat <- suppressWarnings(
           SCTransform(
@@ -212,6 +223,17 @@ cluster_pipeline <- function(
             min_cells = min_cells, verbose = FALSE
           )
         )
+
+        counts <- GetAssayData(seurat)
+        counts[is.na(counts)] <- 0
+        seurat <- SetAssayData(seurat, new.data = counts)
+        counts <- GetAssayData(seurat, slot = "counts")
+        counts[is.na(counts)] <- 0
+        seurat <- SetAssayData(seurat, slot = "counts", new.data = counts)
+
+        seurat$nCount_SCT <- colSums(seurat, slot = "counts")
+        seurat$nFeature_SCT <- colSums(counts > 0)
+
       } else if (conserve_memory == FALSE) {
         seurat <- suppressWarnings(
           SCTransform(
