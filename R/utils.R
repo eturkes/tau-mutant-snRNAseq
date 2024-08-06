@@ -174,7 +174,7 @@ datatable_download_exp <- function(dt) {
 cluster_pipeline <- function(
     seurat, cache_dir, sub_name, protocol,
     vars_to_regress, parallel_override, cc = TRUE, res_divider = 3000,
-    conserve_memory = FALSE, min_cells = NULL
+    conserve_memory = FALSE, min_cells = NULL, dims = 1:30
 ) {
 
   rds <- file.path(cache_dir, paste0("seurat_", sub_name, ".rds"))
@@ -252,7 +252,7 @@ cluster_pipeline <- function(
       seurat$pca1 <- add_df$pca1
       seurat$pca2 <- add_df$pca2
       reduction <- "pca"
-      dims <- 1:30 # Dimensions for downstream computations.
+      dims <- dims # Dimensions for downstream computations.
       # ------------
 
     } else if (protocol[4] == "reads") {
