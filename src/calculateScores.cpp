@@ -54,15 +54,10 @@ NumericMatrix calculateScores(
       for (size_t k = 0; k < indices.size(); ++k) {
         idx_values[k] = orig_mat(indices[k], j);
       }
-      double sum_values = sum(idx_values);
-      double var_values = exp(stddev(idx_values) / sum_values);
+      double sum_values = sum(idx_values) * 2;
+      double var_values = sum(abs(idx_values - mean(idx_values)));
 
-      if (std::isnan(var_values) || var_values == 0) {
-        var_values = 1.0;
-      }
-
-      double len_values = sqrt(indices.size());
-      double score = sum_values / var_values / len_values;
+      double score = sum_values - var_values;
 
       mat(i, j) = score;
     }
