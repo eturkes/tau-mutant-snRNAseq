@@ -407,9 +407,9 @@ logcounts(counts, withDimnames = FALSE) <- cpm(
   counts(counts), log = TRUE, prior.count = 2
 )
 counts
-
-gse_cpm <- logcounts(gse)
-counts_cpm <- logcounts(counts)
+gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
+gse_cpm <- logcounts(gse)[rownames(gse) %in% names(gene_sets_keep), ]
+counts_cpm <- logcounts(counts)[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
 gse_range <- c(
   min(gse_cpm), (min(gse_cpm) + max(gse_cpm)) / 2, max(gse_cpm)
 )
@@ -798,9 +798,9 @@ logcounts(counts, withDimnames = FALSE) <- cpm(
   counts(counts), log = TRUE, prior.count = 2
 )
 counts
-
-gse_cpm <- logcounts(gse)
-counts_cpm <- logcounts(counts)
+gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
+gse_cpm <- logcounts(gse)[rownames(gse) %in% names(gene_sets_keep), ]
+counts_cpm <- logcounts(counts)[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
 gse_range <- c(
   min(gse_cpm), (min(gse_cpm) + max(gse_cpm)) / 2, max(gse_cpm)
 )
@@ -1189,9 +1189,9 @@ logcounts(counts, withDimnames = FALSE) <- cpm(
   counts(counts), log = TRUE, prior.count = 2
 )
 counts
-
-gse_cpm <- logcounts(gse)
-counts_cpm <- logcounts(counts)
+gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
+gse_cpm <- logcounts(gse)[rownames(gse) %in% names(gene_sets_keep), ]
+counts_cpm <- logcounts(counts)[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
 gse_range <- c(
   min(gse_cpm), (min(gse_cpm) + max(gse_cpm)) / 2, max(gse_cpm)
 )
@@ -1580,9 +1580,9 @@ logcounts(counts, withDimnames = FALSE) <- cpm(
   counts(counts), log = TRUE, prior.count = 2
 )
 counts
-
-gse_cpm <- logcounts(gse)
-counts_cpm <- logcounts(counts)
+gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
+gse_cpm <- logcounts(gse)[rownames(gse) %in% names(gene_sets_keep), ]
+counts_cpm <- logcounts(counts)[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
 gse_range <- c(
   min(gse_cpm), (min(gse_cpm) + max(gse_cpm)) / 2, max(gse_cpm)
 )
@@ -1971,9 +1971,9 @@ logcounts(counts, withDimnames = FALSE) <- cpm(
   counts(counts), log = TRUE, prior.count = 2
 )
 counts
-
-gse_cpm <- logcounts(gse)
-counts_cpm <- logcounts(counts)
+gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
+gse_cpm <- logcounts(gse)[rownames(gse) %in% names(gene_sets_keep), ]
+counts_cpm <- logcounts(counts)[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
 gse_range <- c(
   min(gse_cpm), (min(gse_cpm) + max(gse_cpm)) / 2, max(gse_cpm)
 )
@@ -2362,9 +2362,9 @@ logcounts(counts, withDimnames = FALSE) <- cpm(
   counts(counts), log = TRUE, prior.count = 2
 )
 counts
-
-gse_cpm <- logcounts(gse)
-counts_cpm <- logcounts(counts)
+gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
+gse_cpm <- logcounts(gse)[rownames(gse) %in% names(gene_sets_keep), ]
+counts_cpm <- logcounts(counts)[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
 gse_range <- c(
   min(gse_cpm), (min(gse_cpm) + max(gse_cpm)) / 2, max(gse_cpm)
 )
@@ -2753,9 +2753,9 @@ logcounts(counts, withDimnames = FALSE) <- cpm(
   counts(counts), log = TRUE, prior.count = 2
 )
 counts
-
-gse_cpm <- logcounts(gse)
-counts_cpm <- logcounts(counts)
+gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
+gse_cpm <- logcounts(gse)[rownames(gse) %in% names(gene_sets_keep), ]
+counts_cpm <- logcounts(counts)[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
 gse_range <- c(
   min(gse_cpm), (min(gse_cpm) + max(gse_cpm)) / 2, max(gse_cpm)
 )
@@ -3144,9 +3144,9 @@ logcounts(counts, withDimnames = FALSE) <- cpm(
   counts(counts), log = TRUE, prior.count = 2
 )
 counts
-
-gse_cpm <- logcounts(gse)
-counts_cpm <- logcounts(counts)
+gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
+gse_cpm <- logcounts(gse)[rownames(gse) %in% names(gene_sets_keep), ]
+counts_cpm <- logcounts(counts)[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
 gse_range <- c(
   min(gse_cpm), (min(gse_cpm) + max(gse_cpm)) / 2, max(gse_cpm)
 )
@@ -3535,9 +3535,9 @@ logcounts(counts, withDimnames = FALSE) <- cpm(
   counts(counts), log = TRUE, prior.count = 2
 )
 counts
-
-gse_cpm <- logcounts(gse)
-counts_cpm <- logcounts(counts)
+gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
+gse_cpm <- logcounts(gse)[rownames(gse) %in% names(gene_sets_keep), ]
+counts_cpm <- logcounts(counts)[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
 gse_range <- c(
   min(gse_cpm), (min(gse_cpm) + max(gse_cpm)) / 2, max(gse_cpm)
 )
