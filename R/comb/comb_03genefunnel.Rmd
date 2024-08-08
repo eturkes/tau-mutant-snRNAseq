@@ -242,19 +242,11 @@ gene_anno <- data.frame(
 
 ```{r}
 ctype <- "Glut CA3 01"
-```
-
-## MAPT KI vs. S305N+3
-
-```{r}
-genotype <- c("MAPTKI", "S305N")
 
 rds <- file.path(
   cache_dir,
   paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "seurat_cleaned.rds",
+    gsub(" ", "_", x = paste(ctype, collapse = " ")), "seurat_cleaned.rds",
     sep = "_"
   )
 )
@@ -265,8 +257,6 @@ if (file.exists(rds)) {
   seurat <- seurat_orig
   seurat@active.ident <- seurat$level2_subclusters
   seurat <- subset(seurat, idents = gsub("-", replacement = "/", x = ctype))
-  seurat@active.ident <- seurat$genotype
-  seurat <- subset(seurat, idents = genotype)
   seurat@active.ident <- factor(seurat$genotype_batch)
   seurat <- subset(seurat, downsample = min(table(seurat@active.ident)))
 
@@ -282,7 +272,12 @@ if (file.exists(rds)) {
   seurat$nCount_SCT <- colSums(seurat, layer = "counts")
   seurat$nFeature_SCT <- colSums(counts_mat > 0)
 
-  seurat$genotype <- factor(seurat$genotype, levels = c(genotype))
+  seurat$genotype <- factor(
+    seurat$genotype,
+    levels = c(
+      "MAPTKI", "S305N", "P301S", "NLGF_MAPTKI", "NLGF_S305N", "NLGF_P301S"
+    )
+  )
   seurat$genotype_batch <- factor(
     seurat$genotype_batch,
     levels = paste(
@@ -298,12 +293,11 @@ if (file.exists(rds)) {
   saveRDS(seurat, file = rds)
 }
 
+
 rds <- file.path(
   cache_dir,
   paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "scores.rds",
+    gsub(" ", "_", x = paste(ctype, collapse = " ")), "scores.rds",
     sep = "_"
   )
 )
@@ -328,9 +322,7 @@ seurat$nFeature_GF <- colSums(GetAssayData(seurat, layer = "counts") > 0)
 rds <- file.path(
   cache_dir,
   paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "scores_SCT.rds",
+    gsub(" ", "_", x = paste(ctype, collapse = " ")), "scores_SCT.rds",
     sep = "_"
   )
 )
@@ -356,9 +348,7 @@ rm(scores)
 rds <- file.path(
   cache_dir,
   paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "seurat.rds",
+    gsub(" ", "_", x = paste(ctype, collapse = " ")), "seurat.rds",
     sep = "_"
   )
 )
@@ -366,13 +356,17 @@ if (!file.exists(rds)) {
   saveRDS(seurat, file = rds)
 }
 seurat
-```
 
-```{r}
 thresh <- table(seurat$genotype_batch)
 thresh
 thresh <- unique(thresh) * 0.01
 thresh
+```
+
+## MAPT KI vs. S305N+3
+
+```{r}
+genotype <- c("MAPTKI", "S305N")
 
 gse <- as.SingleCellExperiment(seurat, assay = "GF_SCT")
 gse <- suppressWarnings(
@@ -389,6 +383,7 @@ gse <- gse[keep, ]
 logcounts(gse, withDimnames = FALSE) <- cpm(
   counts(gse), log = TRUE, prior.count = 1
 )
+gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse
 
 counts <- as.SingleCellExperiment(seurat, assay = "SCT")
@@ -406,10 +401,12 @@ counts <- counts[keep, ]
 logcounts(counts, withDimnames = FALSE) <- cpm(
   counts(counts), log = TRUE, prior.count = 2
 )
-counts
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
-gse_cpm <- logcounts(gse)[rownames(gse) %in% names(gene_sets_keep), ]
-counts_cpm <- logcounts(counts)[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+counts <- counts[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+counts
+
+gse_cpm <- logcounts(gse)
+counts_cpm <- logcounts(counts)
 gse_range <- c(
   min(gse_cpm), (min(gse_cpm) + max(gse_cpm)) / 2, max(gse_cpm)
 )
@@ -434,8 +431,6 @@ cont_mat <- makeContrasts(
 cont_mat <- contrasts.fit(fit, cont_mat)
 cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
 plotSA(cont_fit)
-cont_fit <- cont_fit[rownames(cont_fit) %in% names(gene_sets_keep), ]
-gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(cont_fit)]
 tests <- decideTests(cont_fit)
 write.fit(
   cont_fit, tests, file.path(cache_dir, "results.tsv"),
@@ -540,9 +535,6 @@ cont_mat <- makeContrasts(
 cont_mat <- contrasts.fit(fit, cont_mat)
 cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
 plotSA(cont_fit)
-cont_fit <- cont_fit[
-  rownames(cont_fit) %in% unique(unlist(geneIds(gene_sets_sub))),
-]
 tests <- decideTests(cont_fit)
 write.fit(
   cont_fit, tests, file.path(cache_dir, "results.tsv"),
@@ -640,131 +632,6 @@ Heatmap(
 ```{r}
 genotype <- c("MAPTKI", "P301S")
 
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "seurat_cleaned.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  seurat <- readRDS(rds)
-} else {
-
-  seurat <- seurat_orig
-  seurat@active.ident <- seurat$level2_subclusters
-  seurat <- subset(seurat, idents = gsub("-", replacement = "/", x = ctype))
-  seurat@active.ident <- seurat$genotype
-  seurat <- subset(seurat, idents = genotype)
-  seurat@active.ident <- factor(seurat$genotype_batch)
-  seurat <- subset(seurat, downsample = min(table(seurat@active.ident)))
-
-  seurat <- PrepSCTFindMarkers(seurat, verbose = FALSE)
-
-  counts_mat <- GetAssayData(seurat)
-  counts_mat[is.na(counts_mat)] <- 0
-  seurat <- SetAssayData(seurat, new.data = counts_mat)
-  counts_mat <- GetAssayData(seurat, slot = "counts")
-  counts_mat[is.na(counts_mat)] <- 0
-  seurat <- SetAssayData(seurat, slot = "counts", new.data = counts_mat)
-
-  seurat$nCount_SCT <- colSums(seurat, layer = "counts")
-  seurat$nFeature_SCT <- colSums(counts_mat > 0)
-
-  seurat$genotype <- factor(seurat$genotype, levels = c(genotype))
-  seurat$genotype_batch <- factor(
-    seurat$genotype_batch,
-    levels = paste(
-      rep(levels(seurat$genotype), each = 4),
-      paste0("batch0", seq(4)), sep = "_"
-    )
-  )
-  seurat$broad_annotations <- factor(seurat$broad_annotations)
-  seurat$level1_subclusters <- factor(seurat$level1_subclusters)
-  seurat$level2_subclusters <- factor(seurat$level2_subclusters)
-  seurat@active.ident <- seurat$genotype_batch
-
-  saveRDS(seurat, file = rds)
-}
-
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "scores.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  scores <- readRDS(rds)
-} else {
-  gc()
-  DefaultAssay(seurat) <- "RNA"
-  scores <- calculateScores(
-    GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
-  )
-  gc()
-  rownames(scores) <- names(gene_sets)
-  colnames(scores) <- colnames(seurat)
-  saveRDS(scores, file = rds)
-}
-seurat[["GF"]] <- CreateAssay5Object(scores, data = log1p(scores))
-DefaultAssay(seurat) <- "GF"
-seurat$nCount_GF <- colSums(seurat, layer = "counts")
-seurat$nFeature_GF <- colSums(GetAssayData(seurat, layer = "counts") > 0)
-
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "scores_SCT.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  scores <- readRDS(rds)
-} else {
-  gc()
-  DefaultAssay(seurat) <- "SCT"
-  scores <- calculateScores(
-    GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
-  )
-  gc()
-  rownames(scores) <- names(gene_sets)
-  colnames(scores) <- colnames(seurat)
-  saveRDS(scores, file = rds)
-}
-seurat[["GF_SCT"]] <- CreateAssay5Object(scores, data = log1p(scores))
-DefaultAssay(seurat) <- "GF_SCT"
-seurat$nCount_GF_SCT <- colSums(seurat, layer = "counts")
-seurat$nFeature_GF_SCT <- colSums(GetAssayData(seurat, layer = "counts") > 0)
-
-rm(scores)
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "seurat.rds",
-    sep = "_"
-  )
-)
-if (!file.exists(rds)) {
-  saveRDS(seurat, file = rds)
-}
-seurat
-```
-
-```{r}
-thresh <- table(seurat$genotype_batch)
-thresh
-thresh <- unique(thresh) * 0.01
-thresh
-
 gse <- as.SingleCellExperiment(seurat, assay = "GF_SCT")
 gse <- suppressWarnings(
   aggregateAcrossCells(
@@ -780,6 +647,7 @@ gse <- gse[keep, ]
 logcounts(gse, withDimnames = FALSE) <- cpm(
   counts(gse), log = TRUE, prior.count = 1
 )
+gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse
 
 counts <- as.SingleCellExperiment(seurat, assay = "SCT")
@@ -797,10 +665,12 @@ counts <- counts[keep, ]
 logcounts(counts, withDimnames = FALSE) <- cpm(
   counts(counts), log = TRUE, prior.count = 2
 )
-counts
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
-gse_cpm <- logcounts(gse)[rownames(gse) %in% names(gene_sets_keep), ]
-counts_cpm <- logcounts(counts)[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+counts <- counts[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+counts
+
+gse_cpm <- logcounts(gse)
+counts_cpm <- logcounts(counts)
 gse_range <- c(
   min(gse_cpm), (min(gse_cpm) + max(gse_cpm)) / 2, max(gse_cpm)
 )
@@ -825,8 +695,6 @@ cont_mat <- makeContrasts(
 cont_mat <- contrasts.fit(fit, cont_mat)
 cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
 plotSA(cont_fit)
-cont_fit <- cont_fit[rownames(cont_fit) %in% names(gene_sets_keep), ]
-gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(cont_fit)]
 tests <- decideTests(cont_fit)
 write.fit(
   cont_fit, tests, file.path(cache_dir, "results.tsv"),
@@ -931,9 +799,6 @@ cont_mat <- makeContrasts(
 cont_mat <- contrasts.fit(fit, cont_mat)
 cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
 plotSA(cont_fit)
-cont_fit <- cont_fit[
-  rownames(cont_fit) %in% unique(unlist(geneIds(gene_sets_sub))),
-]
 tests <- decideTests(cont_fit)
 write.fit(
   cont_fit, tests, file.path(cache_dir, "results.tsv"),
@@ -1031,131 +896,6 @@ Heatmap(
 ```{r}
 genotype <- c("S305N", "P301S")
 
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "seurat_cleaned.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  seurat <- readRDS(rds)
-} else {
-
-  seurat <- seurat_orig
-  seurat@active.ident <- seurat$level2_subclusters
-  seurat <- subset(seurat, idents = gsub("-", replacement = "/", x = ctype))
-  seurat@active.ident <- seurat$genotype
-  seurat <- subset(seurat, idents = genotype)
-  seurat@active.ident <- factor(seurat$genotype_batch)
-  seurat <- subset(seurat, downsample = min(table(seurat@active.ident)))
-
-  seurat <- PrepSCTFindMarkers(seurat, verbose = FALSE)
-
-  counts_mat <- GetAssayData(seurat)
-  counts_mat[is.na(counts_mat)] <- 0
-  seurat <- SetAssayData(seurat, new.data = counts_mat)
-  counts_mat <- GetAssayData(seurat, slot = "counts")
-  counts_mat[is.na(counts_mat)] <- 0
-  seurat <- SetAssayData(seurat, slot = "counts", new.data = counts_mat)
-
-  seurat$nCount_SCT <- colSums(seurat, layer = "counts")
-  seurat$nFeature_SCT <- colSums(counts_mat > 0)
-
-  seurat$genotype <- factor(seurat$genotype, levels = c(genotype))
-  seurat$genotype_batch <- factor(
-    seurat$genotype_batch,
-    levels = paste(
-      rep(levels(seurat$genotype), each = 4),
-      paste0("batch0", seq(4)), sep = "_"
-    )
-  )
-  seurat$broad_annotations <- factor(seurat$broad_annotations)
-  seurat$level1_subclusters <- factor(seurat$level1_subclusters)
-  seurat$level2_subclusters <- factor(seurat$level2_subclusters)
-  seurat@active.ident <- seurat$genotype_batch
-
-  saveRDS(seurat, file = rds)
-}
-
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "scores.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  scores <- readRDS(rds)
-} else {
-  gc()
-  DefaultAssay(seurat) <- "RNA"
-  scores <- calculateScores(
-    GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
-  )
-  gc()
-  rownames(scores) <- names(gene_sets)
-  colnames(scores) <- colnames(seurat)
-  saveRDS(scores, file = rds)
-}
-seurat[["GF"]] <- CreateAssay5Object(scores, data = log1p(scores))
-DefaultAssay(seurat) <- "GF"
-seurat$nCount_GF <- colSums(seurat, layer = "counts")
-seurat$nFeature_GF <- colSums(GetAssayData(seurat, layer = "counts") > 0)
-
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "scores_SCT.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  scores <- readRDS(rds)
-} else {
-  gc()
-  DefaultAssay(seurat) <- "SCT"
-  scores <- calculateScores(
-    GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
-  )
-  gc()
-  rownames(scores) <- names(gene_sets)
-  colnames(scores) <- colnames(seurat)
-  saveRDS(scores, file = rds)
-}
-seurat[["GF_SCT"]] <- CreateAssay5Object(scores, data = log1p(scores))
-DefaultAssay(seurat) <- "GF_SCT"
-seurat$nCount_GF_SCT <- colSums(seurat, layer = "counts")
-seurat$nFeature_GF_SCT <- colSums(GetAssayData(seurat, layer = "counts") > 0)
-
-rm(scores)
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "seurat.rds",
-    sep = "_"
-  )
-)
-if (!file.exists(rds)) {
-  saveRDS(seurat, file = rds)
-}
-seurat
-```
-
-```{r}
-thresh <- table(seurat$genotype_batch)
-thresh
-thresh <- unique(thresh) * 0.01
-thresh
-
 gse <- as.SingleCellExperiment(seurat, assay = "GF_SCT")
 gse <- suppressWarnings(
   aggregateAcrossCells(
@@ -1171,6 +911,7 @@ gse <- gse[keep, ]
 logcounts(gse, withDimnames = FALSE) <- cpm(
   counts(gse), log = TRUE, prior.count = 1
 )
+gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse
 
 counts <- as.SingleCellExperiment(seurat, assay = "SCT")
@@ -1188,10 +929,12 @@ counts <- counts[keep, ]
 logcounts(counts, withDimnames = FALSE) <- cpm(
   counts(counts), log = TRUE, prior.count = 2
 )
-counts
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
-gse_cpm <- logcounts(gse)[rownames(gse) %in% names(gene_sets_keep), ]
-counts_cpm <- logcounts(counts)[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+counts <- counts[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+counts
+
+gse_cpm <- logcounts(gse)
+counts_cpm <- logcounts(counts)
 gse_range <- c(
   min(gse_cpm), (min(gse_cpm) + max(gse_cpm)) / 2, max(gse_cpm)
 )
@@ -1216,8 +959,6 @@ cont_mat <- makeContrasts(
 cont_mat <- contrasts.fit(fit, cont_mat)
 cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
 plotSA(cont_fit)
-cont_fit <- cont_fit[rownames(cont_fit) %in% names(gene_sets_keep), ]
-gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(cont_fit)]
 tests <- decideTests(cont_fit)
 write.fit(
   cont_fit, tests, file.path(cache_dir, "results.tsv"),
@@ -1322,9 +1063,6 @@ cont_mat <- makeContrasts(
 cont_mat <- contrasts.fit(fit, cont_mat)
 cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
 plotSA(cont_fit)
-cont_fit <- cont_fit[
-  rownames(cont_fit) %in% unique(unlist(geneIds(gene_sets_sub))),
-]
 tests <- decideTests(cont_fit)
 write.fit(
   cont_fit, tests, file.path(cache_dir, "results.tsv"),
@@ -1422,131 +1160,6 @@ Heatmap(
 ```{r}
 genotype <- c("MAPTKI", "NLGF_MAPTKI")
 
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "seurat_cleaned.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  seurat <- readRDS(rds)
-} else {
-
-  seurat <- seurat_orig
-  seurat@active.ident <- seurat$level2_subclusters
-  seurat <- subset(seurat, idents = gsub("-", replacement = "/", x = ctype))
-  seurat@active.ident <- seurat$genotype
-  seurat <- subset(seurat, idents = genotype)
-  seurat@active.ident <- factor(seurat$genotype_batch)
-  seurat <- subset(seurat, downsample = min(table(seurat@active.ident)))
-
-  seurat <- PrepSCTFindMarkers(seurat, verbose = FALSE)
-
-  counts_mat <- GetAssayData(seurat)
-  counts_mat[is.na(counts_mat)] <- 0
-  seurat <- SetAssayData(seurat, new.data = counts_mat)
-  counts_mat <- GetAssayData(seurat, slot = "counts")
-  counts_mat[is.na(counts_mat)] <- 0
-  seurat <- SetAssayData(seurat, slot = "counts", new.data = counts_mat)
-
-  seurat$nCount_SCT <- colSums(seurat, layer = "counts")
-  seurat$nFeature_SCT <- colSums(counts_mat > 0)
-
-  seurat$genotype <- factor(seurat$genotype, levels = c(genotype))
-  seurat$genotype_batch <- factor(
-    seurat$genotype_batch,
-    levels = paste(
-      rep(levels(seurat$genotype), each = 4),
-      paste0("batch0", seq(4)), sep = "_"
-    )
-  )
-  seurat$broad_annotations <- factor(seurat$broad_annotations)
-  seurat$level1_subclusters <- factor(seurat$level1_subclusters)
-  seurat$level2_subclusters <- factor(seurat$level2_subclusters)
-  seurat@active.ident <- seurat$genotype_batch
-
-  saveRDS(seurat, file = rds)
-}
-
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "scores.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  scores <- readRDS(rds)
-} else {
-  gc()
-  DefaultAssay(seurat) <- "RNA"
-  scores <- calculateScores(
-    GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
-  )
-  gc()
-  rownames(scores) <- names(gene_sets)
-  colnames(scores) <- colnames(seurat)
-  saveRDS(scores, file = rds)
-}
-seurat[["GF"]] <- CreateAssay5Object(scores, data = log1p(scores))
-DefaultAssay(seurat) <- "GF"
-seurat$nCount_GF <- colSums(seurat, layer = "counts")
-seurat$nFeature_GF <- colSums(GetAssayData(seurat, layer = "counts") > 0)
-
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "scores_SCT.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  scores <- readRDS(rds)
-} else {
-  gc()
-  DefaultAssay(seurat) <- "SCT"
-  scores <- calculateScores(
-    GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
-  )
-  gc()
-  rownames(scores) <- names(gene_sets)
-  colnames(scores) <- colnames(seurat)
-  saveRDS(scores, file = rds)
-}
-seurat[["GF_SCT"]] <- CreateAssay5Object(scores, data = log1p(scores))
-DefaultAssay(seurat) <- "GF_SCT"
-seurat$nCount_GF_SCT <- colSums(seurat, layer = "counts")
-seurat$nFeature_GF_SCT <- colSums(GetAssayData(seurat, layer = "counts") > 0)
-
-rm(scores)
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "seurat.rds",
-    sep = "_"
-  )
-)
-if (!file.exists(rds)) {
-  saveRDS(seurat, file = rds)
-}
-seurat
-```
-
-```{r}
-thresh <- table(seurat$genotype_batch)
-thresh
-thresh <- unique(thresh) * 0.01
-thresh
-
 gse <- as.SingleCellExperiment(seurat, assay = "GF_SCT")
 gse <- suppressWarnings(
   aggregateAcrossCells(
@@ -1562,6 +1175,7 @@ gse <- gse[keep, ]
 logcounts(gse, withDimnames = FALSE) <- cpm(
   counts(gse), log = TRUE, prior.count = 1
 )
+gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse
 
 counts <- as.SingleCellExperiment(seurat, assay = "SCT")
@@ -1579,10 +1193,12 @@ counts <- counts[keep, ]
 logcounts(counts, withDimnames = FALSE) <- cpm(
   counts(counts), log = TRUE, prior.count = 2
 )
-counts
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
-gse_cpm <- logcounts(gse)[rownames(gse) %in% names(gene_sets_keep), ]
-counts_cpm <- logcounts(counts)[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+counts <- counts[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+counts
+
+gse_cpm <- logcounts(gse)
+counts_cpm <- logcounts(counts)
 gse_range <- c(
   min(gse_cpm), (min(gse_cpm) + max(gse_cpm)) / 2, max(gse_cpm)
 )
@@ -1607,8 +1223,6 @@ cont_mat <- makeContrasts(
 cont_mat <- contrasts.fit(fit, cont_mat)
 cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
 plotSA(cont_fit)
-cont_fit <- cont_fit[rownames(cont_fit) %in% names(gene_sets_keep), ]
-gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(cont_fit)]
 tests <- decideTests(cont_fit)
 write.fit(
   cont_fit, tests, file.path(cache_dir, "results.tsv"),
@@ -1713,9 +1327,6 @@ cont_mat <- makeContrasts(
 cont_mat <- contrasts.fit(fit, cont_mat)
 cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
 plotSA(cont_fit)
-cont_fit <- cont_fit[
-  rownames(cont_fit) %in% unique(unlist(geneIds(gene_sets_sub))),
-]
 tests <- decideTests(cont_fit)
 write.fit(
   cont_fit, tests, file.path(cache_dir, "results.tsv"),
@@ -1813,131 +1424,6 @@ Heatmap(
 ```{r}
 genotype <- c("S305N", "NLGF_S305N")
 
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "seurat_cleaned.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  seurat <- readRDS(rds)
-} else {
-
-  seurat <- seurat_orig
-  seurat@active.ident <- seurat$level2_subclusters
-  seurat <- subset(seurat, idents = gsub("-", replacement = "/", x = ctype))
-  seurat@active.ident <- seurat$genotype
-  seurat <- subset(seurat, idents = genotype)
-  seurat@active.ident <- factor(seurat$genotype_batch)
-  seurat <- subset(seurat, downsample = min(table(seurat@active.ident)))
-
-  seurat <- PrepSCTFindMarkers(seurat, verbose = FALSE)
-
-  counts_mat <- GetAssayData(seurat)
-  counts_mat[is.na(counts_mat)] <- 0
-  seurat <- SetAssayData(seurat, new.data = counts_mat)
-  counts_mat <- GetAssayData(seurat, slot = "counts")
-  counts_mat[is.na(counts_mat)] <- 0
-  seurat <- SetAssayData(seurat, slot = "counts", new.data = counts_mat)
-
-  seurat$nCount_SCT <- colSums(seurat, layer = "counts")
-  seurat$nFeature_SCT <- colSums(counts_mat > 0)
-
-  seurat$genotype <- factor(seurat$genotype, levels = c(genotype))
-  seurat$genotype_batch <- factor(
-    seurat$genotype_batch,
-    levels = paste(
-      rep(levels(seurat$genotype), each = 4),
-      paste0("batch0", seq(4)), sep = "_"
-    )
-  )
-  seurat$broad_annotations <- factor(seurat$broad_annotations)
-  seurat$level1_subclusters <- factor(seurat$level1_subclusters)
-  seurat$level2_subclusters <- factor(seurat$level2_subclusters)
-  seurat@active.ident <- seurat$genotype_batch
-
-  saveRDS(seurat, file = rds)
-}
-
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "scores.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  scores <- readRDS(rds)
-} else {
-  gc()
-  DefaultAssay(seurat) <- "RNA"
-  scores <- calculateScores(
-    GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
-  )
-  gc()
-  rownames(scores) <- names(gene_sets)
-  colnames(scores) <- colnames(seurat)
-  saveRDS(scores, file = rds)
-}
-seurat[["GF"]] <- CreateAssay5Object(scores, data = log1p(scores))
-DefaultAssay(seurat) <- "GF"
-seurat$nCount_GF <- colSums(seurat, layer = "counts")
-seurat$nFeature_GF <- colSums(GetAssayData(seurat, layer = "counts") > 0)
-
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "scores_SCT.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  scores <- readRDS(rds)
-} else {
-  gc()
-  DefaultAssay(seurat) <- "SCT"
-  scores <- calculateScores(
-    GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
-  )
-  gc()
-  rownames(scores) <- names(gene_sets)
-  colnames(scores) <- colnames(seurat)
-  saveRDS(scores, file = rds)
-}
-seurat[["GF_SCT"]] <- CreateAssay5Object(scores, data = log1p(scores))
-DefaultAssay(seurat) <- "GF_SCT"
-seurat$nCount_GF_SCT <- colSums(seurat, layer = "counts")
-seurat$nFeature_GF_SCT <- colSums(GetAssayData(seurat, layer = "counts") > 0)
-
-rm(scores)
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "seurat.rds",
-    sep = "_"
-  )
-)
-if (!file.exists(rds)) {
-  saveRDS(seurat, file = rds)
-}
-seurat
-```
-
-```{r}
-thresh <- table(seurat$genotype_batch)
-thresh
-thresh <- unique(thresh) * 0.01
-thresh
-
 gse <- as.SingleCellExperiment(seurat, assay = "GF_SCT")
 gse <- suppressWarnings(
   aggregateAcrossCells(
@@ -1953,6 +1439,7 @@ gse <- gse[keep, ]
 logcounts(gse, withDimnames = FALSE) <- cpm(
   counts(gse), log = TRUE, prior.count = 1
 )
+gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse
 
 counts <- as.SingleCellExperiment(seurat, assay = "SCT")
@@ -1970,10 +1457,12 @@ counts <- counts[keep, ]
 logcounts(counts, withDimnames = FALSE) <- cpm(
   counts(counts), log = TRUE, prior.count = 2
 )
-counts
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
-gse_cpm <- logcounts(gse)[rownames(gse) %in% names(gene_sets_keep), ]
-counts_cpm <- logcounts(counts)[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+counts <- counts[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+counts
+
+gse_cpm <- logcounts(gse)
+counts_cpm <- logcounts(counts)
 gse_range <- c(
   min(gse_cpm), (min(gse_cpm) + max(gse_cpm)) / 2, max(gse_cpm)
 )
@@ -1998,8 +1487,6 @@ cont_mat <- makeContrasts(
 cont_mat <- contrasts.fit(fit, cont_mat)
 cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
 plotSA(cont_fit)
-cont_fit <- cont_fit[rownames(cont_fit) %in% names(gene_sets_keep), ]
-gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(cont_fit)]
 tests <- decideTests(cont_fit)
 write.fit(
   cont_fit, tests, file.path(cache_dir, "results.tsv"),
@@ -2104,9 +1591,6 @@ cont_mat <- makeContrasts(
 cont_mat <- contrasts.fit(fit, cont_mat)
 cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
 plotSA(cont_fit)
-cont_fit <- cont_fit[
-  rownames(cont_fit) %in% unique(unlist(geneIds(gene_sets_sub))),
-]
 tests <- decideTests(cont_fit)
 write.fit(
   cont_fit, tests, file.path(cache_dir, "results.tsv"),
@@ -2204,131 +1688,6 @@ Heatmap(
 ```{r}
 genotype <- c("P301S", "NLGF_P301S")
 
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "seurat_cleaned.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  seurat <- readRDS(rds)
-} else {
-
-  seurat <- seurat_orig
-  seurat@active.ident <- seurat$level2_subclusters
-  seurat <- subset(seurat, idents = gsub("-", replacement = "/", x = ctype))
-  seurat@active.ident <- seurat$genotype
-  seurat <- subset(seurat, idents = genotype)
-  seurat@active.ident <- factor(seurat$genotype_batch)
-  seurat <- subset(seurat, downsample = min(table(seurat@active.ident)))
-
-  seurat <- PrepSCTFindMarkers(seurat, verbose = FALSE)
-
-  counts_mat <- GetAssayData(seurat)
-  counts_mat[is.na(counts_mat)] <- 0
-  seurat <- SetAssayData(seurat, new.data = counts_mat)
-  counts_mat <- GetAssayData(seurat, slot = "counts")
-  counts_mat[is.na(counts_mat)] <- 0
-  seurat <- SetAssayData(seurat, slot = "counts", new.data = counts_mat)
-
-  seurat$nCount_SCT <- colSums(seurat, layer = "counts")
-  seurat$nFeature_SCT <- colSums(counts_mat > 0)
-
-  seurat$genotype <- factor(seurat$genotype, levels = c(genotype))
-  seurat$genotype_batch <- factor(
-    seurat$genotype_batch,
-    levels = paste(
-      rep(levels(seurat$genotype), each = 4),
-      paste0("batch0", seq(4)), sep = "_"
-    )
-  )
-  seurat$broad_annotations <- factor(seurat$broad_annotations)
-  seurat$level1_subclusters <- factor(seurat$level1_subclusters)
-  seurat$level2_subclusters <- factor(seurat$level2_subclusters)
-  seurat@active.ident <- seurat$genotype_batch
-
-  saveRDS(seurat, file = rds)
-}
-
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "scores.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  scores <- readRDS(rds)
-} else {
-  gc()
-  DefaultAssay(seurat) <- "RNA"
-  scores <- calculateScores(
-    GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
-  )
-  gc()
-  rownames(scores) <- names(gene_sets)
-  colnames(scores) <- colnames(seurat)
-  saveRDS(scores, file = rds)
-}
-seurat[["GF"]] <- CreateAssay5Object(scores, data = log1p(scores))
-DefaultAssay(seurat) <- "GF"
-seurat$nCount_GF <- colSums(seurat, layer = "counts")
-seurat$nFeature_GF <- colSums(GetAssayData(seurat, layer = "counts") > 0)
-
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "scores_SCT.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  scores <- readRDS(rds)
-} else {
-  gc()
-  DefaultAssay(seurat) <- "SCT"
-  scores <- calculateScores(
-    GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
-  )
-  gc()
-  rownames(scores) <- names(gene_sets)
-  colnames(scores) <- colnames(seurat)
-  saveRDS(scores, file = rds)
-}
-seurat[["GF_SCT"]] <- CreateAssay5Object(scores, data = log1p(scores))
-DefaultAssay(seurat) <- "GF_SCT"
-seurat$nCount_GF_SCT <- colSums(seurat, layer = "counts")
-seurat$nFeature_GF_SCT <- colSums(GetAssayData(seurat, layer = "counts") > 0)
-
-rm(scores)
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "seurat.rds",
-    sep = "_"
-  )
-)
-if (!file.exists(rds)) {
-  saveRDS(seurat, file = rds)
-}
-seurat
-```
-
-```{r}
-thresh <- table(seurat$genotype_batch)
-thresh
-thresh <- unique(thresh) * 0.01
-thresh
-
 gse <- as.SingleCellExperiment(seurat, assay = "GF_SCT")
 gse <- suppressWarnings(
   aggregateAcrossCells(
@@ -2344,6 +1703,7 @@ gse <- gse[keep, ]
 logcounts(gse, withDimnames = FALSE) <- cpm(
   counts(gse), log = TRUE, prior.count = 1
 )
+gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse
 
 counts <- as.SingleCellExperiment(seurat, assay = "SCT")
@@ -2361,10 +1721,12 @@ counts <- counts[keep, ]
 logcounts(counts, withDimnames = FALSE) <- cpm(
   counts(counts), log = TRUE, prior.count = 2
 )
-counts
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
-gse_cpm <- logcounts(gse)[rownames(gse) %in% names(gene_sets_keep), ]
-counts_cpm <- logcounts(counts)[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+counts <- counts[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+counts
+
+gse_cpm <- logcounts(gse)
+counts_cpm <- logcounts(counts)
 gse_range <- c(
   min(gse_cpm), (min(gse_cpm) + max(gse_cpm)) / 2, max(gse_cpm)
 )
@@ -2389,8 +1751,6 @@ cont_mat <- makeContrasts(
 cont_mat <- contrasts.fit(fit, cont_mat)
 cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
 plotSA(cont_fit)
-cont_fit <- cont_fit[rownames(cont_fit) %in% names(gene_sets_keep), ]
-gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(cont_fit)]
 tests <- decideTests(cont_fit)
 write.fit(
   cont_fit, tests, file.path(cache_dir, "results.tsv"),
@@ -2495,9 +1855,6 @@ cont_mat <- makeContrasts(
 cont_mat <- contrasts.fit(fit, cont_mat)
 cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
 plotSA(cont_fit)
-cont_fit <- cont_fit[
-  rownames(cont_fit) %in% unique(unlist(geneIds(gene_sets_sub))),
-]
 tests <- decideTests(cont_fit)
 write.fit(
   cont_fit, tests, file.path(cache_dir, "results.tsv"),
@@ -2595,131 +1952,6 @@ Heatmap(
 ```{r}
 genotype <- c("NLGF_S305N", "NLGF_P301S")
 
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "seurat_cleaned.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  seurat <- readRDS(rds)
-} else {
-
-  seurat <- seurat_orig
-  seurat@active.ident <- seurat$level2_subclusters
-  seurat <- subset(seurat, idents = gsub("-", replacement = "/", x = ctype))
-  seurat@active.ident <- seurat$genotype
-  seurat <- subset(seurat, idents = genotype)
-  seurat@active.ident <- factor(seurat$genotype_batch)
-  seurat <- subset(seurat, downsample = min(table(seurat@active.ident)))
-
-  seurat <- PrepSCTFindMarkers(seurat, verbose = FALSE)
-
-  counts_mat <- GetAssayData(seurat)
-  counts_mat[is.na(counts_mat)] <- 0
-  seurat <- SetAssayData(seurat, new.data = counts_mat)
-  counts_mat <- GetAssayData(seurat, slot = "counts")
-  counts_mat[is.na(counts_mat)] <- 0
-  seurat <- SetAssayData(seurat, slot = "counts", new.data = counts_mat)
-
-  seurat$nCount_SCT <- colSums(seurat, layer = "counts")
-  seurat$nFeature_SCT <- colSums(counts_mat > 0)
-
-  seurat$genotype <- factor(seurat$genotype, levels = c(genotype))
-  seurat$genotype_batch <- factor(
-    seurat$genotype_batch,
-    levels = paste(
-      rep(levels(seurat$genotype), each = 4),
-      paste0("batch0", seq(4)), sep = "_"
-    )
-  )
-  seurat$broad_annotations <- factor(seurat$broad_annotations)
-  seurat$level1_subclusters <- factor(seurat$level1_subclusters)
-  seurat$level2_subclusters <- factor(seurat$level2_subclusters)
-  seurat@active.ident <- seurat$genotype_batch
-
-  saveRDS(seurat, file = rds)
-}
-
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "scores.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  scores <- readRDS(rds)
-} else {
-  gc()
-  DefaultAssay(seurat) <- "RNA"
-  scores <- calculateScores(
-    GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
-  )
-  gc()
-  rownames(scores) <- names(gene_sets)
-  colnames(scores) <- colnames(seurat)
-  saveRDS(scores, file = rds)
-}
-seurat[["GF"]] <- CreateAssay5Object(scores, data = log1p(scores))
-DefaultAssay(seurat) <- "GF"
-seurat$nCount_GF <- colSums(seurat, layer = "counts")
-seurat$nFeature_GF <- colSums(GetAssayData(seurat, layer = "counts") > 0)
-
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "scores_SCT.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  scores <- readRDS(rds)
-} else {
-  gc()
-  DefaultAssay(seurat) <- "SCT"
-  scores <- calculateScores(
-    GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
-  )
-  gc()
-  rownames(scores) <- names(gene_sets)
-  colnames(scores) <- colnames(seurat)
-  saveRDS(scores, file = rds)
-}
-seurat[["GF_SCT"]] <- CreateAssay5Object(scores, data = log1p(scores))
-DefaultAssay(seurat) <- "GF_SCT"
-seurat$nCount_GF_SCT <- colSums(seurat, layer = "counts")
-seurat$nFeature_GF_SCT <- colSums(GetAssayData(seurat, layer = "counts") > 0)
-
-rm(scores)
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "seurat.rds",
-    sep = "_"
-  )
-)
-if (!file.exists(rds)) {
-  saveRDS(seurat, file = rds)
-}
-seurat
-```
-
-```{r}
-thresh <- table(seurat$genotype_batch)
-thresh
-thresh <- unique(thresh) * 0.01
-thresh
-
 gse <- as.SingleCellExperiment(seurat, assay = "GF_SCT")
 gse <- suppressWarnings(
   aggregateAcrossCells(
@@ -2735,6 +1967,7 @@ gse <- gse[keep, ]
 logcounts(gse, withDimnames = FALSE) <- cpm(
   counts(gse), log = TRUE, prior.count = 1
 )
+gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse
 
 counts <- as.SingleCellExperiment(seurat, assay = "SCT")
@@ -2752,10 +1985,12 @@ counts <- counts[keep, ]
 logcounts(counts, withDimnames = FALSE) <- cpm(
   counts(counts), log = TRUE, prior.count = 2
 )
-counts
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
-gse_cpm <- logcounts(gse)[rownames(gse) %in% names(gene_sets_keep), ]
-counts_cpm <- logcounts(counts)[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+counts <- counts[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+counts
+
+gse_cpm <- logcounts(gse)
+counts_cpm <- logcounts(counts)
 gse_range <- c(
   min(gse_cpm), (min(gse_cpm) + max(gse_cpm)) / 2, max(gse_cpm)
 )
@@ -2780,8 +2015,6 @@ cont_mat <- makeContrasts(
 cont_mat <- contrasts.fit(fit, cont_mat)
 cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
 plotSA(cont_fit)
-cont_fit <- cont_fit[rownames(cont_fit) %in% names(gene_sets_keep), ]
-gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(cont_fit)]
 tests <- decideTests(cont_fit)
 write.fit(
   cont_fit, tests, file.path(cache_dir, "results.tsv"),
@@ -2886,9 +2119,6 @@ cont_mat <- makeContrasts(
 cont_mat <- contrasts.fit(fit, cont_mat)
 cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
 plotSA(cont_fit)
-cont_fit <- cont_fit[
-  rownames(cont_fit) %in% unique(unlist(geneIds(gene_sets_sub))),
-]
 tests <- decideTests(cont_fit)
 write.fit(
   cont_fit, tests, file.path(cache_dir, "results.tsv"),
@@ -2986,131 +2216,6 @@ Heatmap(
 ```{r}
 genotype <- c("MAPTKI", "NLGF_S305N")
 
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "seurat_cleaned.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  seurat <- readRDS(rds)
-} else {
-
-  seurat <- seurat_orig
-  seurat@active.ident <- seurat$level2_subclusters
-  seurat <- subset(seurat, idents = gsub("-", replacement = "/", x = ctype))
-  seurat@active.ident <- seurat$genotype
-  seurat <- subset(seurat, idents = genotype)
-  seurat@active.ident <- factor(seurat$genotype_batch)
-  seurat <- subset(seurat, downsample = min(table(seurat@active.ident)))
-
-  seurat <- PrepSCTFindMarkers(seurat, verbose = FALSE)
-
-  counts_mat <- GetAssayData(seurat)
-  counts_mat[is.na(counts_mat)] <- 0
-  seurat <- SetAssayData(seurat, new.data = counts_mat)
-  counts_mat <- GetAssayData(seurat, slot = "counts")
-  counts_mat[is.na(counts_mat)] <- 0
-  seurat <- SetAssayData(seurat, slot = "counts", new.data = counts_mat)
-
-  seurat$nCount_SCT <- colSums(seurat, layer = "counts")
-  seurat$nFeature_SCT <- colSums(counts_mat > 0)
-
-  seurat$genotype <- factor(seurat$genotype, levels = c(genotype))
-  seurat$genotype_batch <- factor(
-    seurat$genotype_batch,
-    levels = paste(
-      rep(levels(seurat$genotype), each = 4),
-      paste0("batch0", seq(4)), sep = "_"
-    )
-  )
-  seurat$broad_annotations <- factor(seurat$broad_annotations)
-  seurat$level1_subclusters <- factor(seurat$level1_subclusters)
-  seurat$level2_subclusters <- factor(seurat$level2_subclusters)
-  seurat@active.ident <- seurat$genotype_batch
-
-  saveRDS(seurat, file = rds)
-}
-
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "scores.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  scores <- readRDS(rds)
-} else {
-  gc()
-  DefaultAssay(seurat) <- "RNA"
-  scores <- calculateScores(
-    GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
-  )
-  gc()
-  rownames(scores) <- names(gene_sets)
-  colnames(scores) <- colnames(seurat)
-  saveRDS(scores, file = rds)
-}
-seurat[["GF"]] <- CreateAssay5Object(scores, data = log1p(scores))
-DefaultAssay(seurat) <- "GF"
-seurat$nCount_GF <- colSums(seurat, layer = "counts")
-seurat$nFeature_GF <- colSums(GetAssayData(seurat, layer = "counts") > 0)
-
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "scores_SCT.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  scores <- readRDS(rds)
-} else {
-  gc()
-  DefaultAssay(seurat) <- "SCT"
-  scores <- calculateScores(
-    GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
-  )
-  gc()
-  rownames(scores) <- names(gene_sets)
-  colnames(scores) <- colnames(seurat)
-  saveRDS(scores, file = rds)
-}
-seurat[["GF_SCT"]] <- CreateAssay5Object(scores, data = log1p(scores))
-DefaultAssay(seurat) <- "GF_SCT"
-seurat$nCount_GF_SCT <- colSums(seurat, layer = "counts")
-seurat$nFeature_GF_SCT <- colSums(GetAssayData(seurat, layer = "counts") > 0)
-
-rm(scores)
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "seurat.rds",
-    sep = "_"
-  )
-)
-if (!file.exists(rds)) {
-  saveRDS(seurat, file = rds)
-}
-seurat
-```
-
-```{r}
-thresh <- table(seurat$genotype_batch)
-thresh
-thresh <- unique(thresh) * 0.01
-thresh
-
 gse <- as.SingleCellExperiment(seurat, assay = "GF_SCT")
 gse <- suppressWarnings(
   aggregateAcrossCells(
@@ -3126,6 +2231,7 @@ gse <- gse[keep, ]
 logcounts(gse, withDimnames = FALSE) <- cpm(
   counts(gse), log = TRUE, prior.count = 1
 )
+gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse
 
 counts <- as.SingleCellExperiment(seurat, assay = "SCT")
@@ -3143,10 +2249,12 @@ counts <- counts[keep, ]
 logcounts(counts, withDimnames = FALSE) <- cpm(
   counts(counts), log = TRUE, prior.count = 2
 )
-counts
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
-gse_cpm <- logcounts(gse)[rownames(gse) %in% names(gene_sets_keep), ]
-counts_cpm <- logcounts(counts)[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+counts <- counts[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+counts
+
+gse_cpm <- logcounts(gse)
+counts_cpm <- logcounts(counts)
 gse_range <- c(
   min(gse_cpm), (min(gse_cpm) + max(gse_cpm)) / 2, max(gse_cpm)
 )
@@ -3171,8 +2279,6 @@ cont_mat <- makeContrasts(
 cont_mat <- contrasts.fit(fit, cont_mat)
 cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
 plotSA(cont_fit)
-cont_fit <- cont_fit[rownames(cont_fit) %in% names(gene_sets_keep), ]
-gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(cont_fit)]
 tests <- decideTests(cont_fit)
 write.fit(
   cont_fit, tests, file.path(cache_dir, "results.tsv"),
@@ -3277,9 +2383,6 @@ cont_mat <- makeContrasts(
 cont_mat <- contrasts.fit(fit, cont_mat)
 cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
 plotSA(cont_fit)
-cont_fit <- cont_fit[
-  rownames(cont_fit) %in% unique(unlist(geneIds(gene_sets_sub))),
-]
 tests <- decideTests(cont_fit)
 write.fit(
   cont_fit, tests, file.path(cache_dir, "results.tsv"),
@@ -3377,131 +2480,6 @@ Heatmap(
 ```{r}
 genotype <- c("MAPTKI", "NLGF_P301S")
 
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "seurat_cleaned.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  seurat <- readRDS(rds)
-} else {
-
-  seurat <- seurat_orig
-  seurat@active.ident <- seurat$level2_subclusters
-  seurat <- subset(seurat, idents = gsub("-", replacement = "/", x = ctype))
-  seurat@active.ident <- seurat$genotype
-  seurat <- subset(seurat, idents = genotype)
-  seurat@active.ident <- factor(seurat$genotype_batch)
-  seurat <- subset(seurat, downsample = min(table(seurat@active.ident)))
-
-  seurat <- PrepSCTFindMarkers(seurat, verbose = FALSE)
-
-  counts_mat <- GetAssayData(seurat)
-  counts_mat[is.na(counts_mat)] <- 0
-  seurat <- SetAssayData(seurat, new.data = counts_mat)
-  counts_mat <- GetAssayData(seurat, slot = "counts")
-  counts_mat[is.na(counts_mat)] <- 0
-  seurat <- SetAssayData(seurat, slot = "counts", new.data = counts_mat)
-
-  seurat$nCount_SCT <- colSums(seurat, layer = "counts")
-  seurat$nFeature_SCT <- colSums(counts_mat > 0)
-
-  seurat$genotype <- factor(seurat$genotype, levels = c(genotype))
-  seurat$genotype_batch <- factor(
-    seurat$genotype_batch,
-    levels = paste(
-      rep(levels(seurat$genotype), each = 4),
-      paste0("batch0", seq(4)), sep = "_"
-    )
-  )
-  seurat$broad_annotations <- factor(seurat$broad_annotations)
-  seurat$level1_subclusters <- factor(seurat$level1_subclusters)
-  seurat$level2_subclusters <- factor(seurat$level2_subclusters)
-  seurat@active.ident <- seurat$genotype_batch
-
-  saveRDS(seurat, file = rds)
-}
-
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "scores.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  scores <- readRDS(rds)
-} else {
-  gc()
-  DefaultAssay(seurat) <- "RNA"
-  scores <- calculateScores(
-    GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
-  )
-  gc()
-  rownames(scores) <- names(gene_sets)
-  colnames(scores) <- colnames(seurat)
-  saveRDS(scores, file = rds)
-}
-seurat[["GF"]] <- CreateAssay5Object(scores, data = log1p(scores))
-DefaultAssay(seurat) <- "GF"
-seurat$nCount_GF <- colSums(seurat, layer = "counts")
-seurat$nFeature_GF <- colSums(GetAssayData(seurat, layer = "counts") > 0)
-
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "scores_SCT.rds",
-    sep = "_"
-  )
-)
-if (file.exists(rds)) {
-  scores <- readRDS(rds)
-} else {
-  gc()
-  DefaultAssay(seurat) <- "SCT"
-  scores <- calculateScores(
-    GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
-  )
-  gc()
-  rownames(scores) <- names(gene_sets)
-  colnames(scores) <- colnames(seurat)
-  saveRDS(scores, file = rds)
-}
-seurat[["GF_SCT"]] <- CreateAssay5Object(scores, data = log1p(scores))
-DefaultAssay(seurat) <- "GF_SCT"
-seurat$nCount_GF_SCT <- colSums(seurat, layer = "counts")
-seurat$nFeature_GF_SCT <- colSums(GetAssayData(seurat, layer = "counts") > 0)
-
-rm(scores)
-rds <- file.path(
-  cache_dir,
-  paste(
-    gsub(" ", "_", x = paste(ctype, collapse = " ")),
-    gsub(" ", "_", x = paste(genotype, collapse = " ")),
-    "seurat.rds",
-    sep = "_"
-  )
-)
-if (!file.exists(rds)) {
-  saveRDS(seurat, file = rds)
-}
-seurat
-```
-
-```{r}
-thresh <- table(seurat$genotype_batch)
-thresh
-thresh <- unique(thresh) * 0.01
-thresh
-
 gse <- as.SingleCellExperiment(seurat, assay = "GF_SCT")
 gse <- suppressWarnings(
   aggregateAcrossCells(
@@ -3517,6 +2495,7 @@ gse <- gse[keep, ]
 logcounts(gse, withDimnames = FALSE) <- cpm(
   counts(gse), log = TRUE, prior.count = 1
 )
+gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse
 
 counts <- as.SingleCellExperiment(seurat, assay = "SCT")
@@ -3534,10 +2513,12 @@ counts <- counts[keep, ]
 logcounts(counts, withDimnames = FALSE) <- cpm(
   counts(counts), log = TRUE, prior.count = 2
 )
-counts
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
-gse_cpm <- logcounts(gse)[rownames(gse) %in% names(gene_sets_keep), ]
-counts_cpm <- logcounts(counts)[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+counts <- counts[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+counts
+
+gse_cpm <- logcounts(gse)
+counts_cpm <- logcounts(counts)
 gse_range <- c(
   min(gse_cpm), (min(gse_cpm) + max(gse_cpm)) / 2, max(gse_cpm)
 )
@@ -3562,8 +2543,6 @@ cont_mat <- makeContrasts(
 cont_mat <- contrasts.fit(fit, cont_mat)
 cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
 plotSA(cont_fit)
-cont_fit <- cont_fit[rownames(cont_fit) %in% names(gene_sets_keep), ]
-gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(cont_fit)]
 tests <- decideTests(cont_fit)
 write.fit(
   cont_fit, tests, file.path(cache_dir, "results.tsv"),
@@ -3668,9 +2647,6 @@ cont_mat <- makeContrasts(
 cont_mat <- contrasts.fit(fit, cont_mat)
 cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
 plotSA(cont_fit)
-cont_fit <- cont_fit[
-  rownames(cont_fit) %in% unique(unlist(geneIds(gene_sets_sub))),
-]
 tests <- decideTests(cont_fit)
 write.fit(
   cont_fit, tests, file.path(cache_dir, "results.tsv"),
