@@ -238,10 +238,10 @@ gene_anno <- data.frame(
 )
 ```
 
-# Glut L2/3 Cortex 01
+# Glut CA3 01
 
 ```{r}
-ctype <- "Glut L2-3 Cortex 01"
+ctype <- "Glut CA3 01"
 ```
 
 ## MAPT KI vs. S305N+3
