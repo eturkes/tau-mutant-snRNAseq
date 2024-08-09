@@ -258,7 +258,6 @@ if (file.exists(rds)) {
   seurat@active.ident <- seurat$level2_subclusters
   seurat <- subset(seurat, idents = gsub("-", replacement = "/", x = ctype))
   seurat@active.ident <- factor(seurat$genotype_batch)
-  # seurat <- subset(seurat, downsample = min(table(seurat@active.ident)))
 
   seurat <- PrepSCTFindMarkers(seurat, verbose = FALSE)
 
