@@ -383,11 +383,11 @@ gse <- suppressWarnings(
 )
 keep <- filterByExpr(
   counts(gse), group = factor(gse$genotype),
-  min.total.count = thresh * 2, min.count = thresh * 2
+  min.total.count = 12, min.count = 12
 )
 gse <- gse[keep, ]
 logcounts(gse, withDimnames = FALSE) <- cpm(
-  counts(gse), log = TRUE, prior.count = 80 / thresh
+  counts(gse), log = TRUE, prior.count = 10
 )
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse
@@ -401,11 +401,11 @@ counts <- suppressWarnings(
 )
 keep <- filterByExpr(
   counts(counts), group = factor(counts$genotype),
-  min.total.count = thresh, min.count = thresh
+  min.total.count = 7, min.count = 7
 )
 counts <- counts[keep, ]
 logcounts(counts, withDimnames = FALSE) <- cpm(
-  counts(counts), log = TRUE, prior.count = 40 / thresh
+  counts(counts), log = TRUE, prior.count = 6
 )
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
 counts <- counts[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
@@ -775,11 +775,11 @@ gse <- suppressWarnings(
 )
 keep <- filterByExpr(
   counts(gse), group = factor(gse$genotype),
-  min.total.count = thresh * 2, min.count = thresh * 2
+  min.total.count = 12, min.count = 12
 )
 gse <- gse[keep, ]
 logcounts(gse, withDimnames = FALSE) <- cpm(
-  counts(gse), log = TRUE, prior.count = 80 / thresh
+  counts(gse), log = TRUE, prior.count = 10
 )
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse
@@ -793,11 +793,11 @@ counts <- suppressWarnings(
 )
 keep <- filterByExpr(
   counts(counts), group = factor(counts$genotype),
-  min.total.count = thresh, min.count = thresh
+  min.total.count = 7, min.count = 7
 )
 counts <- counts[keep, ]
 logcounts(counts, withDimnames = FALSE) <- cpm(
-  counts(counts), log = TRUE, prior.count = 40 / thresh
+  counts(counts), log = TRUE, prior.count = 6
 )
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
 counts <- counts[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
@@ -1167,11 +1167,11 @@ gse <- suppressWarnings(
 )
 keep <- filterByExpr(
   counts(gse), group = factor(gse$genotype),
-  min.total.count = thresh * 2, min.count = thresh * 2
+  min.total.count = 12, min.count = 12
 )
 gse <- gse[keep, ]
 logcounts(gse, withDimnames = FALSE) <- cpm(
-  counts(gse), log = TRUE, prior.count = 80 / thresh
+  counts(gse), log = TRUE, prior.count = 10
 )
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse
@@ -1185,11 +1185,11 @@ counts <- suppressWarnings(
 )
 keep <- filterByExpr(
   counts(counts), group = factor(counts$genotype),
-  min.total.count = thresh, min.count = thresh
+  min.total.count = 7, min.count = 7
 )
 counts <- counts[keep, ]
 logcounts(counts, withDimnames = FALSE) <- cpm(
-  counts(counts), log = TRUE, prior.count = 40 / thresh
+  counts(counts), log = TRUE, prior.count = 6
 )
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
 counts <- counts[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
@@ -1559,11 +1559,11 @@ gse <- suppressWarnings(
 )
 keep <- filterByExpr(
   counts(gse), group = factor(gse$genotype),
-  min.total.count = thresh * 2, min.count = thresh * 2
+  min.total.count = 12, min.count = 12
 )
 gse <- gse[keep, ]
 logcounts(gse, withDimnames = FALSE) <- cpm(
-  counts(gse), log = TRUE, prior.count = 80 / thresh
+  counts(gse), log = TRUE, prior.count = 10
 )
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse
@@ -1577,11 +1577,11 @@ counts <- suppressWarnings(
 )
 keep <- filterByExpr(
   counts(counts), group = factor(counts$genotype),
-  min.total.count = thresh, min.count = thresh
+  min.total.count = 7, min.count = 7
 )
 counts <- counts[keep, ]
 logcounts(counts, withDimnames = FALSE) <- cpm(
-  counts(counts), log = TRUE, prior.count = 40 / thresh
+  counts(counts), log = TRUE, prior.count = 6
 )
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
 counts <- counts[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
@@ -1951,11 +1951,11 @@ gse <- suppressWarnings(
 )
 keep <- filterByExpr(
   counts(gse), group = factor(gse$genotype),
-  min.total.count = thresh * 2, min.count = thresh * 2
+  min.total.count = 12, min.count = 12
 )
 gse <- gse[keep, ]
 logcounts(gse, withDimnames = FALSE) <- cpm(
-  counts(gse), log = TRUE, prior.count = 80 / thresh
+  counts(gse), log = TRUE, prior.count = 10
 )
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse
@@ -1969,11 +1969,11 @@ counts <- suppressWarnings(
 )
 keep <- filterByExpr(
   counts(counts), group = factor(counts$genotype),
-  min.total.count = thresh, min.count = thresh
+  min.total.count = 7, min.count = 7
 )
 counts <- counts[keep, ]
 logcounts(counts, withDimnames = FALSE) <- cpm(
-  counts(counts), log = TRUE, prior.count = 40 / thresh
+  counts(counts), log = TRUE, prior.count = 6
 )
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
 counts <- counts[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
@@ -2343,11 +2343,11 @@ gse <- suppressWarnings(
 )
 keep <- filterByExpr(
   counts(gse), group = factor(gse$genotype),
-  min.total.count = thresh * 2, min.count = thresh * 2
+  min.total.count = 12, min.count = 12
 )
 gse <- gse[keep, ]
 logcounts(gse, withDimnames = FALSE) <- cpm(
-  counts(gse), log = TRUE, prior.count = 80 / thresh
+  counts(gse), log = TRUE, prior.count = 10
 )
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse
@@ -2361,11 +2361,11 @@ counts <- suppressWarnings(
 )
 keep <- filterByExpr(
   counts(counts), group = factor(counts$genotype),
-  min.total.count = thresh, min.count = thresh
+  min.total.count = 7, min.count = 7
 )
 counts <- counts[keep, ]
 logcounts(counts, withDimnames = FALSE) <- cpm(
-  counts(counts), log = TRUE, prior.count = 40 / thresh
+  counts(counts), log = TRUE, prior.count = 6
 )
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
 counts <- counts[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
@@ -2735,11 +2735,11 @@ gse <- suppressWarnings(
 )
 keep <- filterByExpr(
   counts(gse), group = factor(gse$genotype),
-  min.total.count = thresh * 2, min.count = thresh * 2
+  min.total.count = 12, min.count = 12
 )
 gse <- gse[keep, ]
 logcounts(gse, withDimnames = FALSE) <- cpm(
-  counts(gse), log = TRUE, prior.count = 80 / thresh
+  counts(gse), log = TRUE, prior.count = 10
 )
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse
@@ -2753,11 +2753,11 @@ counts <- suppressWarnings(
 )
 keep <- filterByExpr(
   counts(counts), group = factor(counts$genotype),
-  min.total.count = thresh, min.count = thresh
+  min.total.count = 7, min.count = 7
 )
 counts <- counts[keep, ]
 logcounts(counts, withDimnames = FALSE) <- cpm(
-  counts(counts), log = TRUE, prior.count = 40 / thresh
+  counts(counts), log = TRUE, prior.count = 6
 )
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
 counts <- counts[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
@@ -3127,11 +3127,11 @@ gse <- suppressWarnings(
 )
 keep <- filterByExpr(
   counts(gse), group = factor(gse$genotype),
-  min.total.count = thresh * 2, min.count = thresh * 2
+  min.total.count = 12, min.count = 12
 )
 gse <- gse[keep, ]
 logcounts(gse, withDimnames = FALSE) <- cpm(
-  counts(gse), log = TRUE, prior.count = 80 / thresh
+  counts(gse), log = TRUE, prior.count = 10
 )
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse
@@ -3145,11 +3145,11 @@ counts <- suppressWarnings(
 )
 keep <- filterByExpr(
   counts(counts), group = factor(counts$genotype),
-  min.total.count = thresh, min.count = thresh
+  min.total.count = 7, min.count = 7
 )
 counts <- counts[keep, ]
 logcounts(counts, withDimnames = FALSE) <- cpm(
-  counts(counts), log = TRUE, prior.count = 40 / thresh
+  counts(counts), log = TRUE, prior.count = 6
 )
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
 counts <- counts[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
@@ -3519,11 +3519,11 @@ gse <- suppressWarnings(
 )
 keep <- filterByExpr(
   counts(gse), group = factor(gse$genotype),
-  min.total.count = thresh * 2, min.count = thresh * 2
+  min.total.count = 12, min.count = 12
 )
 gse <- gse[keep, ]
 logcounts(gse, withDimnames = FALSE) <- cpm(
-  counts(gse), log = TRUE, prior.count = 80 / thresh
+  counts(gse), log = TRUE, prior.count = 10
 )
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse
@@ -3537,11 +3537,11 @@ counts <- suppressWarnings(
 )
 keep <- filterByExpr(
   counts(counts), group = factor(counts$genotype),
-  min.total.count = thresh, min.count = thresh
+  min.total.count = 7, min.count = 7
 )
 counts <- counts[keep, ]
 logcounts(counts, withDimnames = FALSE) <- cpm(
-  counts(counts), log = TRUE, prior.count = 40 / thresh
+  counts(counts), log = TRUE, prior.count = 6
 )
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
 counts <- counts[rownames(counts) %in% unique(unlist(geneIds(gene_sets_sub))), ]
