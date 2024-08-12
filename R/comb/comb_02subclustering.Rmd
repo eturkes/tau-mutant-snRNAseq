@@ -135,7 +135,7 @@ seurat <- readRDS(
   file.path(cache_dir, "..", "step01", "processed_merged_seurat.rds")
 )
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
@@ -174,7 +174,7 @@ if (file.exists(rds)) {
 markers <- markers[markers$p_val_adj < 0.05, ]
 top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
 top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
-top <- merge(top, gene_anno, by = "gene")
+top <- merge(top, gene_anno, by = "ensembl")
 datatable_download(top)
 
 table <- table(seurat$subcluster_annotations, seurat$allen_labels)
@@ -309,7 +309,7 @@ seurat <- readRDS(
   file.path(cache_dir, "..", "step02", "annotated_neuronal.rds")
 )
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
@@ -354,7 +354,7 @@ if (file.exists(rds)) {
 markers <- markers[markers$p_val_adj < 0.05, ]
 top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
 top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
-top <- merge(top, gene_anno, by = "gene")
+top <- merge(top, gene_anno, by = "ensembl")
 datatable_download(top)
 
 table <- table(seurat$subcluster_annotations, seurat$allen_labels)
@@ -489,7 +489,7 @@ seurat <- readRDS(
   file.path(cache_dir, "..", "step02", "annotated_neuronal.rds")
 )
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
@@ -523,7 +523,7 @@ if (file.exists(rds)) {
 markers <- markers[markers$p_val_adj < 0.05, ]
 top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
 top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
-top <- merge(top, gene_anno, by = "gene")
+top <- merge(top, gene_anno, by = "ensembl")
 datatable_download(top)
 
 table <- table(seurat$subcluster_annotations, seurat$allen_labels)
@@ -658,7 +658,7 @@ seurat <- readRDS(
   file.path(cache_dir, "..", "step02", "annotated_neuronal.rds")
 )
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
@@ -690,7 +690,7 @@ if (file.exists(rds)) {
 markers <- markers[markers$p_val_adj < 0.05, ]
 top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
 top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
-top <- merge(top, gene_anno, by = "gene")
+top <- merge(top, gene_anno, by = "ensembl")
 datatable_download(top)
 
 table <- table(seurat$subcluster_annotations, seurat$allen_labels)
@@ -825,7 +825,7 @@ seurat <- readRDS(
   file.path(cache_dir, "..", "step02", "annotated_neuronal.rds")
 )
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
@@ -855,7 +855,7 @@ if (file.exists(rds)) {
 markers <- markers[markers$p_val_adj < 0.05, ]
 top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
 top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
-top <- merge(top, gene_anno, by = "gene")
+top <- merge(top, gene_anno, by = "ensembl")
 datatable_download(top)
 
 table <- table(seurat$subcluster_annotations, seurat$allen_labels)
@@ -990,7 +990,7 @@ seurat <- readRDS(
   file.path(cache_dir, "..", "step02", "annotated_neuronal.rds")
 )
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
@@ -1020,7 +1020,7 @@ if (file.exists(rds)) {
 markers <- markers[markers$p_val_adj < 0.05, ]
 top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
 top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
-top <- merge(top, gene_anno, by = "gene")
+top <- merge(top, gene_anno, by = "ensembl")
 datatable_download(top)
 
 table <- table(seurat$subcluster_annotations, seurat$allen_labels)
@@ -1155,7 +1155,7 @@ seurat <- readRDS(
   file.path(cache_dir, "..", "step02", "annotated_neuronal.rds")
 )
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
@@ -1190,7 +1190,7 @@ if (file.exists(rds)) {
 markers <- markers[markers$p_val_adj < 0.05, ]
 top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
 top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
-top <- merge(top, gene_anno, by = "gene")
+top <- merge(top, gene_anno, by = "ensembl")
 datatable_download(top)
 
 table <- table(seurat$subcluster_annotations, seurat$allen_labels)
@@ -1325,7 +1325,7 @@ seurat <- readRDS(
   file.path(cache_dir, "..", "step01", "processed_merged_seurat.rds")
 )
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
@@ -1356,7 +1356,7 @@ if (file.exists(rds)) {
 markers <- markers[markers$p_val_adj < 0.05, ]
 top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
 top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
-top <- merge(top, gene_anno, by = "gene")
+top <- merge(top, gene_anno, by = "ensembl")
 datatable_download(top)
 
 table <- table(seurat$subcluster_annotations, seurat$allen_labels)
@@ -1491,7 +1491,7 @@ seurat <- readRDS(
   file.path(cache_dir, "..", "step02", "annotated_micro.rds")
 )
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
@@ -1511,9 +1511,9 @@ for (i in seq_along(DAM_list)) {
     file.path(data_dir, "DAM_genes", file_list[i]), header = FALSE
   )
   gene_anno_sub <- gene_anno[
-    tolower(gene_anno$geneid) %in% tolower(DAM_list[[i]]$V1),
+    tolower(gene_anno$symbol) %in% tolower(DAM_list[[i]]$V1),
   ]
-  DAM_list[[i]] <- gene_anno_sub$gene
+  DAM_list[[i]] <- gene_anno_sub$ensembl
 }
 
 seurat <- AddModuleScore(seurat, features = DAM_list, name = "DAM_genes")
@@ -1545,7 +1545,7 @@ if (file.exists(rds)) {
 markers <- markers[markers$p_val_adj < 0.05, ]
 top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
 top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
-top <- merge(top, gene_anno, by = "gene")
+top <- merge(top, gene_anno, by = "ensembl")
 datatable_download(top)
 
 table <- table(seurat$subcluster_annotations, seurat$allen_labels)
@@ -1682,7 +1682,7 @@ seurat <- readRDS(
 DefaultAssay(seurat) <- "RNA"
 seurat[["SCT"]] <- NULL
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
@@ -1809,7 +1809,7 @@ seurat <- readRDS(
 DefaultAssay(seurat) <- "RNA"
 seurat[["SCT"]] <- NULL
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
@@ -1936,7 +1936,7 @@ seurat <- readRDS(
 DefaultAssay(seurat) <- "RNA"
 seurat[["SCT"]] <- NULL
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
@@ -2061,7 +2061,7 @@ seurat <- readRDS(
   file.path(cache_dir, "..", "step01", "processed_merged_seurat.rds")
 )
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
@@ -2092,7 +2092,7 @@ if (file.exists(rds)) {
 markers <- markers[markers$p_val_adj < 0.05, ]
 top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
 top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
-top <- merge(top, gene_anno, by = "gene")
+top <- merge(top, gene_anno, by = "ensembl")
 datatable_download(top)
 
 table <- table(seurat$subcluster_annotations, seurat$allen_labels)
@@ -2227,7 +2227,7 @@ seurat <- readRDS(
   file.path(cache_dir, "..", "step02", "annotated_astro.rds")
 )
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
@@ -2258,7 +2258,7 @@ if (file.exists(rds)) {
 markers <- markers[markers$p_val_adj < 0.05, ]
 top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
 top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
-top <- merge(top, gene_anno, by = "gene")
+top <- merge(top, gene_anno, by = "ensembl")
 datatable_download(top)
 
 table <- table(seurat$subcluster_annotations, seurat$allen_labels)
@@ -2395,7 +2395,7 @@ seurat <- readRDS(
 DefaultAssay(seurat) <- "RNA"
 seurat[["SCT"]] <- NULL
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
@@ -2522,7 +2522,7 @@ seurat <- readRDS(
 DefaultAssay(seurat) <- "RNA"
 seurat[["SCT"]] <- NULL
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
@@ -2649,7 +2649,7 @@ seurat <- readRDS(
 DefaultAssay(seurat) <- "RNA"
 seurat[["SCT"]] <- NULL
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
@@ -2776,7 +2776,7 @@ seurat <- readRDS(
 DefaultAssay(seurat) <- "RNA"
 seurat[["SCT"]] <- NULL
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
@@ -2901,7 +2901,7 @@ seurat <- readRDS(
   file.path(cache_dir, "..", "step01", "processed_merged_seurat.rds")
 )
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
@@ -2933,7 +2933,7 @@ if (file.exists(rds)) {
 markers <- markers[markers$p_val_adj < 0.05, ]
 top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
 top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
-top <- merge(top, gene_anno, by = "gene")
+top <- merge(top, gene_anno, by = "ensembl")
 datatable_download(top)
 
 table <- table(seurat$subcluster_annotations, seurat$allen_labels)
@@ -3071,7 +3071,7 @@ seurat <- readRDS(
   file.path(cache_dir, "..", "step01", "processed_merged_seurat.rds")
 )
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
@@ -3101,7 +3101,7 @@ if (file.exists(rds)) {
 markers <- markers[markers$p_val_adj < 0.05, ]
 top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
 top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
-top <- merge(top, gene_anno, by = "gene")
+top <- merge(top, gene_anno, by = "ensembl")
 datatable_download(top)
 
 table <- table(seurat$subcluster_annotations, seurat$allen_labels)
@@ -3236,7 +3236,7 @@ seurat <- readRDS(
   file.path(cache_dir, "..", "step02", "annotated_oligo.rds")
 )
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
@@ -3268,7 +3268,7 @@ if (file.exists(rds)) {
 markers <- markers[markers$p_val_adj < 0.05, ]
 top <- markers %>% group_by(cluster) %>% top_n(n = -25, wt = p_val_adj)
 top <- top %>% group_by(cluster) %>% top_n(n = -25, wt = avg_log2FC)
-top <- merge(top, gene_anno, by = "gene")
+top <- merge(top, gene_anno, by = "ensembl")
 datatable_download(top)
 
 table <- table(seurat$subcluster_annotations, seurat$allen_labels)
@@ -3405,7 +3405,7 @@ seurat <- readRDS(
 DefaultAssay(seurat) <- "RNA"
 seurat[["SCT"]] <- NULL
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
@@ -3532,7 +3532,7 @@ seurat <- readRDS(
 DefaultAssay(seurat) <- "RNA"
 seurat[["SCT"]] <- NULL
 gene_anno <- data.frame(
-  geneid = unlist(seurat@misc), gene = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
 )
 seurat <- subset(seurat, idents = ctype)
 
