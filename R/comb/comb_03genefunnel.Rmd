@@ -451,21 +451,6 @@ if (!file.exists(rds)) {
 }
 seurat
 table(seurat$genotype_batch_ctype)
-
-rds <- file.path(cache_dir, "global_contam.rds")
-if (file.exists(rds)) {
-  contam <- readRDS(rds)
-} else {
-  contam <- vector(length = length(levels(seurat$genotype_batch)))
-  names(contam) <- levels(seurat$genotype_batch)
-  for (i in seq_along(contam)) {
-    sub_seurat <- subset(seurat, subset = genotype_batch == names(contam)[i])
-    contam[i] <- mean(sub_seurat$percent_contam)
-  }
-  rm(sub_seurat)
-  saveRDS(contam, file = rds)
-}
-contam
 ```
 
 # Microglia, Glut CA3, Glut CA1, Glut Entorhinal Cortex
@@ -478,7 +463,6 @@ gse <- suppressWarnings(
     use_exprs_values = "counts", statistics = "sum"
   )
 )
-gse$contam <- contam[match(gse$genotype_batch, names(contam))]
 
 keep <- filterByExpr(
   gse, group = gse$genotype_ctype, min.count = 50, min.total.count = 50
@@ -499,7 +483,6 @@ deg <- suppressWarnings(
     use_exprs_values = "counts", statistics = "sum"
   )
 )
-deg$contam <- contam[match(deg$genotype_batch, names(contam))]
 
 keep <- filterByExpr(
   deg, group = deg$genotype_ctype, min.count = 200, min.total.count = 200
@@ -544,9 +527,7 @@ row_split <- factor(
 ## GSE
 
 ```{r}
-design <- model.matrix(
-  ~ 0 + gse$genotype_ctype + gse$batch + as.numeric(gse$contam)
-)
+design <- model.matrix(~ 0 + gse$genotype_ctype + gse$batch)
 colnames(design) <- make.names(colnames(design))
 
 fit <- lmFit(logcounts(gse), design)
@@ -733,10 +714,7 @@ mat <- logcounts(gse)[
 mat <- mat[
   match(rownames(gse_results_up), rownames(mat)), , drop = FALSE
 ]
-mat <- removeBatchEffect(
-  mat, batch = gse$batch, covariates = as.numeric(gse$contam),
-  group = gse$genotype_ctype
-)
+mat <- removeBatchEffect(mat, batch = gse$batch, group = gse$genotype_ctype)
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
@@ -800,10 +778,7 @@ mat <- logcounts(gse)[
 mat <- mat[
   match(rownames(gse_results_down), rownames(mat)), , drop = FALSE
 ]
-mat <- removeBatchEffect(
-  mat, batch = gse$batch, covariates = as.numeric(gse$contam),
-  group = gse$genotype_ctype
-)
+mat <- removeBatchEffect(mat, batch = gse$batch, group = gse$genotype_ctype)
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
@@ -865,9 +840,7 @@ draw(
 ## DGE
 
 ```{r}
-design <- model.matrix(
-  ~ 0 + deg$genotype_ctype + deg$batch + as.numeric(deg$contam)
-)
+design <- model.matrix(~ 0 + deg$genotype_ctype + deg$batch)
 colnames(design) <- make.names(colnames(design))
 
 fit <- lmFit(logcounts(deg), design)
@@ -1059,10 +1032,7 @@ mat <- mat[
   match(rownames(deg_results_up), rownames(mat)), , drop = FALSE
 ]
 rownames(mat) <- deg_results_up$symbol
-mat <- removeBatchEffect(
-  mat, batch = gse$batch, covariates = as.numeric(gse$contam),
-  group = gse$genotype_ctype
-)
+mat <- removeBatchEffect(mat, batch = gse$batch, group = gse$genotype_ctype)
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
@@ -1127,10 +1097,7 @@ mat <- mat[
   match(rownames(deg_results_down), rownames(mat)), , drop = FALSE
 ]
 rownames(mat) <- deg_results_down$symbol
-mat <- removeBatchEffect(
-  mat, batch = gse$batch, covariates = as.numeric(gse$contam),
-  group = gse$genotype_ctype
-)
+mat <- removeBatchEffect(mat, batch = gse$batch, group = gse$genotype_ctype)
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
