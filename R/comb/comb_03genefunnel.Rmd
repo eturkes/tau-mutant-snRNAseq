@@ -452,40 +452,49 @@ if (!file.exists(rds)) {
 seurat
 table(seurat$genotype_batch_ctype)
 
-gse_orig <- as.SingleCellExperiment(seurat, assay = "GF")
-gse_orig <- suppressWarnings(
-  aggregateAcrossCells(
-    gse_orig, colData(gse_orig)[ , "genotype_batch_ctype"],
-    use_exprs_values = "counts", statistics = "sum"
+seurat$tau <- gsub("NLGF_", replacement = "", x = seurat$genotype_ctype)
+seurat$tau <- factor(
+  seurat$tau,
+  levels = c(
+    "MAPTKI_Microglia", "S305N_Microglia", "P301S_Microglia",
+    "MAPTKI_Glut_CA3", "S305N_Glut_CA3", "P301S_Glut_CA3",
+    "MAPTKI_Glut_CA1", "S305N_Glut_CA1", "P301S_Glut_CA1",
+    "MAPTKI_Glut_ENT", "S305N_Glut_ENT", "P301S_Glut_ENT"
   )
 )
 
-deg_orig <- as.SingleCellExperiment(seurat, assay = "RNA")
-deg_orig <- suppressWarnings(
-  aggregateAcrossCells(
-    deg_orig, colData(deg_orig)[ , "genotype_batch_ctype"],
-    use_exprs_values = "counts", statistics = "sum"
+seurat$amyloid <- ifelse(
+  grepl("^NLGF_", x = seurat$genotype_ctype),
+  yes =  gsub("^.*_", replacement = "NLGF_", x = seurat$genotype_batch_ctype),
+  no = gsub("^.*_", replacement = "WT_", x = seurat$genotype_batch_ctype)
+)
+seurat$amyloid <- factor(
+  seurat$amyloid,
+  levels = c(
+    "WT_Microglia", "NLGF_Microglia", "WT_CA3", "NLGF_CA3",
+    "WT_CA1", "NLGF_CA1", "WT_ENT", "NLGF_ENT"
   )
+)
+
+seurat$ctype <- factor(
+  sub("^.*_", "", seurat$genotype_batch_ctype),
+  levels = c("Microglia", "CA3", "CA1", "ENT")
 )
 ```
 
-# Microglia
+# Microglia, Glut CA3, Glut CA1, Glut Entorhinal Cortex
 
 ```{r}
-gse <- gse_orig[ , 1:24]
-gse$tau <- factor(
-  gsub("NLGF_", replacement = "", x = gse$genotype),
-  levels = c("MAPTKI", "S305N", "P301S")
+gse <- as.SingleCellExperiment(seurat, assay = "GF")
+gse <- suppressWarnings(
+  aggregateAcrossCells(
+    gse, colData(gse)[ , "genotype_batch_ctype"],
+    use_exprs_values = "counts", statistics = "sum"
+  )
 )
-gse$amyloid <- factor(
-  c(rep("WT", times = 12), rep("NLGF", times = 12)), levels = c("WT", "NLGF")
-)
-
-design <- model.matrix(~ gse$tau * gse$amyloid)
-colnames(design) <- make.names(colnames(design))
 
 keep <- filterByExpr(
-  gse, design = design, min.count = 50, min.total.count = 50
+  gse, group = gse$genotype_ctype, min.count = 50, min.total.count = 50
 )
 gse <- gse[keep, ]
 
@@ -495,25 +504,20 @@ logcounts(gse, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 2)
 
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse_corrected <- removeBatchEffect(
-  logcounts(gse), batch = gse$batch, design = design
+  logcounts(gse), batch = gse$batch, group = gse$genotype_ctype
 )
-
 gse
 
-deg <- deg_orig[ , 1:24]
-deg$tau <- factor(
-  gsub("NLGF_", replacement = "", x = deg$genotype),
-  levels = c("MAPTKI", "S305N", "P301S")
+deg <- as.SingleCellExperiment(seurat, assay = "RNA")
+deg <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype_batch_ctype"],
+    use_exprs_values = "counts", statistics = "sum"
+  )
 )
-deg$amyloid <- factor(
-  c(rep("WT", times = 12), rep("NLGF", times = 12)), levels = c("WT", "NLGF")
-)
-
-design <- model.matrix(~ deg$tau * deg$amyloid)
-colnames(design) <- make.names(colnames(design))
 
 keep <- filterByExpr(
-  deg, design = design, min.count = 200, min.total.count = 200
+  deg, group = deg$genotype_ctype, min.count = 200, min.total.count = 200
 )
 deg <- deg[keep, ]
 
@@ -524,9 +528,8 @@ logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 0.5)
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
 deg <- deg[rownames(deg) %in% unique(unlist(geneIds(gene_sets_sub))), ]
 deg_corrected <- removeBatchEffect(
-  logcounts(deg), batch = deg$batch, design = design
+  logcounts(deg), batch = deg$batch, group = deg$genotype_ctype
 )
-
 deg
 
 gse_range <- c(
@@ -541,21 +544,42 @@ deg_range <- c(
 )
 
 row_split <- factor(
-  rep(c("2-1", "3-1", "4/5/6-1/2/3", "5-2", "6-3"), each = 5),
-  levels = c("2-1", "3-1", "4/5/6-1/2/3", "5-2", "6-3")
+  rep(
+    c(
+      "2-1", "3-1", "4-1", "5-2", "6-3",
+      "5-4", "6-4", "5-1", "6-1",
+      "8-7", "9-7", "10-7", "11-8", "12-9",
+      "11-10", "12-10", "11-7", "12-7",
+      "14-13", "15-13", "16-13", "17-14", "18-15",
+      "17-16", "18-16", "17-13", "18-13",
+      "20-19", "21-19", "22-19", "23-20", "24-21",
+      "23-22", "24-22", "23-19", "24-19"
+    ),
+    each = 3
+  ),
+  levels = c(
+    "2-1", "3-1", "4-1", "5-2", "6-3",
+    "5-4", "6-4", "5-1", "6-1",
+    "8-7", "9-7", "10-7", "11-8", "12-9",
+    "11-10", "12-10", "11-7", "12-7",
+    "14-13", "15-13", "16-13", "17-14", "18-15",
+    "17-16", "18-16", "17-13", "18-13",
+    "20-19", "21-19", "22-19", "23-20", "24-21",
+    "23-22", "24-22", "23-19", "24-19"
+  ),
 )
 ```
 
 ## GSE
 
 ```{r}
-design <- model.matrix(~ gse$tau * gse$amyloid + gse$batch)
+design <- model.matrix(
+  ~ 0 + gse$tau + gse$amyloid + gse$tau:gse$amyloid:gse$ctype + gse$batch
+)
 colnames(design) <- make.names(colnames(design))
 
 fit <- lmFit(logcounts(gse), design)
-cont_mat <- makeContrasts(
-  "gse.tauS305N", "gse.tauP301S", "gse.amyloidNLGF",
-  "gse.tauS305N.gse.amyloidNLGF", "gse.tauP301S.gse.amyloidNLGF",
+cont_mat <- makeContrasts(design,
   levels = design
 )
 cont_mat <- contrasts.fit(fit, cont_mat)
@@ -570,16 +594,650 @@ write.fit(
 results <- read.delim(file.path(cache_dir, "results.tsv"))
 rownames(results) <- results$X
 results <- results[ , -1]
-tests <- as.data.frame(tests)
-tests <- rowSums(abs(tests) > 0) > 0
-results <- results[tests, ]
+keep <- as.data.frame(decideTests(cont_fit, method = "global"))
+keep <- rowSums(abs(keep) > 0) > 0
+results <- results[keep, ]
 results <- results[order(results$F.p.value), ]
 results$gene_set <- rownames(results)
 
-gse_results_list_up <- vector("list", length = 5)
-idx <- 17
+gse_results_list_up <- vector("list", length = 36)
+idx <- 74
 for (i in seq_along(gse_results_list_up)) {
-  results_sub <- results[ , c(idx - 15, idx)]
+  results_sub <- results[ , c(idx - 72, idx)]
+  results_sub <- results_sub[results_sub[[1]] > 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(gse_results_list_up)
+  results_sub <- results_sub[keep, ]
+  gse_results_list_up[[i]] <- rownames(results_sub)[1:3]
+  idx <- idx + 1
+}
+
+gse_results_list_down <- vector("list", length = 36)
+idx <- 74
+for (i in seq_along(gse_results_list_down)) {
+  results_sub <- results[ , c(idx - 72, idx)]
+  results_sub <- results_sub[results_sub[[1]] < 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(gse_results_list_down)
+  results_sub <- results_sub[keep, ]
+  gse_results_list_down[[i]] <- rownames(results_sub)[1:3]
+  idx <- idx + 1
+}
+
+gse_results_up <- results[
+  rownames(results) %in% unique(unlist(gse_results_list_up)),
+]
+gse_results_up <- gse_results_up[
+  match(unique(unlist(gse_results_list_up)), rownames(gse_results_up)),
+]
+gse_results_down <- results[
+  rownames(results) %in% unique(unlist(gse_results_list_down)),
+]
+gse_results_down <- gse_results_down[
+  match(unique(unlist(gse_results_list_down)), rownames(gse_results_down)),
+]
+
+datatable_download(gse_results_up)
+datatable_download(gse_results_down)
+```
+
+```{r, fig.width = 26, fig.height = 23}
+mat <- gse_corrected[
+  rownames(gse) %in% rownames(gse_results_up), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(gse_results_up), rownames(mat)), , drop = FALSE
+]
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(24), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(24), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+
+mat <- gse_corrected[
+  rownames(gse) %in% rownames(gse_results_down), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(gse_results_down), rownames(mat)), , drop = FALSE
+]
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(24), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(24), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+```
+
+## DGE
+
+```{r}
+design <- model.matrix(~ 0 + deg$genotype_ctype + deg$batch)
+colnames(design) <- make.names(colnames(design))
+
+fit <- lmFit(logcounts(deg), design)
+cont_mat <- makeContrasts(
+  S305N_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeS305N_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  P301S_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeP301S_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  NLGF_MAPTKI_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_MAPTKI_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  NLGF_S305N_Microglia_S305N_Microglia =
+    deg.genotype_ctypeNLGF_S305N_Microglia -
+    deg.genotype_ctypeS305N_Microglia,
+  NLGF_P301S_Microglia_P301S_Microglia =
+    deg.genotype_ctypeNLGF_P301S_Microglia -
+    deg.genotype_ctypeP301S_Microglia,
+  NLGF_S305N_Microglia_NLGF_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_S305N_Microglia -
+    deg.genotype_ctypeNLGF_MAPTKI_Microglia,
+  NLGF_P301S_Microglia_NLGF_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_P301S_Microglia -
+    deg.genotype_ctypeNLGF_MAPTKI_Microglia,
+  NLGF_S305N_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_S305N_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  NLGF_P301S_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_P301S_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  S305N_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeS305N_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  P301S_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeP301S_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_MAPTKI_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_S305N_Glut_CA3_S305N_Glut_CA3 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    deg.genotype_ctypeS305N_Glut_CA3,
+  NLGF_P301S_Glut_CA3_P301S_Glut_CA3 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    deg.genotype_ctypeP301S_Glut_CA3,
+  NLGF_S305N_Glut_CA3_NLGF_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA3,
+  NLGF_P301S_Glut_CA3_NLGF_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA3,
+  NLGF_S305N_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_P301S_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  S305N_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeS305N_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  P301S_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeP301S_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_MAPTKI_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_S305N_Glut_CA1_S305N_Glut_CA1 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    deg.genotype_ctypeS305N_Glut_CA1,
+  NLGF_P301S_Glut_CA1_P301S_Glut_CA1 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    deg.genotype_ctypeP301S_Glut_CA1,
+  NLGF_S305N_Glut_CA1_NLGF_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA1,
+  NLGF_P301S_Glut_CA1_NLGF_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA1,
+  NLGF_S305N_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_P301S_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  S305N_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeS305N_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  P301S_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeP301S_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_MAPTKI_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_S305N_Glut_ENT_S305N_Glut_ENT =
+    deg.genotype_ctypeNLGF_S305N_Glut_ENT -
+    deg.genotype_ctypeS305N_Glut_ENT,
+  NLGF_P301S_Glut_ENT_P301S_Glut_ENT =
+    deg.genotype_ctypeNLGF_P301S_Glut_ENT -
+    deg.genotype_ctypeP301S_Glut_ENT,
+  NLGF_S305N_Glut_ENT_NLGF_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_S305N_Glut_ENT -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_ENT,
+  NLGF_P301S_Glut_ENT_NLGF_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_P301S_Glut_ENT -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_ENT,
+  NLGF_S305N_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_S305N_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_P301S_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_P301S_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  levels = design
+)
+cont_mat <- contrasts.fit(fit, cont_mat)
+cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
+plotSA(cont_fit)
+
+tests <- decideTests(cont_fit, method = "global")
+write.fit(
+  cont_fit, tests, file.path(cache_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(cache_dir, "results.tsv"))
+rownames(results) <- results$X
+results <- results[ , -1]
+keep <- as.data.frame(decideTests(cont_fit, method = "global"))
+keep <- rowSums(abs(keep) > 0) > 0
+results <- results[keep, ]
+results <- results[order(results$F.p.value), ]
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results), gene_anno_sub$ensembl),
+]
+results$symbol <- gene_anno_sub$symbol
+
+deg_results_list_up <- vector("list", length = 36)
+idx <- 74
+for (i in seq_along(deg_results_list_up)) {
+  results_sub <- results[ , c(idx - 72, idx)]
+  results_sub <- results_sub[results_sub[[1]] > 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(deg_results_list_up)
+  results_sub <- results_sub[keep, ]
+  deg_results_list_up[[i]] <- rownames(results_sub)[1:3]
+  idx <- idx + 1
+}
+
+deg_results_list_down <- vector("list", length = 36)
+idx <- 74
+for (i in seq_along(deg_results_list_down)) {
+  results_sub <- results[ , c(idx - 72, idx)]
+  results_sub <- results_sub[results_sub[[1]] < 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(deg_results_list_down)
+  results_sub <- results_sub[keep, ]
+  deg_results_list_down[[i]] <- rownames(results_sub)[1:3]
+  idx <- idx + 1
+}
+
+deg_results_up <- results[
+  rownames(results) %in% unique(unlist(deg_results_list_up)),
+]
+deg_results_up <- deg_results_up[
+  match(unique(unlist(deg_results_list_up)), rownames(deg_results_up)),
+]
+deg_results_down <- results[
+  rownames(results) %in% unique(unlist(deg_results_list_down)),
+]
+deg_results_down <- deg_results_down[
+  match(unique(unlist(deg_results_list_down)), rownames(deg_results_down)),
+]
+
+datatable_download(deg_results_up)
+datatable_download(deg_results_down)
+```
+
+```{r, fig.width = 18, fig.height = 15}
+mat <- deg_corrected[
+  rownames(deg) %in% rownames(deg_results_up), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(deg_results_up), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- deg_results_up$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(24), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(24), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg) %in% rownames(deg_results_down), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(deg_results_down), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- deg_results_down$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(24), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(24), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+```
+
+# Microglia
+
+```{r}
+row_split <- factor(
+  rep(
+    c(
+      "2-1", "3-1", "4-1", "5-2", "6-3",
+      "5-4", "6-4", "5-1", "6-1"
+    ),
+    each = 5
+  ),
+  levels = c(
+    "2-1", "3-1", "4-1", "5-2", "6-3",
+    "5-4", "6-4", "5-1", "6-1"
+  )
+)
+```
+
+## GSE
+
+```{r}
+design <- model.matrix(~ 0 + gse$genotype_ctype + gse$batch)
+colnames(design) <- make.names(colnames(design))
+
+fit <- lmFit(logcounts(gse), design)
+cont_mat <- makeContrasts(
+  S305N_Microglia_MAPTKI_Microglia =
+    gse.genotype_ctypeS305N_Microglia -
+    gse.genotype_ctypeMAPTKI_Microglia,
+  P301S_Microglia_MAPTKI_Microglia =
+    gse.genotype_ctypeP301S_Microglia -
+    gse.genotype_ctypeMAPTKI_Microglia,
+  NLGF_MAPTKI_Microglia_MAPTKI_Microglia =
+    gse.genotype_ctypeNLGF_MAPTKI_Microglia -
+    gse.genotype_ctypeMAPTKI_Microglia,
+  NLGF_S305N_Microglia_S305N_Microglia =
+    gse.genotype_ctypeNLGF_S305N_Microglia -
+    gse.genotype_ctypeS305N_Microglia,
+  NLGF_P301S_Microglia_P301S_Microglia =
+    gse.genotype_ctypeNLGF_P301S_Microglia -
+    gse.genotype_ctypeP301S_Microglia,
+  NLGF_S305N_Microglia_NLGF_MAPTKI_Microglia =
+    gse.genotype_ctypeNLGF_S305N_Microglia -
+    gse.genotype_ctypeNLGF_MAPTKI_Microglia,
+  NLGF_P301S_Microglia_NLGF_MAPTKI_Microglia =
+    gse.genotype_ctypeNLGF_P301S_Microglia -
+    gse.genotype_ctypeNLGF_MAPTKI_Microglia,
+  NLGF_S305N_Microglia_MAPTKI_Microglia =
+    gse.genotype_ctypeNLGF_S305N_Microglia -
+    gse.genotype_ctypeMAPTKI_Microglia,
+  NLGF_P301S_Microglia_MAPTKI_Microglia =
+    gse.genotype_ctypeNLGF_P301S_Microglia -
+    gse.genotype_ctypeMAPTKI_Microglia,
+  S305N_Glut_CA3_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeS305N_Glut_CA3 -
+    gse.genotype_ctypeMAPTKI_Glut_CA3,
+  P301S_Glut_CA3_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeP301S_Glut_CA3 -
+    gse.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_MAPTKI_Glut_CA3_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA3 -
+    gse.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_S305N_Glut_CA3_S305N_Glut_CA3 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    gse.genotype_ctypeS305N_Glut_CA3,
+  NLGF_P301S_Glut_CA3_P301S_Glut_CA3 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    gse.genotype_ctypeP301S_Glut_CA3,
+  NLGF_S305N_Glut_CA3_NLGF_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA3,
+  NLGF_P301S_Glut_CA3_NLGF_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA3,
+  NLGF_S305N_Glut_CA3_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    gse.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_P301S_Glut_CA3_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    gse.genotype_ctypeMAPTKI_Glut_CA3,
+  S305N_Glut_CA1_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeS305N_Glut_CA1 -
+    gse.genotype_ctypeMAPTKI_Glut_CA1,
+  P301S_Glut_CA1_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeP301S_Glut_CA1 -
+    gse.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_MAPTKI_Glut_CA1_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA1 -
+    gse.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_S305N_Glut_CA1_S305N_Glut_CA1 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    gse.genotype_ctypeS305N_Glut_CA1,
+  NLGF_P301S_Glut_CA1_P301S_Glut_CA1 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    gse.genotype_ctypeP301S_Glut_CA1,
+  NLGF_S305N_Glut_CA1_NLGF_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA1,
+  NLGF_P301S_Glut_CA1_NLGF_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA1,
+  NLGF_S305N_Glut_CA1_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    gse.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_P301S_Glut_CA1_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    gse.genotype_ctypeMAPTKI_Glut_CA1,
+  S305N_Glut_ENT_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeS305N_Glut_ENT -
+    gse.genotype_ctypeMAPTKI_Glut_ENT,
+  P301S_Glut_ENT_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeP301S_Glut_ENT -
+    gse.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_MAPTKI_Glut_ENT_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_ENT -
+    gse.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_S305N_Glut_ENT_S305N_Glut_ENT =
+    gse.genotype_ctypeNLGF_S305N_Glut_ENT -
+    gse.genotype_ctypeS305N_Glut_ENT,
+  NLGF_P301S_Glut_ENT_P301S_Glut_ENT =
+    gse.genotype_ctypeNLGF_P301S_Glut_ENT -
+    gse.genotype_ctypeP301S_Glut_ENT,
+  NLGF_S305N_Glut_ENT_NLGF_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeNLGF_S305N_Glut_ENT -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_ENT,
+  NLGF_P301S_Glut_ENT_NLGF_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeNLGF_P301S_Glut_ENT -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_ENT,
+  NLGF_S305N_Glut_ENT_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeNLGF_S305N_Glut_ENT -
+    gse.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_P301S_Glut_ENT_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeNLGF_P301S_Glut_ENT -
+    gse.genotype_ctypeMAPTKI_Glut_ENT,
+  levels = design
+)
+cont_mat <- contrasts.fit(fit, cont_mat)
+cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
+plotSA(cont_fit)
+
+tests <- decideTests(cont_fit, method = "global")
+write.fit(
+  cont_fit, tests, file.path(cache_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(cache_dir, "results.tsv"))
+rownames(results) <- results$X
+results <- results[ , -1]
+keep <- as.data.frame(decideTests(cont_fit, method = "global"))[ , 1:9]
+keep <- rowSums(abs(keep) > 0) > 0
+results <- results[keep, ]
+results <- results[order(results$F.p.value), ]
+results$gene_set <- rownames(results)
+
+gse_results_list_up <- vector("list", length = 9)
+idx <- 74
+for (i in seq_along(gse_results_list_up)) {
+  results_sub <- results[ , c(idx - 72, idx)]
   results_sub <- results_sub[results_sub[[1]] > 0, ]
   results_sub <- results_sub[order(results_sub[[2]]), ]
   keep <- rownames(results_sub) %notin% unlist(gse_results_list_up)
@@ -588,10 +1246,10 @@ for (i in seq_along(gse_results_list_up)) {
   idx <- idx + 1
 }
 
-gse_results_list_down <- vector("list", length = 5)
-idx <- 17
+gse_results_list_down <- vector("list", length = 9)
+idx <- 74
 for (i in seq_along(gse_results_list_down)) {
-  results_sub <- results[ , c(idx - 15, idx)]
+  results_sub <- results[ , c(idx - 72, idx)]
   results_sub <- results_sub[results_sub[[1]] < 0, ]
   results_sub <- results_sub[order(results_sub[[2]]), ]
   keep <- rownames(results_sub) %notin% unlist(gse_results_list_down)
@@ -615,13 +1273,13 @@ gse_results_down <- gse_results_down[
 
 datatable_download(gse_results_up)
 datatable_download(gse_results_down)
-datatable_download(results)
 ```
 
-```{r, fig.width = 14, fig.height = 8}
+```{r, fig.width = 14, fig.height = 12}
 mat <- gse_corrected[
-  rownames(gse_corrected) %in% rownames(gse_results_up), , drop = FALSE
+  rownames(gse) %in% rownames(gse_results_up), , drop = FALSE
 ]
+mat <- mat[ , 1:24]
 mat <- mat[
   match(rownames(gse_results_up), rownames(mat)), , drop = FALSE
 ]
@@ -683,8 +1341,9 @@ draw(
 )
 
 mat <- gse_corrected[
-  rownames(gse_corrected) %in% rownames(gse_results_down), , drop = FALSE
+  rownames(gse) %in% rownames(gse_results_down), , drop = FALSE
 ]
+mat <- mat[ , 1:24]
 mat <- mat[
   match(rownames(gse_results_down), rownames(mat)), , drop = FALSE
 ]
@@ -749,13 +1408,119 @@ draw(
 ## DGE
 
 ```{r}
-design <- model.matrix(~ deg$tau * deg$amyloid + deg$batch)
+design <- model.matrix(~ 0 + deg$genotype_ctype + deg$batch)
 colnames(design) <- make.names(colnames(design))
 
 fit <- lmFit(logcounts(deg), design)
 cont_mat <- makeContrasts(
-  "deg.tauS305N", "deg.tauP301S", "deg.amyloidNLGF",
-  "deg.tauS305N.deg.amyloidNLGF", "deg.tauP301S.deg.amyloidNLGF",
+  S305N_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeS305N_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  P301S_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeP301S_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  NLGF_MAPTKI_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_MAPTKI_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  NLGF_S305N_Microglia_S305N_Microglia =
+    deg.genotype_ctypeNLGF_S305N_Microglia -
+    deg.genotype_ctypeS305N_Microglia,
+  NLGF_P301S_Microglia_P301S_Microglia =
+    deg.genotype_ctypeNLGF_P301S_Microglia -
+    deg.genotype_ctypeP301S_Microglia,
+  NLGF_S305N_Microglia_NLGF_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_S305N_Microglia -
+    deg.genotype_ctypeNLGF_MAPTKI_Microglia,
+  NLGF_P301S_Microglia_NLGF_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_P301S_Microglia -
+    deg.genotype_ctypeNLGF_MAPTKI_Microglia,
+  NLGF_S305N_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_S305N_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  NLGF_P301S_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_P301S_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  S305N_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeS305N_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  P301S_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeP301S_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_MAPTKI_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_S305N_Glut_CA3_S305N_Glut_CA3 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    deg.genotype_ctypeS305N_Glut_CA3,
+  NLGF_P301S_Glut_CA3_P301S_Glut_CA3 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    deg.genotype_ctypeP301S_Glut_CA3,
+  NLGF_S305N_Glut_CA3_NLGF_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA3,
+  NLGF_P301S_Glut_CA3_NLGF_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA3,
+  NLGF_S305N_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_P301S_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  S305N_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeS305N_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  P301S_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeP301S_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_MAPTKI_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_S305N_Glut_CA1_S305N_Glut_CA1 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    deg.genotype_ctypeS305N_Glut_CA1,
+  NLGF_P301S_Glut_CA1_P301S_Glut_CA1 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    deg.genotype_ctypeP301S_Glut_CA1,
+  NLGF_S305N_Glut_CA1_NLGF_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA1,
+  NLGF_P301S_Glut_CA1_NLGF_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA1,
+  NLGF_S305N_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_P301S_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  S305N_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeS305N_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  P301S_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeP301S_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_MAPTKI_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_S305N_Glut_ENT_S305N_Glut_ENT =
+    deg.genotype_ctypeNLGF_S305N_Glut_ENT -
+    deg.genotype_ctypeS305N_Glut_ENT,
+  NLGF_P301S_Glut_ENT_P301S_Glut_ENT =
+    deg.genotype_ctypeNLGF_P301S_Glut_ENT -
+    deg.genotype_ctypeP301S_Glut_ENT,
+  NLGF_S305N_Glut_ENT_NLGF_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_S305N_Glut_ENT -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_ENT,
+  NLGF_P301S_Glut_ENT_NLGF_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_P301S_Glut_ENT -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_ENT,
+  NLGF_S305N_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_S305N_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_P301S_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_P301S_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
   levels = design
 )
 cont_mat <- contrasts.fit(fit, cont_mat)
@@ -770,9 +1535,9 @@ write.fit(
 results <- read.delim(file.path(cache_dir, "results.tsv"))
 rownames(results) <- results$X
 results <- results[ , -1]
-tests <- as.data.frame(tests)
-tests <- rowSums(abs(tests) > 0) > 0
-results <- results[tests, ]
+keep <- as.data.frame(decideTests(cont_fit, method = "global"))[ , 1:9]
+keep <- rowSums(abs(keep) > 0) > 0
+results <- results[keep, ]
 results <- results[order(results$F.p.value), ]
 gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
 gene_anno_sub <- gene_anno_sub[
@@ -780,10 +1545,10 @@ gene_anno_sub <- gene_anno_sub[
 ]
 results$symbol <- gene_anno_sub$symbol
 
-deg_results_list_up <- vector("list", length = 5)
-idx <- 17
+deg_results_list_up <- vector("list", length = 9)
+idx <- 74
 for (i in seq_along(deg_results_list_up)) {
-  results_sub <- results[ , c(idx - 15, idx)]
+  results_sub <- results[ , c(idx - 72, idx)]
   results_sub <- results_sub[results_sub[[1]] > 0, ]
   results_sub <- results_sub[order(results_sub[[2]]), ]
   keep <- rownames(results_sub) %notin% unlist(deg_results_list_up)
@@ -792,10 +1557,10 @@ for (i in seq_along(deg_results_list_up)) {
   idx <- idx + 1
 }
 
-deg_results_list_down <- vector("list", length = 5)
-idx <- 17
+deg_results_list_down <- vector("list", length = 9)
+idx <- 74
 for (i in seq_along(deg_results_list_down)) {
-  results_sub <- results[ , c(idx - 15, idx)]
+  results_sub <- results[ , c(idx - 72, idx)]
   results_sub <- results_sub[results_sub[[1]] < 0, ]
   results_sub <- results_sub[order(results_sub[[2]]), ]
   keep <- rownames(results_sub) %notin% unlist(deg_results_list_down)
@@ -819,13 +1584,13 @@ deg_results_down <- deg_results_down[
 
 datatable_download(deg_results_up)
 datatable_download(deg_results_down)
-datatable_download(results)
 ```
 
-```{r, fig.width = 8, fig.height = 8}
+```{r, fig.width = 8, fig.height = 12}
 mat <- deg_corrected[
-  rownames(deg_corrected) %in% rownames(deg_results_up), , drop = FALSE
+  rownames(deg) %in% rownames(deg_results_up), , drop = FALSE
 ]
+mat <- mat[ , 1:24]
 mat <- mat[
   match(rownames(deg_results_up), rownames(mat)), , drop = FALSE
 ]
@@ -888,8 +1653,9 @@ draw(
 )
 
 mat <- deg_corrected[
-  rownames(deg_corrected) %in% rownames(deg_results_down), , drop = FALSE
+  rownames(deg) %in% rownames(deg_results_down), , drop = FALSE
 ]
+mat <- mat[ , 1:24]
 mat <- mat[
   match(rownames(deg_results_down), rownames(mat)), , drop = FALSE
 ]
@@ -955,90 +1721,137 @@ draw(
 # Glut CA3
 
 ```{r}
-gse <- gse_orig[ , 25:48]
-gse$tau <- factor(
-  gsub("NLGF_", replacement = "", x = gse$genotype),
-  levels = c("MAPTKI", "S305N", "P301S")
-)
-gse$amyloid <- factor(
-  c(rep("WT", times = 12), rep("NLGF", times = 12)), levels = c("WT", "NLGF")
-)
-
-design <- model.matrix(~ gse$tau * gse$amyloid)
-colnames(design) <- make.names(colnames(design))
-
-keep <- filterByExpr(
-  gse, design = design, min.count = 50, min.total.count = 50
-)
-gse <- gse[keep, ]
-
-dge <- DGEList(counts(gse))
-dge <- calcNormFactors(dge)
-logcounts(gse, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 2)
-
-gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
-gse_corrected <- removeBatchEffect(
-  logcounts(gse), batch = gse$batch, design = design
-)
-
-gse
-
-deg <- deg_orig[ , 25:48]
-deg$tau <- factor(
-  gsub("NLGF_", replacement = "", x = deg$genotype),
-  levels = c("MAPTKI", "S305N", "P301S")
-)
-deg$amyloid <- factor(
-  c(rep("WT", times = 12), rep("NLGF", times = 12)), levels = c("WT", "NLGF")
-)
-
-design <- model.matrix(~ deg$tau * deg$amyloid)
-colnames(design) <- make.names(colnames(design))
-
-keep <- filterByExpr(
-  deg, design = design, min.count = 200, min.total.count = 200
-)
-deg <- deg[keep, ]
-
-dge <- DGEList(counts(deg))
-dge <- calcNormFactors(dge)
-logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 0.5)
-
-gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
-deg <- deg[rownames(deg) %in% unique(unlist(geneIds(gene_sets_sub))), ]
-deg_corrected <- removeBatchEffect(
-  logcounts(deg), batch = deg$batch, design = design
-)
-
-deg
-
-gse_range <- c(
-  min(gse_corrected),
-  (min(gse_corrected) + max(gse_corrected)) / 2,
-  max(gse_corrected)
-)
-deg_range <- c(
-  min(deg_corrected),
-  (min(deg_corrected) + max(deg_corrected)) / 2,
-  max(deg_corrected)
-)
-
 row_split <- factor(
-  rep(c("2-1", "3-1", "4/5/6-1/2/3", "5-2", "6-3"), each = 5),
-  levels = c("2-1", "3-1", "4/5/6-1/2/3", "5-2", "6-3")
+  rep(
+    c(
+      "2-1", "3-1", "4-1", "5-2", "6-3",
+      "5-4", "6-4", "5-1", "6-1"
+    ),
+    each = 5
+  ),
+  levels = c(
+    "2-1", "3-1", "4-1", "5-2", "6-3",
+    "5-4", "6-4", "5-1", "6-1"
+  )
 )
 ```
 
 ## GSE
 
 ```{r}
-design <- model.matrix(~ gse$tau * gse$amyloid + gse$batch)
+design <- model.matrix(~ 0 + gse$genotype_ctype + gse$batch)
 colnames(design) <- make.names(colnames(design))
 
 fit <- lmFit(logcounts(gse), design)
 cont_mat <- makeContrasts(
-  "gse.tauS305N", "gse.tauP301S", "gse.amyloidNLGF",
-  "gse.tauS305N.gse.amyloidNLGF", "gse.tauP301S.gse.amyloidNLGF",
+  S305N_Microglia_MAPTKI_Microglia =
+    gse.genotype_ctypeS305N_Microglia -
+    gse.genotype_ctypeMAPTKI_Microglia,
+  P301S_Microglia_MAPTKI_Microglia =
+    gse.genotype_ctypeP301S_Microglia -
+    gse.genotype_ctypeMAPTKI_Microglia,
+  NLGF_MAPTKI_Microglia_MAPTKI_Microglia =
+    gse.genotype_ctypeNLGF_MAPTKI_Microglia -
+    gse.genotype_ctypeMAPTKI_Microglia,
+  NLGF_S305N_Microglia_S305N_Microglia =
+    gse.genotype_ctypeNLGF_S305N_Microglia -
+    gse.genotype_ctypeS305N_Microglia,
+  NLGF_P301S_Microglia_P301S_Microglia =
+    gse.genotype_ctypeNLGF_P301S_Microglia -
+    gse.genotype_ctypeP301S_Microglia,
+  NLGF_S305N_Microglia_NLGF_MAPTKI_Microglia =
+    gse.genotype_ctypeNLGF_S305N_Microglia -
+    gse.genotype_ctypeNLGF_MAPTKI_Microglia,
+  NLGF_P301S_Microglia_NLGF_MAPTKI_Microglia =
+    gse.genotype_ctypeNLGF_P301S_Microglia -
+    gse.genotype_ctypeNLGF_MAPTKI_Microglia,
+  NLGF_S305N_Microglia_MAPTKI_Microglia =
+    gse.genotype_ctypeNLGF_S305N_Microglia -
+    gse.genotype_ctypeMAPTKI_Microglia,
+  NLGF_P301S_Microglia_MAPTKI_Microglia =
+    gse.genotype_ctypeNLGF_P301S_Microglia -
+    gse.genotype_ctypeMAPTKI_Microglia,
+  S305N_Glut_CA3_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeS305N_Glut_CA3 -
+    gse.genotype_ctypeMAPTKI_Glut_CA3,
+  P301S_Glut_CA3_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeP301S_Glut_CA3 -
+    gse.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_MAPTKI_Glut_CA3_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA3 -
+    gse.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_S305N_Glut_CA3_S305N_Glut_CA3 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    gse.genotype_ctypeS305N_Glut_CA3,
+  NLGF_P301S_Glut_CA3_P301S_Glut_CA3 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    gse.genotype_ctypeP301S_Glut_CA3,
+  NLGF_S305N_Glut_CA3_NLGF_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA3,
+  NLGF_P301S_Glut_CA3_NLGF_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA3,
+  NLGF_S305N_Glut_CA3_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    gse.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_P301S_Glut_CA3_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    gse.genotype_ctypeMAPTKI_Glut_CA3,
+  S305N_Glut_CA1_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeS305N_Glut_CA1 -
+    gse.genotype_ctypeMAPTKI_Glut_CA1,
+  P301S_Glut_CA1_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeP301S_Glut_CA1 -
+    gse.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_MAPTKI_Glut_CA1_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA1 -
+    gse.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_S305N_Glut_CA1_S305N_Glut_CA1 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    gse.genotype_ctypeS305N_Glut_CA1,
+  NLGF_P301S_Glut_CA1_P301S_Glut_CA1 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    gse.genotype_ctypeP301S_Glut_CA1,
+  NLGF_S305N_Glut_CA1_NLGF_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA1,
+  NLGF_P301S_Glut_CA1_NLGF_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA1,
+  NLGF_S305N_Glut_CA1_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    gse.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_P301S_Glut_CA1_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    gse.genotype_ctypeMAPTKI_Glut_CA1,
+  S305N_Glut_ENT_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeS305N_Glut_ENT -
+    gse.genotype_ctypeMAPTKI_Glut_ENT,
+  P301S_Glut_ENT_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeP301S_Glut_ENT -
+    gse.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_MAPTKI_Glut_ENT_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_ENT -
+    gse.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_S305N_Glut_ENT_S305N_Glut_ENT =
+    gse.genotype_ctypeNLGF_S305N_Glut_ENT -
+    gse.genotype_ctypeS305N_Glut_ENT,
+  NLGF_P301S_Glut_ENT_P301S_Glut_ENT =
+    gse.genotype_ctypeNLGF_P301S_Glut_ENT -
+    gse.genotype_ctypeP301S_Glut_ENT,
+  NLGF_S305N_Glut_ENT_NLGF_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeNLGF_S305N_Glut_ENT -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_ENT,
+  NLGF_P301S_Glut_ENT_NLGF_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeNLGF_P301S_Glut_ENT -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_ENT,
+  NLGF_S305N_Glut_ENT_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeNLGF_S305N_Glut_ENT -
+    gse.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_P301S_Glut_ENT_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeNLGF_P301S_Glut_ENT -
+    gse.genotype_ctypeMAPTKI_Glut_ENT,
   levels = design
 )
 cont_mat <- contrasts.fit(fit, cont_mat)
@@ -1053,16 +1866,16 @@ write.fit(
 results <- read.delim(file.path(cache_dir, "results.tsv"))
 rownames(results) <- results$X
 results <- results[ , -1]
-tests <- as.data.frame(tests)
-tests <- rowSums(abs(tests) > 0) > 0
-results <- results[tests, ]
+keep <- as.data.frame(decideTests(cont_fit, method = "global"))[ , 10:18]
+keep <- rowSums(abs(keep) > 0) > 0
+results <- results[keep, ]
 results <- results[order(results$F.p.value), ]
 results$gene_set <- rownames(results)
 
-gse_results_list_up <- vector("list", length = 5)
-idx <- 17
+gse_results_list_up <- vector("list", length = 9)
+idx <- 83
 for (i in seq_along(gse_results_list_up)) {
-  results_sub <- results[ , c(idx - 15, idx)]
+  results_sub <- results[ , c(idx - 72, idx)]
   results_sub <- results_sub[results_sub[[1]] > 0, ]
   results_sub <- results_sub[order(results_sub[[2]]), ]
   keep <- rownames(results_sub) %notin% unlist(gse_results_list_up)
@@ -1071,10 +1884,10 @@ for (i in seq_along(gse_results_list_up)) {
   idx <- idx + 1
 }
 
-gse_results_list_down <- vector("list", length = 5)
-idx <- 17
+gse_results_list_down <- vector("list", length = 9)
+idx <- 83
 for (i in seq_along(gse_results_list_down)) {
-  results_sub <- results[ , c(idx - 15, idx)]
+  results_sub <- results[ , c(idx - 72, idx)]
   results_sub <- results_sub[results_sub[[1]] < 0, ]
   results_sub <- results_sub[order(results_sub[[2]]), ]
   keep <- rownames(results_sub) %notin% unlist(gse_results_list_down)
@@ -1098,13 +1911,13 @@ gse_results_down <- gse_results_down[
 
 datatable_download(gse_results_up)
 datatable_download(gse_results_down)
-datatable_download(results)
 ```
 
-```{r, fig.width = 14, fig.height = 8}
+```{r, fig.width = 14, fig.height = 12}
 mat <- gse_corrected[
-  rownames(gse_corrected) %in% rownames(gse_results_up), , drop = FALSE
+  rownames(gse) %in% rownames(gse_results_up), , drop = FALSE
 ]
+mat <- mat[ , 25:48]
 mat <- mat[
   match(rownames(gse_results_up), rownames(mat)), , drop = FALSE
 ]
@@ -1166,8 +1979,9 @@ draw(
 )
 
 mat <- gse_corrected[
-  rownames(gse_corrected) %in% rownames(gse_results_down), , drop = FALSE
+  rownames(gse) %in% rownames(gse_results_down), , drop = FALSE
 ]
+mat <- mat[ , 25:48]
 mat <- mat[
   match(rownames(gse_results_down), rownames(mat)), , drop = FALSE
 ]
@@ -1232,13 +2046,119 @@ draw(
 ## DGE
 
 ```{r}
-design <- model.matrix(~ deg$tau * deg$amyloid + deg$batch)
+design <- model.matrix(~ 0 + deg$genotype_ctype + deg$batch)
 colnames(design) <- make.names(colnames(design))
 
 fit <- lmFit(logcounts(deg), design)
 cont_mat <- makeContrasts(
-  "deg.tauS305N", "deg.tauP301S", "deg.amyloidNLGF",
-  "deg.tauS305N.deg.amyloidNLGF", "deg.tauP301S.deg.amyloidNLGF",
+  S305N_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeS305N_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  P301S_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeP301S_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  NLGF_MAPTKI_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_MAPTKI_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  NLGF_S305N_Microglia_S305N_Microglia =
+    deg.genotype_ctypeNLGF_S305N_Microglia -
+    deg.genotype_ctypeS305N_Microglia,
+  NLGF_P301S_Microglia_P301S_Microglia =
+    deg.genotype_ctypeNLGF_P301S_Microglia -
+    deg.genotype_ctypeP301S_Microglia,
+  NLGF_S305N_Microglia_NLGF_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_S305N_Microglia -
+    deg.genotype_ctypeNLGF_MAPTKI_Microglia,
+  NLGF_P301S_Microglia_NLGF_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_P301S_Microglia -
+    deg.genotype_ctypeNLGF_MAPTKI_Microglia,
+  NLGF_S305N_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_S305N_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  NLGF_P301S_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_P301S_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  S305N_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeS305N_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  P301S_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeP301S_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_MAPTKI_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_S305N_Glut_CA3_S305N_Glut_CA3 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    deg.genotype_ctypeS305N_Glut_CA3,
+  NLGF_P301S_Glut_CA3_P301S_Glut_CA3 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    deg.genotype_ctypeP301S_Glut_CA3,
+  NLGF_S305N_Glut_CA3_NLGF_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA3,
+  NLGF_P301S_Glut_CA3_NLGF_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA3,
+  NLGF_S305N_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_P301S_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  S305N_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeS305N_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  P301S_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeP301S_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_MAPTKI_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_S305N_Glut_CA1_S305N_Glut_CA1 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    deg.genotype_ctypeS305N_Glut_CA1,
+  NLGF_P301S_Glut_CA1_P301S_Glut_CA1 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    deg.genotype_ctypeP301S_Glut_CA1,
+  NLGF_S305N_Glut_CA1_NLGF_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA1,
+  NLGF_P301S_Glut_CA1_NLGF_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA1,
+  NLGF_S305N_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_P301S_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  S305N_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeS305N_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  P301S_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeP301S_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_MAPTKI_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_S305N_Glut_ENT_S305N_Glut_ENT =
+    deg.genotype_ctypeNLGF_S305N_Glut_ENT -
+    deg.genotype_ctypeS305N_Glut_ENT,
+  NLGF_P301S_Glut_ENT_P301S_Glut_ENT =
+    deg.genotype_ctypeNLGF_P301S_Glut_ENT -
+    deg.genotype_ctypeP301S_Glut_ENT,
+  NLGF_S305N_Glut_ENT_NLGF_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_S305N_Glut_ENT -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_ENT,
+  NLGF_P301S_Glut_ENT_NLGF_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_P301S_Glut_ENT -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_ENT,
+  NLGF_S305N_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_S305N_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_P301S_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_P301S_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
   levels = design
 )
 cont_mat <- contrasts.fit(fit, cont_mat)
@@ -1253,9 +2173,9 @@ write.fit(
 results <- read.delim(file.path(cache_dir, "results.tsv"))
 rownames(results) <- results$X
 results <- results[ , -1]
-tests <- as.data.frame(tests)
-tests <- rowSums(abs(tests) > 0) > 0
-results <- results[tests, ]
+keep <- as.data.frame(decideTests(cont_fit, method = "global"))[ , 10:18]
+keep <- rowSums(abs(keep) > 0) > 0
+results <- results[keep, ]
 results <- results[order(results$F.p.value), ]
 gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
 gene_anno_sub <- gene_anno_sub[
@@ -1263,10 +2183,10 @@ gene_anno_sub <- gene_anno_sub[
 ]
 results$symbol <- gene_anno_sub$symbol
 
-deg_results_list_up <- vector("list", length = 5)
-idx <- 17
+deg_results_list_up <- vector("list", length = 9)
+idx <- 83
 for (i in seq_along(deg_results_list_up)) {
-  results_sub <- results[ , c(idx - 15, idx)]
+  results_sub <- results[ , c(idx - 72, idx)]
   results_sub <- results_sub[results_sub[[1]] > 0, ]
   results_sub <- results_sub[order(results_sub[[2]]), ]
   keep <- rownames(results_sub) %notin% unlist(deg_results_list_up)
@@ -1275,10 +2195,10 @@ for (i in seq_along(deg_results_list_up)) {
   idx <- idx + 1
 }
 
-deg_results_list_down <- vector("list", length = 5)
-idx <- 17
+deg_results_list_down <- vector("list", length = 9)
+idx <- 83
 for (i in seq_along(deg_results_list_down)) {
-  results_sub <- results[ , c(idx - 15, idx)]
+  results_sub <- results[ , c(idx - 72, idx)]
   results_sub <- results_sub[results_sub[[1]] < 0, ]
   results_sub <- results_sub[order(results_sub[[2]]), ]
   keep <- rownames(results_sub) %notin% unlist(deg_results_list_down)
@@ -1302,13 +2222,13 @@ deg_results_down <- deg_results_down[
 
 datatable_download(deg_results_up)
 datatable_download(deg_results_down)
-datatable_download(results)
 ```
 
-```{r, fig.width = 8, fig.height = 8}
+```{r, fig.width = 8, fig.height = 12}
 mat <- deg_corrected[
-  rownames(deg_corrected) %in% rownames(deg_results_up), , drop = FALSE
+  rownames(deg) %in% rownames(deg_results_up), , drop = FALSE
 ]
+mat <- mat[ , 25:48]
 mat <- mat[
   match(rownames(deg_results_up), rownames(mat)), , drop = FALSE
 ]
@@ -1371,8 +2291,1285 @@ draw(
 )
 
 mat <- deg_corrected[
-  rownames(deg_corrected) %in% rownames(deg_results_down), , drop = FALSE
+  rownames(deg) %in% rownames(deg_results_down), , drop = FALSE
 ]
+mat <- mat[ , 25:48]
+mat <- mat[
+  match(rownames(deg_results_down), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- deg_results_down$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+```
+
+# Glut CA1
+
+```{r}
+row_split <- factor(
+  rep(
+    c(
+      "2-1", "3-1", "4-1", "5-2", "6-3",
+      "5-4", "6-4", "5-1", "6-1"
+    ),
+    each = 5
+  ),
+  levels = c(
+    "2-1", "3-1", "4-1", "5-2", "6-3",
+    "5-4", "6-4", "5-1", "6-1"
+  )
+)
+```
+
+## GSE
+
+```{r}
+design <- model.matrix(~ 0 + gse$genotype_ctype + gse$batch)
+colnames(design) <- make.names(colnames(design))
+
+fit <- lmFit(logcounts(gse), design)
+cont_mat <- makeContrasts(
+  S305N_Microglia_MAPTKI_Microglia =
+    gse.genotype_ctypeS305N_Microglia -
+    gse.genotype_ctypeMAPTKI_Microglia,
+  P301S_Microglia_MAPTKI_Microglia =
+    gse.genotype_ctypeP301S_Microglia -
+    gse.genotype_ctypeMAPTKI_Microglia,
+  NLGF_MAPTKI_Microglia_MAPTKI_Microglia =
+    gse.genotype_ctypeNLGF_MAPTKI_Microglia -
+    gse.genotype_ctypeMAPTKI_Microglia,
+  NLGF_S305N_Microglia_S305N_Microglia =
+    gse.genotype_ctypeNLGF_S305N_Microglia -
+    gse.genotype_ctypeS305N_Microglia,
+  NLGF_P301S_Microglia_P301S_Microglia =
+    gse.genotype_ctypeNLGF_P301S_Microglia -
+    gse.genotype_ctypeP301S_Microglia,
+  NLGF_S305N_Microglia_NLGF_MAPTKI_Microglia =
+    gse.genotype_ctypeNLGF_S305N_Microglia -
+    gse.genotype_ctypeNLGF_MAPTKI_Microglia,
+  NLGF_P301S_Microglia_NLGF_MAPTKI_Microglia =
+    gse.genotype_ctypeNLGF_P301S_Microglia -
+    gse.genotype_ctypeNLGF_MAPTKI_Microglia,
+  NLGF_S305N_Microglia_MAPTKI_Microglia =
+    gse.genotype_ctypeNLGF_S305N_Microglia -
+    gse.genotype_ctypeMAPTKI_Microglia,
+  NLGF_P301S_Microglia_MAPTKI_Microglia =
+    gse.genotype_ctypeNLGF_P301S_Microglia -
+    gse.genotype_ctypeMAPTKI_Microglia,
+  S305N_Glut_CA3_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeS305N_Glut_CA3 -
+    gse.genotype_ctypeMAPTKI_Glut_CA3,
+  P301S_Glut_CA3_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeP301S_Glut_CA3 -
+    gse.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_MAPTKI_Glut_CA3_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA3 -
+    gse.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_S305N_Glut_CA3_S305N_Glut_CA3 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    gse.genotype_ctypeS305N_Glut_CA3,
+  NLGF_P301S_Glut_CA3_P301S_Glut_CA3 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    gse.genotype_ctypeP301S_Glut_CA3,
+  NLGF_S305N_Glut_CA3_NLGF_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA3,
+  NLGF_P301S_Glut_CA3_NLGF_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA3,
+  NLGF_S305N_Glut_CA3_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    gse.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_P301S_Glut_CA3_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    gse.genotype_ctypeMAPTKI_Glut_CA3,
+  S305N_Glut_CA1_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeS305N_Glut_CA1 -
+    gse.genotype_ctypeMAPTKI_Glut_CA1,
+  P301S_Glut_CA1_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeP301S_Glut_CA1 -
+    gse.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_MAPTKI_Glut_CA1_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA1 -
+    gse.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_S305N_Glut_CA1_S305N_Glut_CA1 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    gse.genotype_ctypeS305N_Glut_CA1,
+  NLGF_P301S_Glut_CA1_P301S_Glut_CA1 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    gse.genotype_ctypeP301S_Glut_CA1,
+  NLGF_S305N_Glut_CA1_NLGF_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA1,
+  NLGF_P301S_Glut_CA1_NLGF_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA1,
+  NLGF_S305N_Glut_CA1_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    gse.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_P301S_Glut_CA1_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    gse.genotype_ctypeMAPTKI_Glut_CA1,
+  S305N_Glut_ENT_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeS305N_Glut_ENT -
+    gse.genotype_ctypeMAPTKI_Glut_ENT,
+  P301S_Glut_ENT_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeP301S_Glut_ENT -
+    gse.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_MAPTKI_Glut_ENT_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_ENT -
+    gse.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_S305N_Glut_ENT_S305N_Glut_ENT =
+    gse.genotype_ctypeNLGF_S305N_Glut_ENT -
+    gse.genotype_ctypeS305N_Glut_ENT,
+  NLGF_P301S_Glut_ENT_P301S_Glut_ENT =
+    gse.genotype_ctypeNLGF_P301S_Glut_ENT -
+    gse.genotype_ctypeP301S_Glut_ENT,
+  NLGF_S305N_Glut_ENT_NLGF_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeNLGF_S305N_Glut_ENT -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_ENT,
+  NLGF_P301S_Glut_ENT_NLGF_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeNLGF_P301S_Glut_ENT -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_ENT,
+  NLGF_S305N_Glut_ENT_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeNLGF_S305N_Glut_ENT -
+    gse.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_P301S_Glut_ENT_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeNLGF_P301S_Glut_ENT -
+    gse.genotype_ctypeMAPTKI_Glut_ENT,
+  levels = design
+)
+cont_mat <- contrasts.fit(fit, cont_mat)
+cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
+plotSA(cont_fit)
+
+tests <- decideTests(cont_fit, method = "global")
+write.fit(
+  cont_fit, tests, file.path(cache_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(cache_dir, "results.tsv"))
+rownames(results) <- results$X
+results <- results[ , -1]
+keep <- as.data.frame(decideTests(cont_fit, method = "global"))[ , 19:27]
+keep <- rowSums(abs(keep) > 0) > 0
+results <- results[keep, ]
+results <- results[order(results$F.p.value), ]
+results$gene_set <- rownames(results)
+
+gse_results_list_up <- vector("list", length = 9)
+idx <- 92
+for (i in seq_along(gse_results_list_up)) {
+  results_sub <- results[ , c(idx - 72, idx)]
+  results_sub <- results_sub[results_sub[[1]] > 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(gse_results_list_up)
+  results_sub <- results_sub[keep, ]
+  gse_results_list_up[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+gse_results_list_down <- vector("list", length = 9)
+idx <- 92
+for (i in seq_along(gse_results_list_down)) {
+  results_sub <- results[ , c(idx - 72, idx)]
+  results_sub <- results_sub[results_sub[[1]] < 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(gse_results_list_down)
+  results_sub <- results_sub[keep, ]
+  gse_results_list_down[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+gse_results_up <- results[
+  rownames(results) %in% unique(unlist(gse_results_list_up)),
+]
+gse_results_up <- gse_results_up[
+  match(unique(unlist(gse_results_list_up)), rownames(gse_results_up)),
+]
+gse_results_down <- results[
+  rownames(results) %in% unique(unlist(gse_results_list_down)),
+]
+gse_results_down <- gse_results_down[
+  match(unique(unlist(gse_results_list_down)), rownames(gse_results_down)),
+]
+
+datatable_download(gse_results_up)
+datatable_download(gse_results_down)
+```
+
+```{r, fig.width = 14, fig.height = 12}
+mat <- gse_corrected[
+  rownames(gse) %in% rownames(gse_results_up), , drop = FALSE
+]
+mat <- mat[ , 49:72]
+mat <- mat[
+  match(rownames(gse_results_up), rownames(mat)), , drop = FALSE
+]
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+
+mat <- gse_corrected[
+  rownames(gse) %in% rownames(gse_results_down), , drop = FALSE
+]
+mat <- mat[ , 49:72]
+mat <- mat[
+  match(rownames(gse_results_down), rownames(mat)), , drop = FALSE
+]
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+```
+
+## DGE
+
+```{r}
+design <- model.matrix(~ 0 + deg$genotype_ctype + deg$batch)
+colnames(design) <- make.names(colnames(design))
+
+fit <- lmFit(logcounts(deg), design)
+cont_mat <- makeContrasts(
+  S305N_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeS305N_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  P301S_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeP301S_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  NLGF_MAPTKI_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_MAPTKI_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  NLGF_S305N_Microglia_S305N_Microglia =
+    deg.genotype_ctypeNLGF_S305N_Microglia -
+    deg.genotype_ctypeS305N_Microglia,
+  NLGF_P301S_Microglia_P301S_Microglia =
+    deg.genotype_ctypeNLGF_P301S_Microglia -
+    deg.genotype_ctypeP301S_Microglia,
+  NLGF_S305N_Microglia_NLGF_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_S305N_Microglia -
+    deg.genotype_ctypeNLGF_MAPTKI_Microglia,
+  NLGF_P301S_Microglia_NLGF_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_P301S_Microglia -
+    deg.genotype_ctypeNLGF_MAPTKI_Microglia,
+  NLGF_S305N_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_S305N_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  NLGF_P301S_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_P301S_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  S305N_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeS305N_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  P301S_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeP301S_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_MAPTKI_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_S305N_Glut_CA3_S305N_Glut_CA3 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    deg.genotype_ctypeS305N_Glut_CA3,
+  NLGF_P301S_Glut_CA3_P301S_Glut_CA3 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    deg.genotype_ctypeP301S_Glut_CA3,
+  NLGF_S305N_Glut_CA3_NLGF_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA3,
+  NLGF_P301S_Glut_CA3_NLGF_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA3,
+  NLGF_S305N_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_P301S_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  S305N_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeS305N_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  P301S_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeP301S_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_MAPTKI_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_S305N_Glut_CA1_S305N_Glut_CA1 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    deg.genotype_ctypeS305N_Glut_CA1,
+  NLGF_P301S_Glut_CA1_P301S_Glut_CA1 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    deg.genotype_ctypeP301S_Glut_CA1,
+  NLGF_S305N_Glut_CA1_NLGF_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA1,
+  NLGF_P301S_Glut_CA1_NLGF_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA1,
+  NLGF_S305N_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_P301S_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  S305N_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeS305N_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  P301S_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeP301S_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_MAPTKI_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_S305N_Glut_ENT_S305N_Glut_ENT =
+    deg.genotype_ctypeNLGF_S305N_Glut_ENT -
+    deg.genotype_ctypeS305N_Glut_ENT,
+  NLGF_P301S_Glut_ENT_P301S_Glut_ENT =
+    deg.genotype_ctypeNLGF_P301S_Glut_ENT -
+    deg.genotype_ctypeP301S_Glut_ENT,
+  NLGF_S305N_Glut_ENT_NLGF_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_S305N_Glut_ENT -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_ENT,
+  NLGF_P301S_Glut_ENT_NLGF_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_P301S_Glut_ENT -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_ENT,
+  NLGF_S305N_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_S305N_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_P301S_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_P301S_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  levels = design
+)
+cont_mat <- contrasts.fit(fit, cont_mat)
+cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
+plotSA(cont_fit)
+
+tests <- decideTests(cont_fit, method = "global")
+write.fit(
+  cont_fit, tests, file.path(cache_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(cache_dir, "results.tsv"))
+rownames(results) <- results$X
+results <- results[ , -1]
+keep <- as.data.frame(decideTests(cont_fit, method = "global"))[ , 19:27]
+keep <- rowSums(abs(keep) > 0) > 0
+results <- results[keep, ]
+results <- results[order(results$F.p.value), ]
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results), gene_anno_sub$ensembl),
+]
+results$symbol <- gene_anno_sub$symbol
+
+deg_results_list_up <- vector("list", length = 9)
+idx <- 92
+for (i in seq_along(deg_results_list_up)) {
+  results_sub <- results[ , c(idx - 72, idx)]
+  results_sub <- results_sub[results_sub[[1]] > 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(deg_results_list_up)
+  results_sub <- results_sub[keep, ]
+  deg_results_list_up[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+deg_results_list_down <- vector("list", length = 9)
+idx <- 92
+for (i in seq_along(deg_results_list_down)) {
+  results_sub <- results[ , c(idx - 72, idx)]
+  results_sub <- results_sub[results_sub[[1]] < 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(deg_results_list_down)
+  results_sub <- results_sub[keep, ]
+  deg_results_list_down[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+deg_results_up <- results[
+  rownames(results) %in% unique(unlist(deg_results_list_up)),
+]
+deg_results_up <- deg_results_up[
+  match(unique(unlist(deg_results_list_up)), rownames(deg_results_up)),
+]
+deg_results_down <- results[
+  rownames(results) %in% unique(unlist(deg_results_list_down)),
+]
+deg_results_down <- deg_results_down[
+  match(unique(unlist(deg_results_list_down)), rownames(deg_results_down)),
+]
+
+datatable_download(deg_results_up)
+datatable_download(deg_results_down)
+```
+
+```{r, fig.width = 8, fig.height = 12}
+mat <- deg_corrected[
+  rownames(deg) %in% rownames(deg_results_up), , drop = FALSE
+]
+mat <- mat[ , 49:72]
+mat <- mat[
+  match(rownames(deg_results_up), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- deg_results_up$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg) %in% rownames(deg_results_down), , drop = FALSE
+]
+mat <- mat[ , 49:72]
+mat <- mat[
+  match(rownames(deg_results_down), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- deg_results_down$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+```
+
+# Glut Entorhinal Cortex
+
+```{r}
+row_split <- factor(
+  rep(
+    c(
+      "2-1", "3-1", "4-1", "5-2", "6-3",
+      "5-4", "6-4", "5-1", "6-1"
+    ),
+    each = 5
+  ),
+  levels = c(
+    "2-1", "3-1", "4-1", "5-2", "6-3",
+    "5-4", "6-4", "5-1", "6-1"
+  )
+)
+```
+
+## GSE
+
+```{r}
+design <- model.matrix(~ 0 + gse$genotype_ctype + gse$batch)
+colnames(design) <- make.names(colnames(design))
+
+fit <- lmFit(logcounts(gse), design)
+cont_mat <- makeContrasts(
+  S305N_Microglia_MAPTKI_Microglia =
+    gse.genotype_ctypeS305N_Microglia -
+    gse.genotype_ctypeMAPTKI_Microglia,
+  P301S_Microglia_MAPTKI_Microglia =
+    gse.genotype_ctypeP301S_Microglia -
+    gse.genotype_ctypeMAPTKI_Microglia,
+  NLGF_MAPTKI_Microglia_MAPTKI_Microglia =
+    gse.genotype_ctypeNLGF_MAPTKI_Microglia -
+    gse.genotype_ctypeMAPTKI_Microglia,
+  NLGF_S305N_Microglia_S305N_Microglia =
+    gse.genotype_ctypeNLGF_S305N_Microglia -
+    gse.genotype_ctypeS305N_Microglia,
+  NLGF_P301S_Microglia_P301S_Microglia =
+    gse.genotype_ctypeNLGF_P301S_Microglia -
+    gse.genotype_ctypeP301S_Microglia,
+  NLGF_S305N_Microglia_NLGF_MAPTKI_Microglia =
+    gse.genotype_ctypeNLGF_S305N_Microglia -
+    gse.genotype_ctypeNLGF_MAPTKI_Microglia,
+  NLGF_P301S_Microglia_NLGF_MAPTKI_Microglia =
+    gse.genotype_ctypeNLGF_P301S_Microglia -
+    gse.genotype_ctypeNLGF_MAPTKI_Microglia,
+  NLGF_S305N_Microglia_MAPTKI_Microglia =
+    gse.genotype_ctypeNLGF_S305N_Microglia -
+    gse.genotype_ctypeMAPTKI_Microglia,
+  NLGF_P301S_Microglia_MAPTKI_Microglia =
+    gse.genotype_ctypeNLGF_P301S_Microglia -
+    gse.genotype_ctypeMAPTKI_Microglia,
+  S305N_Glut_CA3_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeS305N_Glut_CA3 -
+    gse.genotype_ctypeMAPTKI_Glut_CA3,
+  P301S_Glut_CA3_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeP301S_Glut_CA3 -
+    gse.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_MAPTKI_Glut_CA3_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA3 -
+    gse.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_S305N_Glut_CA3_S305N_Glut_CA3 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    gse.genotype_ctypeS305N_Glut_CA3,
+  NLGF_P301S_Glut_CA3_P301S_Glut_CA3 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    gse.genotype_ctypeP301S_Glut_CA3,
+  NLGF_S305N_Glut_CA3_NLGF_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA3,
+  NLGF_P301S_Glut_CA3_NLGF_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA3,
+  NLGF_S305N_Glut_CA3_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    gse.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_P301S_Glut_CA3_MAPTKI_Glut_CA3 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    gse.genotype_ctypeMAPTKI_Glut_CA3,
+  S305N_Glut_CA1_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeS305N_Glut_CA1 -
+    gse.genotype_ctypeMAPTKI_Glut_CA1,
+  P301S_Glut_CA1_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeP301S_Glut_CA1 -
+    gse.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_MAPTKI_Glut_CA1_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA1 -
+    gse.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_S305N_Glut_CA1_S305N_Glut_CA1 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    gse.genotype_ctypeS305N_Glut_CA1,
+  NLGF_P301S_Glut_CA1_P301S_Glut_CA1 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    gse.genotype_ctypeP301S_Glut_CA1,
+  NLGF_S305N_Glut_CA1_NLGF_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA1,
+  NLGF_P301S_Glut_CA1_NLGF_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_CA1,
+  NLGF_S305N_Glut_CA1_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    gse.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_P301S_Glut_CA1_MAPTKI_Glut_CA1 =
+    gse.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    gse.genotype_ctypeMAPTKI_Glut_CA1,
+  S305N_Glut_ENT_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeS305N_Glut_ENT -
+    gse.genotype_ctypeMAPTKI_Glut_ENT,
+  P301S_Glut_ENT_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeP301S_Glut_ENT -
+    gse.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_MAPTKI_Glut_ENT_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_ENT -
+    gse.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_S305N_Glut_ENT_S305N_Glut_ENT =
+    gse.genotype_ctypeNLGF_S305N_Glut_ENT -
+    gse.genotype_ctypeS305N_Glut_ENT,
+  NLGF_P301S_Glut_ENT_P301S_Glut_ENT =
+    gse.genotype_ctypeNLGF_P301S_Glut_ENT -
+    gse.genotype_ctypeP301S_Glut_ENT,
+  NLGF_S305N_Glut_ENT_NLGF_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeNLGF_S305N_Glut_ENT -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_ENT,
+  NLGF_P301S_Glut_ENT_NLGF_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeNLGF_P301S_Glut_ENT -
+    gse.genotype_ctypeNLGF_MAPTKI_Glut_ENT,
+  NLGF_S305N_Glut_ENT_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeNLGF_S305N_Glut_ENT -
+    gse.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_P301S_Glut_ENT_MAPTKI_Glut_ENT =
+    gse.genotype_ctypeNLGF_P301S_Glut_ENT -
+    gse.genotype_ctypeMAPTKI_Glut_ENT,
+  levels = design
+)
+cont_mat <- contrasts.fit(fit, cont_mat)
+cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
+plotSA(cont_fit)
+
+tests <- decideTests(cont_fit, method = "global")
+write.fit(
+  cont_fit, tests, file.path(cache_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(cache_dir, "results.tsv"))
+rownames(results) <- results$X
+results <- results[ , -1]
+keep <- as.data.frame(decideTests(cont_fit, method = "global"))[ , 28:36]
+keep <- rowSums(abs(keep) > 0) > 0
+results <- results[keep, ]
+results <- results[order(results$F.p.value), ]
+results$gene_set <- rownames(results)
+
+gse_results_list_up <- vector("list", length = 9)
+idx <- 101
+for (i in seq_along(gse_results_list_up)) {
+  results_sub <- results[ , c(idx - 72, idx)]
+  results_sub <- results_sub[results_sub[[1]] > 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(gse_results_list_up)
+  results_sub <- results_sub[keep, ]
+  gse_results_list_up[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+gse_results_list_down <- vector("list", length = 9)
+idx <- 101
+for (i in seq_along(gse_results_list_down)) {
+  results_sub <- results[ , c(idx - 72, idx)]
+  results_sub <- results_sub[results_sub[[1]] < 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(gse_results_list_down)
+  results_sub <- results_sub[keep, ]
+  gse_results_list_down[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+gse_results_up <- results[
+  rownames(results) %in% unique(unlist(gse_results_list_up)),
+]
+gse_results_up <- gse_results_up[
+  match(unique(unlist(gse_results_list_up)), rownames(gse_results_up)),
+]
+gse_results_down <- results[
+  rownames(results) %in% unique(unlist(gse_results_list_down)),
+]
+gse_results_down <- gse_results_down[
+  match(unique(unlist(gse_results_list_down)), rownames(gse_results_down)),
+]
+
+datatable_download(gse_results_up)
+datatable_download(gse_results_down)
+```
+
+```{r, fig.width = 14, fig.height = 12}
+mat <- gse_corrected[
+  rownames(gse) %in% rownames(gse_results_up), , drop = FALSE
+]
+mat <- mat[ , 73:96]
+mat <- mat[
+  match(rownames(gse_results_up), rownames(mat)), , drop = FALSE
+]
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+
+mat <- gse_corrected[
+  rownames(gse) %in% rownames(gse_results_down), , drop = FALSE
+]
+mat <- mat[ , 73:96]
+mat <- mat[
+  match(rownames(gse_results_down), rownames(mat)), , drop = FALSE
+]
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+```
+
+## DGE
+
+```{r}
+design <- model.matrix(~ 0 + deg$genotype_ctype + deg$batch)
+colnames(design) <- make.names(colnames(design))
+
+fit <- lmFit(logcounts(deg), design)
+cont_mat <- makeContrasts(
+  S305N_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeS305N_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  P301S_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeP301S_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  NLGF_MAPTKI_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_MAPTKI_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  NLGF_S305N_Microglia_S305N_Microglia =
+    deg.genotype_ctypeNLGF_S305N_Microglia -
+    deg.genotype_ctypeS305N_Microglia,
+  NLGF_P301S_Microglia_P301S_Microglia =
+    deg.genotype_ctypeNLGF_P301S_Microglia -
+    deg.genotype_ctypeP301S_Microglia,
+  NLGF_S305N_Microglia_NLGF_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_S305N_Microglia -
+    deg.genotype_ctypeNLGF_MAPTKI_Microglia,
+  NLGF_P301S_Microglia_NLGF_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_P301S_Microglia -
+    deg.genotype_ctypeNLGF_MAPTKI_Microglia,
+  NLGF_S305N_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_S305N_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  NLGF_P301S_Microglia_MAPTKI_Microglia =
+    deg.genotype_ctypeNLGF_P301S_Microglia -
+    deg.genotype_ctypeMAPTKI_Microglia,
+  S305N_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeS305N_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  P301S_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeP301S_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_MAPTKI_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_S305N_Glut_CA3_S305N_Glut_CA3 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    deg.genotype_ctypeS305N_Glut_CA3,
+  NLGF_P301S_Glut_CA3_P301S_Glut_CA3 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    deg.genotype_ctypeP301S_Glut_CA3,
+  NLGF_S305N_Glut_CA3_NLGF_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA3,
+  NLGF_P301S_Glut_CA3_NLGF_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA3,
+  NLGF_S305N_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  NLGF_P301S_Glut_CA3_MAPTKI_Glut_CA3 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA3 -
+    deg.genotype_ctypeMAPTKI_Glut_CA3,
+  S305N_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeS305N_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  P301S_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeP301S_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_MAPTKI_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_S305N_Glut_CA1_S305N_Glut_CA1 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    deg.genotype_ctypeS305N_Glut_CA1,
+  NLGF_P301S_Glut_CA1_P301S_Glut_CA1 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    deg.genotype_ctypeP301S_Glut_CA1,
+  NLGF_S305N_Glut_CA1_NLGF_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA1,
+  NLGF_P301S_Glut_CA1_NLGF_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_CA1,
+  NLGF_S305N_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_S305N_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  NLGF_P301S_Glut_CA1_MAPTKI_Glut_CA1 =
+    deg.genotype_ctypeNLGF_P301S_Glut_CA1 -
+    deg.genotype_ctypeMAPTKI_Glut_CA1,
+  S305N_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeS305N_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  P301S_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeP301S_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_MAPTKI_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_S305N_Glut_ENT_S305N_Glut_ENT =
+    deg.genotype_ctypeNLGF_S305N_Glut_ENT -
+    deg.genotype_ctypeS305N_Glut_ENT,
+  NLGF_P301S_Glut_ENT_P301S_Glut_ENT =
+    deg.genotype_ctypeNLGF_P301S_Glut_ENT -
+    deg.genotype_ctypeP301S_Glut_ENT,
+  NLGF_S305N_Glut_ENT_NLGF_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_S305N_Glut_ENT -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_ENT,
+  NLGF_P301S_Glut_ENT_NLGF_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_P301S_Glut_ENT -
+    deg.genotype_ctypeNLGF_MAPTKI_Glut_ENT,
+  NLGF_S305N_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_S305N_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  NLGF_P301S_Glut_ENT_MAPTKI_Glut_ENT =
+    deg.genotype_ctypeNLGF_P301S_Glut_ENT -
+    deg.genotype_ctypeMAPTKI_Glut_ENT,
+  levels = design
+)
+cont_mat <- contrasts.fit(fit, cont_mat)
+cont_fit <- eBayes(cont_mat, trend = TRUE, robust = TRUE)
+plotSA(cont_fit)
+
+tests <- decideTests(cont_fit, method = "global")
+write.fit(
+  cont_fit, tests, file.path(cache_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(cache_dir, "results.tsv"))
+rownames(results) <- results$X
+results <- results[ , -1]
+keep <- as.data.frame(decideTests(cont_fit, method = "global"))[ , 28:36]
+keep <- rowSums(abs(keep) > 0) > 0
+results <- results[keep, ]
+results <- results[order(results$F.p.value), ]
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results), gene_anno_sub$ensembl),
+]
+results$symbol <- gene_anno_sub$symbol
+
+deg_results_list_up <- vector("list", length = 9)
+idx <- 101
+for (i in seq_along(deg_results_list_up)) {
+  results_sub <- results[ , c(idx - 72, idx)]
+  results_sub <- results_sub[results_sub[[1]] > 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(deg_results_list_up)
+  results_sub <- results_sub[keep, ]
+  deg_results_list_up[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+deg_results_list_down <- vector("list", length = 9)
+idx <- 101
+for (i in seq_along(deg_results_list_down)) {
+  results_sub <- results[ , c(idx - 72, idx)]
+  results_sub <- results_sub[results_sub[[1]] < 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(deg_results_list_down)
+  results_sub <- results_sub[keep, ]
+  deg_results_list_down[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+deg_results_up <- results[
+  rownames(results) %in% unique(unlist(deg_results_list_up)),
+]
+deg_results_up <- deg_results_up[
+  match(unique(unlist(deg_results_list_up)), rownames(deg_results_up)),
+]
+deg_results_down <- results[
+  rownames(results) %in% unique(unlist(deg_results_list_down)),
+]
+deg_results_down <- deg_results_down[
+  match(unique(unlist(deg_results_list_down)), rownames(deg_results_down)),
+]
+
+datatable_download(deg_results_up)
+datatable_download(deg_results_down)
+```
+
+```{r, fig.width = 8, fig.height = 12}
+mat <- deg_corrected[
+  rownames(deg) %in% rownames(deg_results_up), , drop = FALSE
+]
+mat <- mat[ , 73:96]
+mat <- mat[
+  match(rownames(deg_results_up), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- deg_results_up$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg) %in% rownames(deg_results_down), , drop = FALSE
+]
+mat <- mat[ , 73:96]
 mat <- mat[
   match(rownames(deg_results_down), rownames(mat)), , drop = FALSE
 ]
