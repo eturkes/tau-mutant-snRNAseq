@@ -418,12 +418,12 @@ for (i in seq_along(seurat_list)) {
     NLGF_MAPTKI_MAPTKI =
       gse.genotypeNLGF_MAPTKI -
       gse.genotypeMAPTKI,
-    NLGF_S305N_S305N =
+    NLGF_S305N_MAPTKI =
       gse.genotypeNLGF_S305N -
-      gse.genotypeS305N,
-    NLGF_P301S_P301S =
+      gse.genotypeMAPTKI,
+    NLGF_P301S_MAPTKI =
       gse.genotypeNLGF_P301S -
-      gse.genotypeP301S,
+      gse.genotypeMAPTKI,
     levels = design
   )
 
@@ -543,12 +543,12 @@ cont_mat <- makeContrasts(
   NLGF_MAPTKI_MAPTKI =
     gse.genotypeNLGF_MAPTKI -
     gse.genotypeMAPTKI,
-  NLGF_S305N_S305N =
+  NLGF_S305N_MAPTKI =
     gse.genotypeNLGF_S305N -
-    gse.genotypeS305N,
-  NLGF_P301S_P301S =
+    gse.genotypeMAPTKI,
+  NLGF_P301S_MAPTKI =
     gse.genotypeNLGF_P301S -
-    gse.genotypeP301S,
+    gse.genotypeMAPTKI,
   levels = design
 )
 
@@ -776,13 +776,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
@@ -790,7 +790,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -890,13 +890,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
@@ -904,7 +904,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -993,12 +993,12 @@ cont_mat <- makeContrasts(
   NLGF_MAPTKI_MAPTKI =
     deg.genotypeNLGF_MAPTKI -
     deg.genotypeMAPTKI,
-  NLGF_S305N_S305N =
+  NLGF_S305N_MAPTKI =
     deg.genotypeNLGF_S305N -
-    deg.genotypeS305N,
-  NLGF_P301S_P301S =
+    deg.genotypeMAPTKI,
+  NLGF_P301S_MAPTKI =
     deg.genotypeNLGF_P301S -
-    deg.genotypeP301S,
+    deg.genotypeMAPTKI,
   levels = design
 )
 
@@ -1230,13 +1230,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
@@ -1244,7 +1244,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -1345,13 +1345,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
@@ -1359,7 +1359,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -1513,12 +1513,12 @@ cont_mat <- makeContrasts(
   NLGF_MAPTKI_MAPTKI =
     gse.genotypeNLGF_MAPTKI -
     gse.genotypeMAPTKI,
-  NLGF_S305N_S305N =
+  NLGF_S305N_MAPTKI =
     gse.genotypeNLGF_S305N -
-    gse.genotypeS305N,
-  NLGF_P301S_P301S =
+    gse.genotypeMAPTKI,
+  NLGF_P301S_MAPTKI =
     gse.genotypeNLGF_P301S -
-    gse.genotypeP301S,
+    gse.genotypeMAPTKI,
   levels = design
 )
 
@@ -1746,13 +1746,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
@@ -1760,7 +1760,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -1860,13 +1860,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
@@ -1874,7 +1874,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -1963,12 +1963,12 @@ cont_mat <- makeContrasts(
   NLGF_MAPTKI_MAPTKI =
     deg.genotypeNLGF_MAPTKI -
     deg.genotypeMAPTKI,
-  NLGF_S305N_S305N =
+  NLGF_S305N_MAPTKI =
     deg.genotypeNLGF_S305N -
-    deg.genotypeS305N,
-  NLGF_P301S_P301S =
+    deg.genotypeMAPTKI,
+  NLGF_P301S_MAPTKI =
     deg.genotypeNLGF_P301S -
-    deg.genotypeP301S,
+    deg.genotypeMAPTKI,
   levels = design
 )
 
@@ -2201,13 +2201,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
@@ -2215,7 +2215,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -2316,13 +2316,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
@@ -2330,7 +2330,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -2484,12 +2484,12 @@ cont_mat <- makeContrasts(
   NLGF_MAPTKI_MAPTKI =
     gse.genotypeNLGF_MAPTKI -
     gse.genotypeMAPTKI,
-  NLGF_S305N_S305N =
+  NLGF_S305N_MAPTKI =
     gse.genotypeNLGF_S305N -
-    gse.genotypeS305N,
-  NLGF_P301S_P301S =
+    gse.genotypeMAPTKI,
+  NLGF_P301S_MAPTKI =
     gse.genotypeNLGF_P301S -
-    gse.genotypeP301S,
+    gse.genotypeMAPTKI,
   levels = design
 )
 
@@ -2719,13 +2719,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
@@ -2733,7 +2733,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -2833,13 +2833,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
@@ -2847,7 +2847,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -2936,12 +2936,12 @@ cont_mat <- makeContrasts(
   NLGF_MAPTKI_MAPTKI =
     deg.genotypeNLGF_MAPTKI -
     deg.genotypeMAPTKI,
-  NLGF_S305N_S305N =
+  NLGF_S305N_MAPTKI =
     deg.genotypeNLGF_S305N -
-    deg.genotypeS305N,
-  NLGF_P301S_P301S =
+    deg.genotypeMAPTKI,
+  NLGF_P301S_MAPTKI =
     deg.genotypeNLGF_P301S -
-    deg.genotypeP301S,
+    deg.genotypeMAPTKI,
   levels = design
 )
 
@@ -3175,13 +3175,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
@@ -3189,7 +3189,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -3290,13 +3290,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
@@ -3304,7 +3304,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -3458,12 +3458,12 @@ cont_mat <- makeContrasts(
   NLGF_MAPTKI_MAPTKI =
     gse.genotypeNLGF_MAPTKI -
     gse.genotypeMAPTKI,
-  NLGF_S305N_S305N =
+  NLGF_S305N_MAPTKI =
     gse.genotypeNLGF_S305N -
-    gse.genotypeS305N,
-  NLGF_P301S_P301S =
+    gse.genotypeMAPTKI,
+  NLGF_P301S_MAPTKI =
     gse.genotypeNLGF_P301S -
-    gse.genotypeP301S,
+    gse.genotypeMAPTKI,
   levels = design
 )
 
@@ -3694,13 +3694,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
@@ -3708,7 +3708,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -3726,7 +3726,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
-  row_title_gp = gpar(fontsize = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -3760,7 +3760,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
-  row_title_gp = gpar(fontsize = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -3808,13 +3808,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
@@ -3822,7 +3822,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -3911,12 +3911,12 @@ cont_mat <- makeContrasts(
   NLGF_MAPTKI_MAPTKI =
     deg.genotypeNLGF_MAPTKI -
     deg.genotypeMAPTKI,
-  NLGF_S305N_S305N =
+  NLGF_S305N_MAPTKI =
     deg.genotypeNLGF_S305N -
-    deg.genotypeS305N,
-  NLGF_P301S_P301S =
+    deg.genotypeMAPTKI,
+  NLGF_P301S_MAPTKI =
     deg.genotypeNLGF_P301S -
-    deg.genotypeP301S,
+    deg.genotypeMAPTKI,
   levels = design
 )
 
@@ -4152,13 +4152,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
@@ -4166,7 +4166,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -4267,13 +4267,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
@@ -4281,7 +4281,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -4435,12 +4435,12 @@ cont_mat <- makeContrasts(
   NLGF_MAPTKI_MAPTKI =
     gse.genotypeNLGF_MAPTKI -
     gse.genotypeMAPTKI,
-  NLGF_S305N_S305N =
+  NLGF_S305N_MAPTKI =
     gse.genotypeNLGF_S305N -
-    gse.genotypeS305N,
-  NLGF_P301S_P301S =
+    gse.genotypeMAPTKI,
+  NLGF_P301S_MAPTKI =
     gse.genotypeNLGF_P301S -
-    gse.genotypeP301S,
+    gse.genotypeMAPTKI,
   levels = design
 )
 
@@ -4672,13 +4672,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
@@ -4686,7 +4686,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -4786,13 +4786,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
@@ -4800,7 +4800,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -4889,12 +4889,12 @@ cont_mat <- makeContrasts(
   NLGF_MAPTKI_MAPTKI =
     deg.genotypeNLGF_MAPTKI -
     deg.genotypeMAPTKI,
-  NLGF_S305N_S305N =
+  NLGF_S305N_MAPTKI =
     deg.genotypeNLGF_S305N -
-    deg.genotypeS305N,
-  NLGF_P301S_P301S =
+    deg.genotypeMAPTKI,
+  NLGF_P301S_MAPTKI =
     deg.genotypeNLGF_P301S -
-    deg.genotypeP301S,
+    deg.genotypeMAPTKI,
   levels = design
 )
 
@@ -5132,13 +5132,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
@@ -5146,7 +5146,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -5247,13 +5247,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
@@ -5261,7 +5261,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -5415,12 +5415,12 @@ cont_mat <- makeContrasts(
   NLGF_MAPTKI_MAPTKI =
     gse.genotypeNLGF_MAPTKI -
     gse.genotypeMAPTKI,
-  NLGF_S305N_S305N =
+  NLGF_S305N_MAPTKI =
     gse.genotypeNLGF_S305N -
-    gse.genotypeS305N,
-  NLGF_P301S_P301S =
+    gse.genotypeMAPTKI,
+  NLGF_P301S_MAPTKI =
     gse.genotypeNLGF_P301S -
-    gse.genotypeP301S,
+    gse.genotypeMAPTKI,
   levels = design
 )
 
@@ -5654,13 +5654,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
@@ -5668,7 +5668,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -5768,13 +5768,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
@@ -5782,7 +5782,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -5871,12 +5871,12 @@ cont_mat <- makeContrasts(
   NLGF_MAPTKI_MAPTKI =
     deg.genotypeNLGF_MAPTKI -
     deg.genotypeMAPTKI,
-  NLGF_S305N_S305N =
+  NLGF_S305N_MAPTKI =
     deg.genotypeNLGF_S305N -
-    deg.genotypeS305N,
-  NLGF_P301S_P301S =
+    deg.genotypeMAPTKI,
+  NLGF_P301S_MAPTKI =
     deg.genotypeNLGF_P301S -
-    deg.genotypeP301S,
+    deg.genotypeMAPTKI,
   levels = design
 )
 
@@ -6114,13 +6114,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
@@ -6128,7 +6128,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -6229,13 +6229,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
@@ -6243,7 +6243,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -6397,12 +6397,12 @@ cont_mat <- makeContrasts(
   NLGF_MAPTKI_MAPTKI =
     gse.genotypeNLGF_MAPTKI -
     gse.genotypeMAPTKI,
-  NLGF_S305N_S305N =
+  NLGF_S305N_MAPTKI =
     gse.genotypeNLGF_S305N -
-    gse.genotypeS305N,
-  NLGF_P301S_P301S =
+    gse.genotypeMAPTKI,
+  NLGF_P301S_MAPTKI =
     gse.genotypeNLGF_P301S -
-    gse.genotypeP301S,
+    gse.genotypeMAPTKI,
   levels = design
 )
 
@@ -6637,13 +6637,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
@@ -6651,7 +6651,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -6751,13 +6751,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
@@ -6765,7 +6765,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -6854,12 +6854,12 @@ cont_mat <- makeContrasts(
   NLGF_MAPTKI_MAPTKI =
     deg.genotypeNLGF_MAPTKI -
     deg.genotypeMAPTKI,
-  NLGF_S305N_S305N =
+  NLGF_S305N_MAPTKI =
     deg.genotypeNLGF_S305N -
-    deg.genotypeS305N,
-  NLGF_P301S_P301S =
+    deg.genotypeMAPTKI,
+  NLGF_P301S_MAPTKI =
     deg.genotypeNLGF_P301S -
-    deg.genotypeP301S,
+    deg.genotypeMAPTKI,
   levels = design
 )
 
@@ -7099,13 +7099,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
@@ -7113,7 +7113,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
@@ -7214,13 +7214,13 @@ row_split <- factor(
       )
     ),
     rep(
-      "5 > 2 (4 & 6 null)",
+      "5 > 1 (4 & 6 null)",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "6 > 3 (4 & 5 null)",
+      "6 > 1 (4 & 5 null)",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
@@ -7228,7 +7228,7 @@ row_split <- factor(
   ),
   levels = c(
     "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
-    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 1 (4 & 6 null)", "6 > 1 (4 & 5 null)"
   )
 )
 
