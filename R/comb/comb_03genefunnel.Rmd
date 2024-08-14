@@ -113,7 +113,7 @@ if (!dir.exists(cache_dir)) {
 ```{r}
 rds <- file.path(cache_dir, "seurat_orig.rds")
 if (file.exists(rds)) {
-  seurat <- readRDS(rds)
+  seurat_orig <- readRDS(rds)
 } else {
 
   file_list <- list.files(file.path(cache_dir, "..", ".."), recursive = TRUE)
@@ -126,7 +126,7 @@ if (file.exists(rds)) {
   }
 
   gc()
-  seurat <- merge(
+  seurat_orig <- merge(
     files[[1]], c(files[[2]], files[[3]], files[[4]],
     files[[5]], files[[6]], files[[7]], files[[8]],
     files[[9]], files[[10]], files[[11]], files[[12]],
@@ -141,20 +141,20 @@ if (file.exists(rds)) {
   seurat_anno <- readRDS(
     file.path(cache_dir, "..", "step02", "annotated_seurat.rds")
   )
-  seurat[["RNA"]] <- CreateAssay5Object(
+  seurat_orig[["RNA"]] <- CreateAssay5Object(
     GetAssayData(seurat_anno, assay = "RNA")
   )
-  seurat@meta.data <- seurat_anno[[]]
-  seurat[["pca"]] <- seurat_anno[["pca"]]
-  seurat[["umap"]] <- seurat_anno[["umap"]]
-  seurat@misc <- seurat_anno@misc
-  seurat@active.ident <- seurat$genotype_batch
+  seurat_orig@meta.data <- seurat_anno[[]]
+  seurat_orig[["pca"]] <- seurat_anno[["pca"]]
+  seurat_orig[["umap"]] <- seurat_anno[["umap"]]
+  seurat_orig@misc <- seurat_anno@misc
+  seurat_orig@active.ident <- seurat_orig$level2_subclusters
 
   rm(seurat_anno)
   gc()
-  saveRDS(seurat, file = rds)
+  saveRDS(seurat_orig, file = rds)
 }
-seurat
+seurat_orig
 
 rds <- file.path(cache_dir, "filtered_gene_sets_mmusculus.rds")
 if (file.exists(rds)) {
@@ -171,7 +171,7 @@ if (file.exists(rds)) {
   gene_sets <- gene_sets[names(gene_sets) %in% names(keep)]
 
   remove <- unique(unlist(geneIds(gene_sets)))[
-    unique(unlist(geneIds(gene_sets))) %notin% rownames(seurat)
+    unique(unlist(geneIds(gene_sets))) %notin% rownames(seurat_orig)
   ]
   remove <- which(
     sapply(geneIds(gene_sets), FUN = function(x) any(x %in% remove))
@@ -241,390 +241,194 @@ if (file.exists(rds)) {
 gene_sets[names(gene_sets) %in% names(gene_sets_keep)]
 
 gene_anno <- data.frame(
-  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
+  symbol = unlist(seurat_orig@misc), ensembl = rownames(seurat_orig[["RNA"]])
 )
 
-ctype <- c(
-  "Microglia 01", "Microglia 02",
-  "Micro Homeostatic 01", "Micro DAM 01", "Micro DAM 02",
-  "Glut CA3 01",
-  "Glut CA1 01",
-  "Glut L2 ENT 01", "Glut L3 ENT 01"
+ctypes <- vector("list", length = 7)
+ctypes <- list(
+  Astrocyte = c(
+    "Astrocyte 01", "Astrocyte 02", "Astrocyte 03",
+    "Astro Homeostatic 01", "Astro DAA 01"
+  ),
+  Oligodendrocyte = c(
+    "Oligodendrocyte 01", "Oligodendrocyte 02", "Oligodendrocyte 03",
+    "Oligodendrocyte 04", "Oligodendrocyte 05",
+    "Oligo Homeostatic 01", "Oligo DAO 01"
+  ),
+  Microglia = c(
+    "Microglia 01", "Microglia 02", "Micro Homeostatic 01",
+    "Micro DAM 01", "Micro DAM 02"
+  ),
+  CA3 = c("Glut CA3 01", "Glut CA3 02", "Glut CA3 03"),
+  CA1 = c("Glut CA1 01"),
+  ENT = c("Glut L2 ENT 01", "Glut L3 ENT 01"),
+  GABAergic = c("GABA Sst 01")
 )
 
-rds <- file.path(cache_dir, "global_seurat_cleaned.rds")
+rds <- file.path(cache_dir, "seurat_list.rds")
 if (file.exists(rds)) {
-  seurat <- readRDS(rds)
+  seurat_list <- readRDS(rds)
 } else {
 
-  seurat@active.ident <- seurat$level2_subclusters
-  seurat <- subset(seurat, idents = gsub("-", replacement = "/", x = ctype))
-  seurat@active.ident <- factor(seurat$genotype_batch)
+  seurat_list <- vector("list", length = 7)
+  for (i in seq_along(ctypes)) {
 
-  seurat <- PrepSCTFindMarkers(seurat, verbose = FALSE)
+    seurat <- subset(seurat_orig, idents = ctypes[[i]])
+    seurat <- PrepSCTFindMarkers(seurat, verbose = FALSE)
 
-  counts_mat <- GetAssayData(seurat)
-  counts_mat[is.na(counts_mat)] <- 0
-  seurat <- SetAssayData(seurat, new.data = counts_mat)
-  counts_mat <- GetAssayData(seurat, slot = "counts")
-  counts_mat[is.na(counts_mat)] <- 0
-  seurat <- SetAssayData(seurat, slot = "counts", new.data = counts_mat)
+    counts_mat <- GetAssayData(seurat)
+    counts_mat[is.na(counts_mat)] <- 0
+    seurat <- SetAssayData(seurat, new.data = counts_mat)
+    counts_mat <- GetAssayData(seurat, slot = "counts")
+    counts_mat[is.na(counts_mat)] <- 0
+    seurat <- SetAssayData(seurat, slot = "counts", new.data = counts_mat)
 
-  seurat$nCount_SCT <- colSums(seurat, layer = "counts")
-  seurat$nFeature_SCT <- colSums(counts_mat > 0)
+    seurat$nCount_SCT <- colSums(seurat, layer = "counts")
+    seurat$nFeature_SCT <- colSums(counts_mat > 0)
 
-  seurat$genotype <- factor(
-    seurat$genotype,
-    levels = c(
-      "MAPTKI", "S305N", "P301S", "NLGF_MAPTKI", "NLGF_S305N", "NLGF_P301S"
+    seurat$genotype <- factor(
+      seurat$genotype,
+      levels = c(
+        "MAPTKI", "S305N", "P301S", "NLGF_MAPTKI", "NLGF_S305N", "NLGF_P301S"
+      )
+    )
+    seurat$genotype_batch <- factor(
+      seurat$genotype_batch,
+      levels = paste(
+        rep(levels(seurat$genotype), each = 4),
+        paste0("batch0", seq(4)), sep = "_"
+      )
+    )
+    seurat$broad_annotations <- factor(seurat$broad_annotations)
+    seurat$level1_subclusters <- factor(seurat$level1_subclusters)
+    seurat$level2_subclusters <- factor(seurat$level2_subclusters)
+    seurat@active.ident <- seurat$genotype_batch
+
+    seurat$tau <- factor(
+      gsub("NLGF_", replacement = "", x = seurat$genotype),
+      levels = c("MAPTKI", "S305N", "P301S")
+    )
+    seurat$amyloid <- factor(
+      ifelse(grepl("NLGF", x = seurat$genotype), yes = "NLGF", no = "WT"),
+      levels = c("WT", "NLGF")
+    )
+
+    gc()
+    DefaultAssay(seurat) <- "RNA"
+    scores <- calculateScores(
+      GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
+    )
+    gc()
+    rownames(scores) <- names(gene_sets)
+    colnames(scores) <- colnames(seurat)
+
+    seurat[["GF"]] <- CreateAssay5Object(scores, data = log1p(scores))
+    DefaultAssay(seurat) <- "GF"
+    seurat$nCount_GF <- colSums(seurat, layer = "counts")
+    seurat$nFeature_GF <- colSums(GetAssayData(seurat, layer = "counts") > 0)
+
+    gc()
+    DefaultAssay(seurat) <- "SCT"
+    scores <- calculateScores(
+      GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
+    )
+    gc()
+    rownames(scores) <- names(gene_sets)
+    colnames(scores) <- colnames(seurat)
+    saveRDS(scores, file = rds)
+
+    seurat[["GF_SCT"]] <- CreateAssay5Object(scores, data = log1p(scores))
+    DefaultAssay(seurat) <- "GF_SCT"
+    seurat$nCount_GF_SCT <- colSums(seurat, layer = "counts")
+    seurat$nFeature_GF_SCT <- colSums(GetAssayData(seurat, layer = "counts") > 0)
+
+    seurat_list[[i]] <- seurat
+  }
+  rm(seurat, scores)
+  gc()
+  saveRDS(seurat_list, file = rds)
+}
+rm(seurat_orig)
+gc()
+seurat_list
+
+gse_list <- vector("list", length = 7)
+deg_list <- vector("list", length = 7)
+
+for (i in seq_along(seurat_list)) {
+
+  gse <- as.SingleCellExperiment(seurat_list[[i]], assay = "GF")
+  gse <- suppressWarnings(
+    aggregateAcrossCells(
+      gse, colData(gse)[ , "genotype_batch"],
+      use_exprs_values = "counts", statistics = "sum"
     )
   )
-  seurat$genotype_batch <- factor(
-    seurat$genotype_batch,
-    levels = paste(
-      rep(levels(seurat$genotype), each = 4),
-      paste0("batch0", seq(4)), sep = "_"
+
+  deg <- as.SingleCellExperiment(seurat_list[[i]], assay = "RNA")
+  deg <- suppressWarnings(
+    aggregateAcrossCells(
+      deg, colData(deg)[ , "genotype_batch"],
+      use_exprs_values = "counts", statistics = "sum"
     )
   )
-  seurat$broad_annotations <- factor(seurat$broad_annotations)
-  seurat$level1_subclusters <- factor(seurat$level1_subclusters)
-  seurat$level2_subclusters <- factor(seurat$level2_subclusters)
-  seurat$genotype_batch_ctype <- paste(
-    seurat$genotype_batch, seurat$level2_subclusters, sep = "_"
-  )
-  seurat$genotype_batch_ctype <- gsub(
-    "Microglia 01", replacement = "Microglia",
-    x = seurat$genotype_batch_ctype
-  )
-  seurat$genotype_batch_ctype <- gsub(
-    "Microglia 02", replacement = "Microglia",
-    x = seurat$genotype_batch_ctype
-  )
-  seurat$genotype_batch_ctype <- gsub(
-    "Micro Homeostatic 01", replacement = "Microglia",
-    x = seurat$genotype_batch_ctype
-  )
-  seurat$genotype_batch_ctype <- gsub(
-    "Micro DAM 01", replacement = "Microglia",
-    x = seurat$genotype_batch_ctype
-  )
-  seurat$genotype_batch_ctype <- gsub(
-    "Micro DAM 02", replacement = "Microglia",
-    x = seurat$genotype_batch_ctype
-  )
-  seurat$genotype_batch_ctype <- gsub(
-    "Glut CA3 01", replacement = "Glut_CA3",
-    x = seurat$genotype_batch_ctype
-  )
-  seurat$genotype_batch_ctype <- gsub(
-    "Glut CA1 01", replacement = "Glut_CA1",
-    x = seurat$genotype_batch_ctype
-  )
-  seurat$genotype_batch_ctype <- gsub(
-    "Glut L2 ENT 01", replacement = "Glut_ENT",
-    x = seurat$genotype_batch_ctype
-  )
-  seurat$genotype_batch_ctype <- gsub(
-    "Glut L3 ENT 01", replacement = "Glut_ENT",
-    x = seurat$genotype_batch_ctype
-  )
-  seurat$genotype_batch_ctype <- factor(
-    seurat$genotype_batch_ctype,
-    levels = c(
-      "MAPTKI_batch01_Microglia", "MAPTKI_batch02_Microglia",
-      "MAPTKI_batch03_Microglia", "MAPTKI_batch04_Microglia",
-      "S305N_batch01_Microglia", "S305N_batch02_Microglia",
-      "S305N_batch03_Microglia", "S305N_batch04_Microglia",
-      "P301S_batch01_Microglia", "P301S_batch02_Microglia",
-      "P301S_batch03_Microglia", "P301S_batch04_Microglia",
-      "NLGF_MAPTKI_batch01_Microglia", "NLGF_MAPTKI_batch02_Microglia",
-      "NLGF_MAPTKI_batch03_Microglia", "NLGF_MAPTKI_batch04_Microglia",
-      "NLGF_S305N_batch01_Microglia", "NLGF_S305N_batch02_Microglia",
-      "NLGF_S305N_batch03_Microglia", "NLGF_S305N_batch04_Microglia",
-      "NLGF_P301S_batch01_Microglia", "NLGF_P301S_batch02_Microglia",
-      "NLGF_P301S_batch03_Microglia", "NLGF_P301S_batch04_Microglia",
-      "MAPTKI_batch01_Glut_CA3", "MAPTKI_batch02_Glut_CA3",
-      "MAPTKI_batch03_Glut_CA3", "MAPTKI_batch04_Glut_CA3",
-      "S305N_batch01_Glut_CA3", "S305N_batch02_Glut_CA3",
-      "S305N_batch03_Glut_CA3", "S305N_batch04_Glut_CA3",
-      "P301S_batch01_Glut_CA3", "P301S_batch02_Glut_CA3",
-      "P301S_batch03_Glut_CA3", "P301S_batch04_Glut_CA3",
-      "NLGF_MAPTKI_batch01_Glut_CA3", "NLGF_MAPTKI_batch02_Glut_CA3",
-      "NLGF_MAPTKI_batch03_Glut_CA3", "NLGF_MAPTKI_batch04_Glut_CA3",
-      "NLGF_S305N_batch01_Glut_CA3", "NLGF_S305N_batch02_Glut_CA3",
-      "NLGF_S305N_batch03_Glut_CA3", "NLGF_S305N_batch04_Glut_CA3",
-      "NLGF_P301S_batch01_Glut_CA3", "NLGF_P301S_batch02_Glut_CA3",
-      "NLGF_P301S_batch03_Glut_CA3", "NLGF_P301S_batch04_Glut_CA3",
-      "MAPTKI_batch01_Glut_CA1", "MAPTKI_batch02_Glut_CA1",
-      "MAPTKI_batch03_Glut_CA1", "MAPTKI_batch04_Glut_CA1",
-      "S305N_batch01_Glut_CA1", "S305N_batch02_Glut_CA1",
-      "S305N_batch03_Glut_CA1", "S305N_batch04_Glut_CA1",
-      "P301S_batch01_Glut_CA1", "P301S_batch02_Glut_CA1",
-      "P301S_batch03_Glut_CA1", "P301S_batch04_Glut_CA1",
-      "NLGF_MAPTKI_batch01_Glut_CA1", "NLGF_MAPTKI_batch02_Glut_CA1",
-      "NLGF_MAPTKI_batch03_Glut_CA1", "NLGF_MAPTKI_batch04_Glut_CA1",
-      "NLGF_S305N_batch01_Glut_CA1", "NLGF_S305N_batch02_Glut_CA1",
-      "NLGF_S305N_batch03_Glut_CA1", "NLGF_S305N_batch04_Glut_CA1",
-      "NLGF_P301S_batch01_Glut_CA1", "NLGF_P301S_batch02_Glut_CA1",
-      "NLGF_P301S_batch03_Glut_CA1", "NLGF_P301S_batch04_Glut_CA1",
-      "MAPTKI_batch01_Glut_ENT", "MAPTKI_batch02_Glut_ENT",
-      "MAPTKI_batch03_Glut_ENT", "MAPTKI_batch04_Glut_ENT",
-      "S305N_batch01_Glut_ENT", "S305N_batch02_Glut_ENT",
-      "S305N_batch03_Glut_ENT", "S305N_batch04_Glut_ENT",
-      "P301S_batch01_Glut_ENT", "P301S_batch02_Glut_ENT",
-      "P301S_batch03_Glut_ENT", "P301S_batch04_Glut_ENT",
-      "NLGF_MAPTKI_batch01_Glut_ENT", "NLGF_MAPTKI_batch02_Glut_ENT",
-      "NLGF_MAPTKI_batch03_Glut_ENT", "NLGF_MAPTKI_batch04_Glut_ENT",
-      "NLGF_S305N_batch01_Glut_ENT", "NLGF_S305N_batch02_Glut_ENT",
-      "NLGF_S305N_batch03_Glut_ENT", "NLGF_S305N_batch04_Glut_ENT",
-      "NLGF_P301S_batch01_Glut_ENT", "NLGF_P301S_batch02_Glut_ENT",
-      "NLGF_P301S_batch03_Glut_ENT", "NLGF_P301S_batch04_Glut_ENT"
-    )
-  )
-  seurat$genotype_ctype <- gsub(
-    "batch\\d{2}_", replacement = "", x = seurat$genotype_batch_ctype
-  )
-  seurat$genotype_ctype <- factor(
-    seurat$genotype_ctype,
-    levels = c(
-      "MAPTKI_Microglia", "S305N_Microglia",
-      "P301S_Microglia", "NLGF_MAPTKI_Microglia",
-      "NLGF_S305N_Microglia", "NLGF_P301S_Microglia",
-      "MAPTKI_Glut_CA3", "S305N_Glut_CA3",
-      "P301S_Glut_CA3", "NLGF_MAPTKI_Glut_CA3",
-      "NLGF_S305N_Glut_CA3", "NLGF_P301S_Glut_CA3",
-      "MAPTKI_Glut_CA1", "S305N_Glut_CA1",
-      "P301S_Glut_CA1", "NLGF_MAPTKI_Glut_CA1",
-      "NLGF_S305N_Glut_CA1", "NLGF_P301S_Glut_CA1",
-      "MAPTKI_Glut_ENT", "S305N_Glut_ENT",
-      "P301S_Glut_ENT", "NLGF_MAPTKI_Glut_ENT",
-      "NLGF_S305N_Glut_ENT", "NLGF_P301S_Glut_ENT"
-    )
-  )
-  seurat@active.ident <- seurat$genotype_batch_ctype
 
-  saveRDS(seurat, file = rds)
+  design <- model.matrix(~ gse$tau * gse$amyloid)
+  colnames(design) <- make.names(colnames(design))
+
+  keep <- filterByExpr(
+    gse, design = design, min.count = 50, min.total.count = 50
+  )
+  gse <- gse[keep, ]
+
+  dge <- DGEList(counts(gse))
+  dge <- calcNormFactors(dge)
+  logcounts(gse, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 2)
+
+  gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
+
+  keep <- filterByExpr(
+    deg, design = design, min.count = 200, min.total.count = 200
+  )
+  deg <- deg[keep, ]
+
+  dge <- DGEList(counts(deg))
+  dge <- calcNormFactors(dge)
+  logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 0.5)
+
+  gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
+  deg <- deg[rownames(deg) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+
+  design <- model.matrix(~ gse$tau * gse$amyloid + gse$batch)
+  colnames(design) <- make.names(colnames(design))
+  cont_mat <- makeContrasts(
+    "gse.tauS305N", "gse.tauP301S", "gse.amyloidNLGF",
+    "gse.tauS305N.gse.amyloidNLGF", "gse.tauP301S.gse.amyloidNLGF",
+    levels = design
+  )
+
+  fit <- lmFit(logcounts(gse), design)
+  fit <- contrasts.fit(fit, cont_mat)
+  fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+  tests <- decideTests(fit, method = "global")
+  write.fit(
+    fit, tests, file.path(cache_dir, "results.tsv"),
+    adjust = "BH", F.adjust = "BH", method = "global"
+  )
+  gse_list[[i]] <- read.delim(file.path(cache_dir, "results.tsv"))
+
+  fit <- lmFit(logcounts(deg), design)
+  fit <- contrasts.fit(fit, cont_mat)
+  fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+  tests <- decideTests(fit, method = "global")
+  write.fit(
+    fit, tests, file.path(cache_dir, "results.tsv"),
+    adjust = "BH", F.adjust = "BH", method = "global"
+  )
+  deg_list[[i]] <- read.delim(file.path(cache_dir, "results.tsv"))
 }
-
-rds <- file.path(cache_dir, "global_scores.rds")
-if (file.exists(rds)) {
-  scores <- readRDS(rds)
-} else {
-  gc()
-  DefaultAssay(seurat) <- "RNA"
-  scores <- calculateScores(
-    GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
-  )
-  gc()
-  rownames(scores) <- names(gene_sets)
-  colnames(scores) <- colnames(seurat)
-  saveRDS(scores, file = rds)
-}
-seurat[["GF"]] <- CreateAssay5Object(scores, data = log1p(scores))
-DefaultAssay(seurat) <- "GF"
-seurat$nCount_GF <- colSums(seurat, layer = "counts")
-seurat$nFeature_GF <- colSums(GetAssayData(seurat, layer = "counts") > 0)
-
-rds <- file.path(cache_dir, "global_scores_SCT.rds")
-if (file.exists(rds)) {
-  scores <- readRDS(rds)
-} else {
-  gc()
-  DefaultAssay(seurat) <- "SCT"
-  scores <- calculateScores(
-    GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
-  )
-  gc()
-  rownames(scores) <- names(gene_sets)
-  colnames(scores) <- colnames(seurat)
-  saveRDS(scores, file = rds)
-}
-seurat[["GF_SCT"]] <- CreateAssay5Object(scores, data = log1p(scores))
-DefaultAssay(seurat) <- "GF_SCT"
-seurat$nCount_GF_SCT <- colSums(seurat, layer = "counts")
-seurat$nFeature_GF_SCT <- colSums(GetAssayData(seurat, layer = "counts") > 0)
-
-rm(scores)
-rds <- file.path(cache_dir, "global_seurat.rds")
-if (!file.exists(rds)) {
-  saveRDS(seurat, file = rds)
-}
-seurat
-table(seurat$genotype_batch_ctype)
-
-gse_orig <- as.SingleCellExperiment(seurat, assay = "GF")
-gse_orig <- suppressWarnings(
-  aggregateAcrossCells(
-    gse_orig, colData(gse_orig)[ , "genotype_batch_ctype"],
-    use_exprs_values = "counts", statistics = "sum"
-  )
-)
-
-deg_orig <- as.SingleCellExperiment(seurat, assay = "RNA")
-deg_orig <- suppressWarnings(
-  aggregateAcrossCells(
-    deg_orig, colData(deg_orig)[ , "genotype_batch_ctype"],
-    use_exprs_values = "counts", statistics = "sum"
-  )
-)
-
-gse_list <- vector("list", length = 2)
-deg_list <- vector("list", length = 2)
-
-gse <- gse_orig[ , 1:24]
-gse$tau <- factor(
-  gsub("NLGF_", replacement = "", x = gse$genotype),
-  levels = c("MAPTKI", "S305N", "P301S")
-)
-gse$amyloid <- factor(
-  c(rep("WT", times = 12), rep("NLGF", times = 12)), levels = c("WT", "NLGF")
-)
-
-design <- model.matrix(~ gse$tau * gse$amyloid)
-colnames(design) <- make.names(colnames(design))
-
-keep <- filterByExpr(
-  gse, design = design, min.count = 50, min.total.count = 50
-)
-gse <- gse[keep, ]
-
-dge <- DGEList(counts(gse))
-dge <- calcNormFactors(dge)
-logcounts(gse, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 2)
-
-gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
-gse
-
-deg <- deg_orig[ , 1:24]
-deg$tau <- factor(
-  gsub("NLGF_", replacement = "", x = deg$genotype),
-  levels = c("MAPTKI", "S305N", "P301S")
-)
-deg$amyloid <- factor(
-  c(rep("WT", times = 12), rep("NLGF", times = 12)), levels = c("WT", "NLGF")
-)
-
-keep <- filterByExpr(
-  deg, design = design, min.count = 200, min.total.count = 200
-)
-deg <- deg[keep, ]
-
-dge <- DGEList(counts(deg))
-dge <- calcNormFactors(dge)
-logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 0.5)
-
-gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
-deg <- deg[rownames(deg) %in% unique(unlist(geneIds(gene_sets_sub))), ]
-deg
-
-design <- model.matrix(~ gse$tau * gse$amyloid + gse$batch)
-colnames(design) <- make.names(colnames(design))
-cont_mat <- makeContrasts(
-  "gse.tauS305N", "gse.tauP301S", "gse.amyloidNLGF",
-  "gse.tauS305N.gse.amyloidNLGF", "gse.tauP301S.gse.amyloidNLGF",
-  levels = design
-)
-
-fit <- lmFit(logcounts(gse), design)
-fit <- contrasts.fit(fit, cont_mat)
-fit <- eBayes(fit, trend = TRUE, robust = TRUE)
-
-tests <- decideTests(fit, method = "global")
-write.fit(
-  fit, tests, file.path(cache_dir, "results.tsv"),
-  adjust = "BH", F.adjust = "BH", method = "global"
-)
-gse_list[[1]] <- read.delim(file.path(cache_dir, "results.tsv"))
-
-fit <- lmFit(logcounts(deg), design)
-fit <- contrasts.fit(fit, cont_mat)
-fit <- eBayes(fit, trend = TRUE, robust = TRUE)
-
-tests <- decideTests(fit, method = "global")
-write.fit(
-  fit, tests, file.path(cache_dir, "results.tsv"),
-  adjust = "BH", F.adjust = "BH", method = "global"
-)
-deg_list[[1]] <- read.delim(file.path(cache_dir, "results.tsv"))
-
-gse <- gse_orig[ , 25:48]
-gse$tau <- factor(
-  gsub("NLGF_", replacement = "", x = gse$genotype),
-  levels = c("MAPTKI", "S305N", "P301S")
-)
-gse$amyloid <- factor(
-  c(rep("WT", times = 12), rep("NLGF", times = 12)), levels = c("WT", "NLGF")
-)
-
-design <- model.matrix(~ gse$tau * gse$amyloid)
-colnames(design) <- make.names(colnames(design))
-
-keep <- filterByExpr(
-  gse, design = design, min.count = 50, min.total.count = 50
-)
-gse <- gse[keep, ]
-
-dge <- DGEList(counts(gse))
-dge <- calcNormFactors(dge)
-logcounts(gse, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 2)
-
-gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
-gse
-
-deg <- deg_orig[ , 25:48]
-deg$tau <- factor(
-  gsub("NLGF_", replacement = "", x = deg$genotype),
-  levels = c("MAPTKI", "S305N", "P301S")
-)
-deg$amyloid <- factor(
-  c(rep("WT", times = 12), rep("NLGF", times = 12)), levels = c("WT", "NLGF")
-)
-
-design <- model.matrix(~ deg$tau * deg$amyloid)
-colnames(design) <- make.names(colnames(design))
-
-keep <- filterByExpr(
-  deg, design = design, min.count = 200, min.total.count = 200
-)
-deg <- deg[keep, ]
-
-dge <- DGEList(counts(deg))
-dge <- calcNormFactors(dge)
-logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 0.5)
-
-gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
-deg <- deg[rownames(deg) %in% unique(unlist(geneIds(gene_sets_sub))), ]
-deg
-
-design <- model.matrix(~ gse$tau * gse$amyloid + gse$batch)
-colnames(design) <- make.names(colnames(design))
-cont_mat <- makeContrasts(
-  "gse.tauS305N", "gse.tauP301S", "gse.amyloidNLGF",
-  "gse.tauS305N.gse.amyloidNLGF", "gse.tauP301S.gse.amyloidNLGF",
-  levels = design
-)
-
-fit <- lmFit(logcounts(gse), design)
-fit <- contrasts.fit(fit, cont_mat)
-fit <- eBayes(fit, trend = TRUE, robust = TRUE)
-
-tests <- decideTests(fit, method = "global")
-write.fit(
-  fit, tests, file.path(cache_dir, "results.tsv"),
-  adjust = "BH", F.adjust = "BH", method = "global"
-)
-gse_list[[2]] <- read.delim(file.path(cache_dir, "results.tsv"))
-
-fit <- lmFit(logcounts(deg), design)
-fit <- contrasts.fit(fit, cont_mat)
-fit <- eBayes(fit, trend = TRUE, robust = TRUE)
-
-tests <- decideTests(fit, method = "global")
-write.fit(
-  fit, tests, file.path(cache_dir, "results.tsv"),
-  adjust = "BH", F.adjust = "BH", method = "global"
-)
-deg_list[[2]] <- read.delim(file.path(cache_dir, "results.tsv"))
 
 results <- do.call(rbind, args = c(gse_list, deg_list))
 corrections <- vector("list", length = 5)
@@ -635,21 +439,20 @@ for (i in seq_along(corrections)) {
 }
 
 row_split <- factor(
-  rep(c("2-1", "3-1", "4/5/6-1/2/3", "5-2", "6-3"), each = 5),
-  levels = c("2-1", "3-1", "4/5/6-1/2/3", "5-2", "6-3")
+  rep(c("2-1", "3-1", "4-1", "5-2", "6-3"), each = 5),
+  levels = c("2-1", "3-1", "4-1", "5-2", "6-3")
 )
 ```
 
-# Microglia
+# Astrocyte
 
 ```{r}
-gse <- gse_orig[ , 1:24]
-gse$tau <- factor(
-  gsub("NLGF_", replacement = "", x = gse$genotype),
-  levels = c("MAPTKI", "S305N", "P301S")
-)
-gse$amyloid <- factor(
-  c(rep("WT", times = 12), rep("NLGF", times = 12)), levels = c("WT", "NLGF")
+gse <- as.SingleCellExperiment(seurat_list[[1]], assay = "GF")
+gse <- suppressWarnings(
+  aggregateAcrossCells(
+    gse, colData(gse)[ , "genotype_batch"],
+    use_exprs_values = "counts", statistics = "sum"
+  )
 )
 
 design <- model.matrix(~ gse$tau * gse$amyloid)
@@ -670,13 +473,12 @@ gse_corrected <- removeBatchEffect(
 )
 gse
 
-deg <- deg_orig[ , 1:24]
-deg$tau <- factor(
-  gsub("NLGF_", replacement = "", x = deg$genotype),
-  levels = c("MAPTKI", "S305N", "P301S")
-)
-deg$amyloid <- factor(
-  c(rep("WT", times = 12), rep("NLGF", times = 12)), levels = c("WT", "NLGF")
+deg <- as.SingleCellExperiment(seurat_list[[1]], assay = "RNA")
+deg <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype_batch"],
+    use_exprs_values = "counts", statistics = "sum"
+  )
 )
 
 keep <- filterByExpr(
@@ -732,7 +534,7 @@ results <- read.delim(file.path(cache_dir, "results.tsv"))
 
 idx <- 18
 length1 <- 1
-length2 <-nrow(gse_list[[1]]
+length2 <-nrow(gse_list[[1]])
 length <- length1:length2
 for (i in seq_along(corrections)) {
   results[ , idx] <- corrections[[i]][length]
@@ -1135,16 +937,15 @@ draw(
 )
 ```
 
-# Glut CA3
+# Oligodendrocyte
 
 ```{r}
-gse <- gse_orig[ , 25:48]
-gse$tau <- factor(
-  gsub("NLGF_", replacement = "", x = gse$genotype),
-  levels = c("MAPTKI", "S305N", "P301S")
-)
-gse$amyloid <- factor(
-  c(rep("WT", times = 12), rep("NLGF", times = 12)), levels = c("WT", "NLGF")
+gse <- as.SingleCellExperiment(seurat_list[[2]], assay = "GF")
+gse <- suppressWarnings(
+  aggregateAcrossCells(
+    gse, colData(gse)[ , "genotype_batch"],
+    use_exprs_values = "counts", statistics = "sum"
+  )
 )
 
 design <- model.matrix(~ gse$tau * gse$amyloid)
@@ -1165,17 +966,13 @@ gse_corrected <- removeBatchEffect(
 )
 gse
 
-deg <- deg_orig[ , 25:48]
-deg$tau <- factor(
-  gsub("NLGF_", replacement = "", x = deg$genotype),
-  levels = c("MAPTKI", "S305N", "P301S")
+deg <- as.SingleCellExperiment(seurat_list[[2]], assay = "RNA")
+deg <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype_batch"],
+    use_exprs_values = "counts", statistics = "sum"
+  )
 )
-deg$amyloid <- factor(
-  c(rep("WT", times = 12), rep("NLGF", times = 12)), levels = c("WT", "NLGF")
-)
-
-design <- model.matrix(~ deg$tau * deg$amyloid)
-colnames(design) <- make.names(colnames(design))
 
 keep <- filterByExpr(
   deg, design = design, min.count = 200, min.total.count = 200
@@ -1441,7 +1238,2520 @@ results <- read.delim(file.path(cache_dir, "results.tsv"))
 
 idx <- 18
 length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) + 1
-length2 <- length(corrections[[1]])
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
+  idx <- idx + 1
+}
+
+rownames(results) <- results$X
+results <- results[ , -1]
+results <- results[ , 1:22]
+tests <- results[ , 17:21]
+tests <- rowSums(tests < 0.05) > 0
+# results <- results[tests, ]
+results <- results[order(results$F, decreasing = TRUE), ]
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results), gene_anno_sub$ensembl),
+]
+results$symbol <- gene_anno_sub$symbol
+
+deg_results_list_up <- vector("list", length = 5)
+idx <- 12
+for (i in seq_along(deg_results_list_up)) {
+  results_sub <- results[ , c(idx - 10, idx)]
+  results_sub <- results_sub[results_sub[[1]] > 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(deg_results_list_up)
+  results_sub <- results_sub[keep, ]
+  deg_results_list_up[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+deg_results_list_down <- vector("list", length = 5)
+idx <- 12
+for (i in seq_along(deg_results_list_down)) {
+  results_sub <- results[ , c(idx - 10, idx)]
+  results_sub <- results_sub[results_sub[[1]] < 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(deg_results_list_down)
+  results_sub <- results_sub[keep, ]
+  deg_results_list_down[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+deg_results_up <- results[
+  rownames(results) %in% unique(unlist(deg_results_list_up)),
+]
+deg_results_up <- deg_results_up[
+  match(unique(unlist(deg_results_list_up)), rownames(deg_results_up)),
+]
+deg_results_down <- results[
+  rownames(results) %in% unique(unlist(deg_results_list_down)),
+]
+deg_results_down <- deg_results_down[
+  match(unique(unlist(deg_results_list_down)), rownames(deg_results_down)),
+]
+
+datatable_download(deg_results_up)
+datatable_download(deg_results_down)
+datatable_download(results)
+```
+
+```{r, fig.width = 8, fig.height = 8}
+mat <- deg_corrected[
+  rownames(deg_corrected) %in% rownames(deg_results_up), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(deg_results_up), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- deg_results_up$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg_corrected) %in% rownames(deg_results_down), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(deg_results_down), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- deg_results_down$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+```
+
+# Microglia
+
+```{r}
+gse <- as.SingleCellExperiment(seurat_list[[3]], assay = "GF")
+gse <- suppressWarnings(
+  aggregateAcrossCells(
+    gse, colData(gse)[ , "genotype_batch"],
+    use_exprs_values = "counts", statistics = "sum"
+  )
+)
+
+design <- model.matrix(~ gse$tau * gse$amyloid)
+colnames(design) <- make.names(colnames(design))
+
+keep <- filterByExpr(
+  gse, design = design, min.count = 50, min.total.count = 50
+)
+gse <- gse[keep, ]
+
+dge <- DGEList(counts(gse))
+dge <- calcNormFactors(dge)
+logcounts(gse, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 2)
+
+gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
+gse_corrected <- removeBatchEffect(
+  logcounts(gse), batch = gse$batch, design = design
+)
+gse
+
+deg <- as.SingleCellExperiment(seurat_list[[3]], assay = "RNA")
+deg <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype_batch"],
+    use_exprs_values = "counts", statistics = "sum"
+  )
+)
+
+keep <- filterByExpr(
+  deg, design = design, min.count = 200, min.total.count = 200
+)
+deg <- deg[keep, ]
+
+dge <- DGEList(counts(deg))
+dge <- calcNormFactors(dge)
+logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 0.5)
+
+gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
+deg <- deg[rownames(deg) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+deg_corrected <- removeBatchEffect(
+  logcounts(deg), batch = deg$batch, design = design
+)
+deg
+
+gse_range <- c(
+  min(gse_corrected),
+  (min(gse_corrected) + max(gse_corrected)) / 2,
+  max(gse_corrected)
+)
+deg_range <- c(
+  min(deg_corrected),
+  (min(deg_corrected) + max(deg_corrected)) / 2,
+  max(deg_corrected)
+)
+```
+
+## GSE
+
+```{r}
+design <- model.matrix(~ gse$tau * gse$amyloid + gse$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  "gse.tauS305N", "gse.tauP301S", "gse.amyloidNLGF",
+  "gse.tauS305N.gse.amyloidNLGF", "gse.tauP301S.gse.amyloidNLGF",
+  levels = design
+)
+
+fit <- lmFit(logcounts(gse), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+plotSA(fit)
+
+tests <- decideTests(fit, method = "global")
+write.fit(
+  fit, tests, file.path(cache_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(cache_dir, "results.tsv"))
+
+idx <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
+  idx <- idx + 1
+}
+
+rownames(results) <- results$X
+results <- results[ , -1]
+results <- results[ , 1:22]
+tests <- results[ , 17:21]
+tests <- rowSums(tests < 0.05) > 0
+# results <- results[tests, ]
+results <- results[order(results$F, decreasing = TRUE), ]
+results$gene_set <- rownames(results)
+
+gse_results_list_up <- vector("list", length = 5)
+idx <- 12
+for (i in seq_along(gse_results_list_up)) {
+  results_sub <- results[ , c(idx - 10, idx)]
+  results_sub <- results_sub[results_sub[[1]] > 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(gse_results_list_up)
+  results_sub <- results_sub[keep, ]
+  gse_results_list_up[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+gse_results_list_down <- vector("list", length = 5)
+idx <- 12
+for (i in seq_along(gse_results_list_down)) {
+  results_sub <- results[ , c(idx - 10, idx)]
+  results_sub <- results_sub[results_sub[[1]] < 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(gse_results_list_down)
+  results_sub <- results_sub[keep, ]
+  gse_results_list_down[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+gse_results_up <- results[
+  rownames(results) %in% unique(unlist(gse_results_list_up)),
+]
+gse_results_up <- gse_results_up[
+  match(unique(unlist(gse_results_list_up)), rownames(gse_results_up)),
+]
+gse_results_down <- results[
+  rownames(results) %in% unique(unlist(gse_results_list_down)),
+]
+gse_results_down <- gse_results_down[
+  match(unique(unlist(gse_results_list_down)), rownames(gse_results_down)),
+]
+
+datatable_download(gse_results_up)
+datatable_download(gse_results_down)
+datatable_download(results)
+```
+
+```{r, fig.width = 14, fig.height = 8}
+mat <- gse_corrected[
+  rownames(gse_corrected) %in% rownames(gse_results_up), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(gse_results_up), rownames(mat)), , drop = FALSE
+]
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+
+mat <- gse_corrected[
+  rownames(gse_corrected) %in% rownames(gse_results_down), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(gse_results_down), rownames(mat)), , drop = FALSE
+]
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+```
+
+## DGE
+
+```{r}
+design <- model.matrix(~ deg$tau * deg$amyloid + deg$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  "deg.tauS305N", "deg.tauP301S", "deg.amyloidNLGF",
+  "deg.tauS305N.deg.amyloidNLGF", "deg.tauP301S.deg.amyloidNLGF",
+  levels = design
+)
+
+fit <- lmFit(logcounts(deg), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+plotSA(fit)
+
+tests <- decideTests(fit, method = "global")
+write.fit(
+  fit, tests, file.path(cache_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(cache_dir, "results.tsv"))
+
+idx <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
+  idx <- idx + 1
+}
+
+rownames(results) <- results$X
+results <- results[ , -1]
+results <- results[ , 1:22]
+tests <- results[ , 17:21]
+tests <- rowSums(tests < 0.05) > 0
+# results <- results[tests, ]
+results <- results[order(results$F, decreasing = TRUE), ]
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results), gene_anno_sub$ensembl),
+]
+results$symbol <- gene_anno_sub$symbol
+
+deg_results_list_up <- vector("list", length = 5)
+idx <- 12
+for (i in seq_along(deg_results_list_up)) {
+  results_sub <- results[ , c(idx - 10, idx)]
+  results_sub <- results_sub[results_sub[[1]] > 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(deg_results_list_up)
+  results_sub <- results_sub[keep, ]
+  deg_results_list_up[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+deg_results_list_down <- vector("list", length = 5)
+idx <- 12
+for (i in seq_along(deg_results_list_down)) {
+  results_sub <- results[ , c(idx - 10, idx)]
+  results_sub <- results_sub[results_sub[[1]] < 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(deg_results_list_down)
+  results_sub <- results_sub[keep, ]
+  deg_results_list_down[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+deg_results_up <- results[
+  rownames(results) %in% unique(unlist(deg_results_list_up)),
+]
+deg_results_up <- deg_results_up[
+  match(unique(unlist(deg_results_list_up)), rownames(deg_results_up)),
+]
+deg_results_down <- results[
+  rownames(results) %in% unique(unlist(deg_results_list_down)),
+]
+deg_results_down <- deg_results_down[
+  match(unique(unlist(deg_results_list_down)), rownames(deg_results_down)),
+]
+
+datatable_download(deg_results_up)
+datatable_download(deg_results_down)
+datatable_download(results)
+```
+
+```{r, fig.width = 8, fig.height = 8}
+mat <- deg_corrected[
+  rownames(deg_corrected) %in% rownames(deg_results_up), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(deg_results_up), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- deg_results_up$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg_corrected) %in% rownames(deg_results_down), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(deg_results_down), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- deg_results_down$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+```
+
+# CA3
+
+```{r}
+gse <- as.SingleCellExperiment(seurat_list[[4]], assay = "GF")
+gse <- suppressWarnings(
+  aggregateAcrossCells(
+    gse, colData(gse)[ , "genotype_batch"],
+    use_exprs_values = "counts", statistics = "sum"
+  )
+)
+
+design <- model.matrix(~ gse$tau * gse$amyloid)
+colnames(design) <- make.names(colnames(design))
+
+keep <- filterByExpr(
+  gse, design = design, min.count = 50, min.total.count = 50
+)
+gse <- gse[keep, ]
+
+dge <- DGEList(counts(gse))
+dge <- calcNormFactors(dge)
+logcounts(gse, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 2)
+
+gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
+gse_corrected <- removeBatchEffect(
+  logcounts(gse), batch = gse$batch, design = design
+)
+gse
+
+deg <- as.SingleCellExperiment(seurat_list[[4]], assay = "RNA")
+deg <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype_batch"],
+    use_exprs_values = "counts", statistics = "sum"
+  )
+)
+
+keep <- filterByExpr(
+  deg, design = design, min.count = 200, min.total.count = 200
+)
+deg <- deg[keep, ]
+
+dge <- DGEList(counts(deg))
+dge <- calcNormFactors(dge)
+logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 0.5)
+
+gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
+deg <- deg[rownames(deg) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+deg_corrected <- removeBatchEffect(
+  logcounts(deg), batch = deg$batch, design = design
+)
+deg
+
+gse_range <- c(
+  min(gse_corrected),
+  (min(gse_corrected) + max(gse_corrected)) / 2,
+  max(gse_corrected)
+)
+deg_range <- c(
+  min(deg_corrected),
+  (min(deg_corrected) + max(deg_corrected)) / 2,
+  max(deg_corrected)
+)
+```
+
+## GSE
+
+```{r}
+design <- model.matrix(~ gse$tau * gse$amyloid + gse$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  "gse.tauS305N", "gse.tauP301S", "gse.amyloidNLGF",
+  "gse.tauS305N.gse.amyloidNLGF", "gse.tauP301S.gse.amyloidNLGF",
+  levels = design
+)
+
+fit <- lmFit(logcounts(gse), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+plotSA(fit)
+
+tests <- decideTests(fit, method = "global")
+write.fit(
+  fit, tests, file.path(cache_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(cache_dir, "results.tsv"))
+
+idx <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
+  idx <- idx + 1
+}
+
+rownames(results) <- results$X
+results <- results[ , -1]
+results <- results[ , 1:22]
+tests <- results[ , 17:21]
+tests <- rowSums(tests < 0.05) > 0
+# results <- results[tests, ]
+results <- results[order(results$F, decreasing = TRUE), ]
+results$gene_set <- rownames(results)
+
+gse_results_list_up <- vector("list", length = 5)
+idx <- 12
+for (i in seq_along(gse_results_list_up)) {
+  results_sub <- results[ , c(idx - 10, idx)]
+  results_sub <- results_sub[results_sub[[1]] > 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(gse_results_list_up)
+  results_sub <- results_sub[keep, ]
+  gse_results_list_up[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+gse_results_list_down <- vector("list", length = 5)
+idx <- 12
+for (i in seq_along(gse_results_list_down)) {
+  results_sub <- results[ , c(idx - 10, idx)]
+  results_sub <- results_sub[results_sub[[1]] < 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(gse_results_list_down)
+  results_sub <- results_sub[keep, ]
+  gse_results_list_down[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+gse_results_up <- results[
+  rownames(results) %in% unique(unlist(gse_results_list_up)),
+]
+gse_results_up <- gse_results_up[
+  match(unique(unlist(gse_results_list_up)), rownames(gse_results_up)),
+]
+gse_results_down <- results[
+  rownames(results) %in% unique(unlist(gse_results_list_down)),
+]
+gse_results_down <- gse_results_down[
+  match(unique(unlist(gse_results_list_down)), rownames(gse_results_down)),
+]
+
+datatable_download(gse_results_up)
+datatable_download(gse_results_down)
+datatable_download(results)
+```
+
+```{r, fig.width = 14, fig.height = 8}
+mat <- gse_corrected[
+  rownames(gse_corrected) %in% rownames(gse_results_up), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(gse_results_up), rownames(mat)), , drop = FALSE
+]
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+
+mat <- gse_corrected[
+  rownames(gse_corrected) %in% rownames(gse_results_down), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(gse_results_down), rownames(mat)), , drop = FALSE
+]
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+```
+
+## DGE
+
+```{r}
+design <- model.matrix(~ deg$tau * deg$amyloid + deg$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  "deg.tauS305N", "deg.tauP301S", "deg.amyloidNLGF",
+  "deg.tauS305N.deg.amyloidNLGF", "deg.tauP301S.deg.amyloidNLGF",
+  levels = design
+)
+
+fit <- lmFit(logcounts(deg), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+plotSA(fit)
+
+tests <- decideTests(fit, method = "global")
+write.fit(
+  fit, tests, file.path(cache_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(cache_dir, "results.tsv"))
+
+idx <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
+  idx <- idx + 1
+}
+
+rownames(results) <- results$X
+results <- results[ , -1]
+results <- results[ , 1:22]
+tests <- results[ , 17:21]
+tests <- rowSums(tests < 0.05) > 0
+# results <- results[tests, ]
+results <- results[order(results$F, decreasing = TRUE), ]
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results), gene_anno_sub$ensembl),
+]
+results$symbol <- gene_anno_sub$symbol
+
+deg_results_list_up <- vector("list", length = 5)
+idx <- 12
+for (i in seq_along(deg_results_list_up)) {
+  results_sub <- results[ , c(idx - 10, idx)]
+  results_sub <- results_sub[results_sub[[1]] > 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(deg_results_list_up)
+  results_sub <- results_sub[keep, ]
+  deg_results_list_up[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+deg_results_list_down <- vector("list", length = 5)
+idx <- 12
+for (i in seq_along(deg_results_list_down)) {
+  results_sub <- results[ , c(idx - 10, idx)]
+  results_sub <- results_sub[results_sub[[1]] < 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(deg_results_list_down)
+  results_sub <- results_sub[keep, ]
+  deg_results_list_down[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+deg_results_up <- results[
+  rownames(results) %in% unique(unlist(deg_results_list_up)),
+]
+deg_results_up <- deg_results_up[
+  match(unique(unlist(deg_results_list_up)), rownames(deg_results_up)),
+]
+deg_results_down <- results[
+  rownames(results) %in% unique(unlist(deg_results_list_down)),
+]
+deg_results_down <- deg_results_down[
+  match(unique(unlist(deg_results_list_down)), rownames(deg_results_down)),
+]
+
+datatable_download(deg_results_up)
+datatable_download(deg_results_down)
+datatable_download(results)
+```
+
+```{r, fig.width = 8, fig.height = 8}
+mat <- deg_corrected[
+  rownames(deg_corrected) %in% rownames(deg_results_up), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(deg_results_up), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- deg_results_up$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg_corrected) %in% rownames(deg_results_down), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(deg_results_down), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- deg_results_down$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+```
+
+# CA1
+
+```{r}
+gse <- as.SingleCellExperiment(seurat_list[[5]], assay = "GF")
+gse <- suppressWarnings(
+  aggregateAcrossCells(
+    gse, colData(gse)[ , "genotype_batch"],
+    use_exprs_values = "counts", statistics = "sum"
+  )
+)
+
+design <- model.matrix(~ gse$tau * gse$amyloid)
+colnames(design) <- make.names(colnames(design))
+
+keep <- filterByExpr(
+  gse, design = design, min.count = 50, min.total.count = 50
+)
+gse <- gse[keep, ]
+
+dge <- DGEList(counts(gse))
+dge <- calcNormFactors(dge)
+logcounts(gse, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 2)
+
+gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
+gse_corrected <- removeBatchEffect(
+  logcounts(gse), batch = gse$batch, design = design
+)
+gse
+
+deg <- as.SingleCellExperiment(seurat_list[[5]], assay = "RNA")
+deg <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype_batch"],
+    use_exprs_values = "counts", statistics = "sum"
+  )
+)
+
+keep <- filterByExpr(
+  deg, design = design, min.count = 200, min.total.count = 200
+)
+deg <- deg[keep, ]
+
+dge <- DGEList(counts(deg))
+dge <- calcNormFactors(dge)
+logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 0.5)
+
+gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
+deg <- deg[rownames(deg) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+deg_corrected <- removeBatchEffect(
+  logcounts(deg), batch = deg$batch, design = design
+)
+deg
+
+gse_range <- c(
+  min(gse_corrected),
+  (min(gse_corrected) + max(gse_corrected)) / 2,
+  max(gse_corrected)
+)
+deg_range <- c(
+  min(deg_corrected),
+  (min(deg_corrected) + max(deg_corrected)) / 2,
+  max(deg_corrected)
+)
+```
+
+## GSE
+
+```{r}
+design <- model.matrix(~ gse$tau * gse$amyloid + gse$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  "gse.tauS305N", "gse.tauP301S", "gse.amyloidNLGF",
+  "gse.tauS305N.gse.amyloidNLGF", "gse.tauP301S.gse.amyloidNLGF",
+  levels = design
+)
+
+fit <- lmFit(logcounts(gse), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+plotSA(fit)
+
+tests <- decideTests(fit, method = "global")
+write.fit(
+  fit, tests, file.path(cache_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(cache_dir, "results.tsv"))
+
+idx <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
+  idx <- idx + 1
+}
+
+rownames(results) <- results$X
+results <- results[ , -1]
+results <- results[ , 1:22]
+tests <- results[ , 17:21]
+tests <- rowSums(tests < 0.05) > 0
+# results <- results[tests, ]
+results <- results[order(results$F, decreasing = TRUE), ]
+results$gene_set <- rownames(results)
+
+gse_results_list_up <- vector("list", length = 5)
+idx <- 12
+for (i in seq_along(gse_results_list_up)) {
+  results_sub <- results[ , c(idx - 10, idx)]
+  results_sub <- results_sub[results_sub[[1]] > 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(gse_results_list_up)
+  results_sub <- results_sub[keep, ]
+  gse_results_list_up[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+gse_results_list_down <- vector("list", length = 5)
+idx <- 12
+for (i in seq_along(gse_results_list_down)) {
+  results_sub <- results[ , c(idx - 10, idx)]
+  results_sub <- results_sub[results_sub[[1]] < 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(gse_results_list_down)
+  results_sub <- results_sub[keep, ]
+  gse_results_list_down[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+gse_results_up <- results[
+  rownames(results) %in% unique(unlist(gse_results_list_up)),
+]
+gse_results_up <- gse_results_up[
+  match(unique(unlist(gse_results_list_up)), rownames(gse_results_up)),
+]
+gse_results_down <- results[
+  rownames(results) %in% unique(unlist(gse_results_list_down)),
+]
+gse_results_down <- gse_results_down[
+  match(unique(unlist(gse_results_list_down)), rownames(gse_results_down)),
+]
+
+datatable_download(gse_results_up)
+datatable_download(gse_results_down)
+datatable_download(results)
+```
+
+```{r, fig.width = 14, fig.height = 8}
+mat <- gse_corrected[
+  rownames(gse_corrected) %in% rownames(gse_results_up), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(gse_results_up), rownames(mat)), , drop = FALSE
+]
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+
+mat <- gse_corrected[
+  rownames(gse_corrected) %in% rownames(gse_results_down), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(gse_results_down), rownames(mat)), , drop = FALSE
+]
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+```
+
+## DGE
+
+```{r}
+design <- model.matrix(~ deg$tau * deg$amyloid + deg$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  "deg.tauS305N", "deg.tauP301S", "deg.amyloidNLGF",
+  "deg.tauS305N.deg.amyloidNLGF", "deg.tauP301S.deg.amyloidNLGF",
+  levels = design
+)
+
+fit <- lmFit(logcounts(deg), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+plotSA(fit)
+
+tests <- decideTests(fit, method = "global")
+write.fit(
+  fit, tests, file.path(cache_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(cache_dir, "results.tsv"))
+
+idx <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
+  idx <- idx + 1
+}
+
+rownames(results) <- results$X
+results <- results[ , -1]
+results <- results[ , 1:22]
+tests <- results[ , 17:21]
+tests <- rowSums(tests < 0.05) > 0
+# results <- results[tests, ]
+results <- results[order(results$F, decreasing = TRUE), ]
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results), gene_anno_sub$ensembl),
+]
+results$symbol <- gene_anno_sub$symbol
+
+deg_results_list_up <- vector("list", length = 5)
+idx <- 12
+for (i in seq_along(deg_results_list_up)) {
+  results_sub <- results[ , c(idx - 10, idx)]
+  results_sub <- results_sub[results_sub[[1]] > 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(deg_results_list_up)
+  results_sub <- results_sub[keep, ]
+  deg_results_list_up[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+deg_results_list_down <- vector("list", length = 5)
+idx <- 12
+for (i in seq_along(deg_results_list_down)) {
+  results_sub <- results[ , c(idx - 10, idx)]
+  results_sub <- results_sub[results_sub[[1]] < 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(deg_results_list_down)
+  results_sub <- results_sub[keep, ]
+  deg_results_list_down[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+deg_results_up <- results[
+  rownames(results) %in% unique(unlist(deg_results_list_up)),
+]
+deg_results_up <- deg_results_up[
+  match(unique(unlist(deg_results_list_up)), rownames(deg_results_up)),
+]
+deg_results_down <- results[
+  rownames(results) %in% unique(unlist(deg_results_list_down)),
+]
+deg_results_down <- deg_results_down[
+  match(unique(unlist(deg_results_list_down)), rownames(deg_results_down)),
+]
+
+datatable_download(deg_results_up)
+datatable_download(deg_results_down)
+datatable_download(results)
+```
+
+```{r, fig.width = 8, fig.height = 8}
+mat <- deg_corrected[
+  rownames(deg_corrected) %in% rownames(deg_results_up), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(deg_results_up), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- deg_results_up$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg_corrected) %in% rownames(deg_results_down), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(deg_results_down), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- deg_results_down$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+```
+
+# ENT
+
+```{r}
+gse <- as.SingleCellExperiment(seurat_list[[6]], assay = "GF")
+gse <- suppressWarnings(
+  aggregateAcrossCells(
+    gse, colData(gse)[ , "genotype_batch"],
+    use_exprs_values = "counts", statistics = "sum"
+  )
+)
+
+design <- model.matrix(~ gse$tau * gse$amyloid)
+colnames(design) <- make.names(colnames(design))
+
+keep <- filterByExpr(
+  gse, design = design, min.count = 50, min.total.count = 50
+)
+gse <- gse[keep, ]
+
+dge <- DGEList(counts(gse))
+dge <- calcNormFactors(dge)
+logcounts(gse, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 2)
+
+gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
+gse_corrected <- removeBatchEffect(
+  logcounts(gse), batch = gse$batch, design = design
+)
+gse
+
+deg <- as.SingleCellExperiment(seurat_list[[6]], assay = "RNA")
+deg <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype_batch"],
+    use_exprs_values = "counts", statistics = "sum"
+  )
+)
+
+keep <- filterByExpr(
+  deg, design = design, min.count = 200, min.total.count = 200
+)
+deg <- deg[keep, ]
+
+dge <- DGEList(counts(deg))
+dge <- calcNormFactors(dge)
+logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 0.5)
+
+gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
+deg <- deg[rownames(deg) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+deg_corrected <- removeBatchEffect(
+  logcounts(deg), batch = deg$batch, design = design
+)
+deg
+
+gse_range <- c(
+  min(gse_corrected),
+  (min(gse_corrected) + max(gse_corrected)) / 2,
+  max(gse_corrected)
+)
+deg_range <- c(
+  min(deg_corrected),
+  (min(deg_corrected) + max(deg_corrected)) / 2,
+  max(deg_corrected)
+)
+```
+
+## GSE
+
+```{r}
+design <- model.matrix(~ gse$tau * gse$amyloid + gse$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  "gse.tauS305N", "gse.tauP301S", "gse.amyloidNLGF",
+  "gse.tauS305N.gse.amyloidNLGF", "gse.tauP301S.gse.amyloidNLGF",
+  levels = design
+)
+
+fit <- lmFit(logcounts(gse), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+plotSA(fit)
+
+tests <- decideTests(fit, method = "global")
+write.fit(
+  fit, tests, file.path(cache_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(cache_dir, "results.tsv"))
+
+idx <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
+  idx <- idx + 1
+}
+
+rownames(results) <- results$X
+results <- results[ , -1]
+results <- results[ , 1:22]
+tests <- results[ , 17:21]
+tests <- rowSums(tests < 0.05) > 0
+# results <- results[tests, ]
+results <- results[order(results$F, decreasing = TRUE), ]
+results$gene_set <- rownames(results)
+
+gse_results_list_up <- vector("list", length = 5)
+idx <- 12
+for (i in seq_along(gse_results_list_up)) {
+  results_sub <- results[ , c(idx - 10, idx)]
+  results_sub <- results_sub[results_sub[[1]] > 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(gse_results_list_up)
+  results_sub <- results_sub[keep, ]
+  gse_results_list_up[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+gse_results_list_down <- vector("list", length = 5)
+idx <- 12
+for (i in seq_along(gse_results_list_down)) {
+  results_sub <- results[ , c(idx - 10, idx)]
+  results_sub <- results_sub[results_sub[[1]] < 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(gse_results_list_down)
+  results_sub <- results_sub[keep, ]
+  gse_results_list_down[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+gse_results_up <- results[
+  rownames(results) %in% unique(unlist(gse_results_list_up)),
+]
+gse_results_up <- gse_results_up[
+  match(unique(unlist(gse_results_list_up)), rownames(gse_results_up)),
+]
+gse_results_down <- results[
+  rownames(results) %in% unique(unlist(gse_results_list_down)),
+]
+gse_results_down <- gse_results_down[
+  match(unique(unlist(gse_results_list_down)), rownames(gse_results_down)),
+]
+
+datatable_download(gse_results_up)
+datatable_download(gse_results_down)
+datatable_download(results)
+```
+
+```{r, fig.width = 14, fig.height = 8}
+mat <- gse_corrected[
+  rownames(gse_corrected) %in% rownames(gse_results_up), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(gse_results_up), rownames(mat)), , drop = FALSE
+]
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+
+mat <- gse_corrected[
+  rownames(gse_corrected) %in% rownames(gse_results_down), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(gse_results_down), rownames(mat)), , drop = FALSE
+]
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+```
+
+## DGE
+
+```{r}
+design <- model.matrix(~ deg$tau * deg$amyloid + deg$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  "deg.tauS305N", "deg.tauP301S", "deg.amyloidNLGF",
+  "deg.tauS305N.deg.amyloidNLGF", "deg.tauP301S.deg.amyloidNLGF",
+  levels = design
+)
+
+fit <- lmFit(logcounts(deg), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+plotSA(fit)
+
+tests <- decideTests(fit, method = "global")
+write.fit(
+  fit, tests, file.path(cache_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(cache_dir, "results.tsv"))
+
+idx <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
+  idx <- idx + 1
+}
+
+rownames(results) <- results$X
+results <- results[ , -1]
+results <- results[ , 1:22]
+tests <- results[ , 17:21]
+tests <- rowSums(tests < 0.05) > 0
+# results <- results[tests, ]
+results <- results[order(results$F, decreasing = TRUE), ]
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results), gene_anno_sub$ensembl),
+]
+results$symbol <- gene_anno_sub$symbol
+
+deg_results_list_up <- vector("list", length = 5)
+idx <- 12
+for (i in seq_along(deg_results_list_up)) {
+  results_sub <- results[ , c(idx - 10, idx)]
+  results_sub <- results_sub[results_sub[[1]] > 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(deg_results_list_up)
+  results_sub <- results_sub[keep, ]
+  deg_results_list_up[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+deg_results_list_down <- vector("list", length = 5)
+idx <- 12
+for (i in seq_along(deg_results_list_down)) {
+  results_sub <- results[ , c(idx - 10, idx)]
+  results_sub <- results_sub[results_sub[[1]] < 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(deg_results_list_down)
+  results_sub <- results_sub[keep, ]
+  deg_results_list_down[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+deg_results_up <- results[
+  rownames(results) %in% unique(unlist(deg_results_list_up)),
+]
+deg_results_up <- deg_results_up[
+  match(unique(unlist(deg_results_list_up)), rownames(deg_results_up)),
+]
+deg_results_down <- results[
+  rownames(results) %in% unique(unlist(deg_results_list_down)),
+]
+deg_results_down <- deg_results_down[
+  match(unique(unlist(deg_results_list_down)), rownames(deg_results_down)),
+]
+
+datatable_download(deg_results_up)
+datatable_download(deg_results_down)
+datatable_download(results)
+```
+
+```{r, fig.width = 8, fig.height = 8}
+mat <- deg_corrected[
+  rownames(deg_corrected) %in% rownames(deg_results_up), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(deg_results_up), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- deg_results_up$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg_corrected) %in% rownames(deg_results_down), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(deg_results_down), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- deg_results_down$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logCPM", title_position = "lefttop-rot"
+    )
+  )
+)
+```
+
+# GABAergic
+
+```{r}
+gse <- as.SingleCellExperiment(seurat_list[[7]], assay = "GF")
+gse <- suppressWarnings(
+  aggregateAcrossCells(
+    gse, colData(gse)[ , "genotype_batch"],
+    use_exprs_values = "counts", statistics = "sum"
+  )
+)
+
+design <- model.matrix(~ gse$tau * gse$amyloid)
+colnames(design) <- make.names(colnames(design))
+
+keep <- filterByExpr(
+  gse, design = design, min.count = 50, min.total.count = 50
+)
+gse <- gse[keep, ]
+
+dge <- DGEList(counts(gse))
+dge <- calcNormFactors(dge)
+logcounts(gse, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 2)
+
+gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
+gse_corrected <- removeBatchEffect(
+  logcounts(gse), batch = gse$batch, design = design
+)
+gse
+
+deg <- as.SingleCellExperiment(seurat_list[[7]], assay = "RNA")
+deg <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype_batch"],
+    use_exprs_values = "counts", statistics = "sum"
+  )
+)
+
+keep <- filterByExpr(
+  deg, design = design, min.count = 200, min.total.count = 200
+)
+deg <- deg[keep, ]
+
+dge <- DGEList(counts(deg))
+dge <- calcNormFactors(dge)
+logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 0.5)
+
+gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
+deg <- deg[rownames(deg) %in% unique(unlist(geneIds(gene_sets_sub))), ]
+deg_corrected <- removeBatchEffect(
+  logcounts(deg), batch = deg$batch, design = design
+)
+deg
+
+gse_range <- c(
+  min(gse_corrected),
+  (min(gse_corrected) + max(gse_corrected)) / 2,
+  max(gse_corrected)
+)
+deg_range <- c(
+  min(deg_corrected),
+  (min(deg_corrected) + max(deg_corrected)) / 2,
+  max(deg_corrected)
+)
+```
+
+## GSE
+
+```{r}
+design <- model.matrix(~ gse$tau * gse$amyloid + gse$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  "gse.tauS305N", "gse.tauP301S", "gse.amyloidNLGF",
+  "gse.tauS305N.gse.amyloidNLGF", "gse.tauP301S.gse.amyloidNLGF",
+  levels = design
+)
+
+fit <- lmFit(logcounts(gse), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+plotSA(fit)
+
+tests <- decideTests(fit, method = "global")
+write.fit(
+  fit, tests, file.path(cache_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(cache_dir, "results.tsv"))
+
+idx <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]]) +
+  nrow(gse_list[[7]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
+  idx <- idx + 1
+}
+
+rownames(results) <- results$X
+results <- results[ , -1]
+results <- results[ , 1:22]
+tests <- results[ , 17:21]
+tests <- rowSums(tests < 0.05) > 0
+# results <- results[tests, ]
+results <- results[order(results$F, decreasing = TRUE), ]
+results$gene_set <- rownames(results)
+
+gse_results_list_up <- vector("list", length = 5)
+idx <- 12
+for (i in seq_along(gse_results_list_up)) {
+  results_sub <- results[ , c(idx - 10, idx)]
+  results_sub <- results_sub[results_sub[[1]] > 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(gse_results_list_up)
+  results_sub <- results_sub[keep, ]
+  gse_results_list_up[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+gse_results_list_down <- vector("list", length = 5)
+idx <- 12
+for (i in seq_along(gse_results_list_down)) {
+  results_sub <- results[ , c(idx - 10, idx)]
+  results_sub <- results_sub[results_sub[[1]] < 0, ]
+  results_sub <- results_sub[order(results_sub[[2]]), ]
+  keep <- rownames(results_sub) %notin% unlist(gse_results_list_down)
+  results_sub <- results_sub[keep, ]
+  gse_results_list_down[[i]] <- rownames(results_sub)[1:5]
+  idx <- idx + 1
+}
+
+gse_results_up <- results[
+  rownames(results) %in% unique(unlist(gse_results_list_up)),
+]
+gse_results_up <- gse_results_up[
+  match(unique(unlist(gse_results_list_up)), rownames(gse_results_up)),
+]
+gse_results_down <- results[
+  rownames(results) %in% unique(unlist(gse_results_list_down)),
+]
+gse_results_down <- gse_results_down[
+  match(unique(unlist(gse_results_list_down)), rownames(gse_results_down)),
+]
+
+datatable_download(gse_results_up)
+datatable_download(gse_results_down)
+datatable_download(results)
+```
+
+```{r, fig.width = 14, fig.height = 8}
+mat <- gse_corrected[
+  rownames(gse_corrected) %in% rownames(gse_results_up), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(gse_results_up), rownames(mat)), , drop = FALSE
+]
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+
+mat <- gse_corrected[
+  rownames(gse_corrected) %in% rownames(gse_results_down), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(gse_results_down), rownames(mat)), , drop = FALSE
+]
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_names_max_width = max_text_width(rownames(mat)),
+  column_names_max_height = max_text_width(colnames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logGSE", title_position = "lefttop-rot"
+  )
+)
+set.seed(1)
+draw(
+  Heatmap(
+    mat,
+    col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    row_names_max_width = max_text_width(rownames(mat)),
+    column_names_max_height = max_text_width(colnames(mat)),
+    heatmap_legend_param = list(
+      title = "Scaled logGSE", title_position = "lefttop-rot"
+    )
+  )
+)
+```
+
+## DGE
+
+```{r}
+design <- model.matrix(~ deg$tau * deg$amyloid + deg$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  "deg.tauS305N", "deg.tauP301S", "deg.amyloidNLGF",
+  "deg.tauS305N.deg.amyloidNLGF", "deg.tauP301S.deg.amyloidNLGF",
+  levels = design
+)
+
+fit <- lmFit(logcounts(deg), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+plotSA(fit)
+
+tests <- decideTests(fit, method = "global")
+write.fit(
+  fit, tests, file.path(cache_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(cache_dir, "results.tsv"))
+
+idx <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]]) +
+  nrow(gse_list[[7]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]]) +
+  nrow(gse_list[[7]]) + nrow(deg_list[[7]])
 length <- length1:length2
 for (i in seq_along(corrections)) {
   results[ , idx] <- corrections[[i]][length]
