@@ -467,7 +467,9 @@ for (i in seq_along(corrections)) {
 # Astrocyte
 
 ```{r}
-gse <- as.SingleCellExperiment(seurat_list[[1]], assay = "GF")
+ctype_idx <- 1
+
+gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
@@ -490,7 +492,7 @@ gse_corrected <- removeBatchEffect(
 )
 gse
 
-deg <- as.SingleCellExperiment(seurat_list[[1]], assay = "RNA")
+deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
 deg <- suppressWarnings(
   aggregateAcrossCells(
     deg, colData(deg)[ , "genotype_batch"],
@@ -801,6 +803,7 @@ mat <- mat[
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -817,6 +820,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -833,6 +837,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -849,6 +854,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -911,6 +917,7 @@ mat <- mat[
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -927,6 +934,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -943,6 +951,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -959,6 +968,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -1248,6 +1258,7 @@ rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -1264,6 +1275,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -1280,6 +1292,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -1296,6 +1309,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -1359,6 +1373,7 @@ rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -1375,6 +1390,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -1391,6 +1407,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -1407,6 +1424,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -1419,7 +1437,9 @@ draw(
 # Oligodendrocyte
 
 ```{r}
-gse <- as.SingleCellExperiment(seurat_list[[2]], assay = "GF")
+ctype_idx <- 2
+
+gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
@@ -1442,7 +1462,7 @@ gse_corrected <- removeBatchEffect(
 )
 gse
 
-deg <- as.SingleCellExperiment(seurat_list[[2]], assay = "RNA")
+deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
 deg <- suppressWarnings(
   aggregateAcrossCells(
     deg, colData(deg)[ , "genotype_batch"],
@@ -1753,6 +1773,7 @@ mat <- mat[
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -1769,6 +1790,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -1785,6 +1807,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -1801,6 +1824,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -1863,6 +1887,7 @@ mat <- mat[
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -1879,6 +1904,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -1895,6 +1921,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -1911,6 +1938,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -2201,6 +2229,7 @@ rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -2217,6 +2246,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -2233,6 +2263,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -2249,6 +2280,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -2312,6 +2344,7 @@ rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -2328,6 +2361,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -2344,6 +2378,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -2360,6 +2395,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -2372,7 +2408,9 @@ draw(
 # Microglia
 
 ```{r}
-gse <- as.SingleCellExperiment(seurat_list[[3]], assay = "GF")
+ctype_idx <- 3
+
+gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
@@ -2395,7 +2433,7 @@ gse_corrected <- removeBatchEffect(
 )
 gse
 
-deg <- as.SingleCellExperiment(seurat_list[[3]], assay = "RNA")
+deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
 deg <- suppressWarnings(
   aggregateAcrossCells(
     deg, colData(deg)[ , "genotype_batch"],
@@ -2708,6 +2746,7 @@ mat <- mat[
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -2724,6 +2763,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -2740,6 +2780,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -2756,6 +2797,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -2818,6 +2860,7 @@ mat <- mat[
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -2834,6 +2877,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -2850,6 +2894,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -2866,6 +2911,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -3157,6 +3203,7 @@ rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -3173,6 +3220,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -3189,6 +3237,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -3205,6 +3254,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -3268,6 +3318,7 @@ rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -3284,6 +3335,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -3300,6 +3352,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -3316,6 +3369,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -3328,7 +3382,9 @@ draw(
 # CA3
 
 ```{r}
-gse <- as.SingleCellExperiment(seurat_list[[4]], assay = "GF")
+ctype_idx <- 4
+
+gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
@@ -3351,7 +3407,7 @@ gse_corrected <- removeBatchEffect(
 )
 gse
 
-deg <- as.SingleCellExperiment(seurat_list[[4]], assay = "RNA")
+deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
 deg <- suppressWarnings(
   aggregateAcrossCells(
     deg, colData(deg)[ , "genotype_batch"],
@@ -3665,6 +3721,7 @@ mat <- mat[
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -3681,6 +3738,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -3697,6 +3755,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -3713,6 +3772,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -3775,6 +3835,7 @@ mat <- mat[
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -3791,6 +3852,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -3807,6 +3869,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -3823,6 +3886,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -4116,6 +4180,7 @@ rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -4132,6 +4197,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -4148,6 +4214,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -4164,6 +4231,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -4227,6 +4295,7 @@ rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -4243,6 +4312,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -4259,6 +4329,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -4275,6 +4346,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -4287,7 +4359,9 @@ draw(
 # CA1
 
 ```{r}
-gse <- as.SingleCellExperiment(seurat_list[[5]], assay = "GF")
+ctype_idx <- 5
+
+gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
@@ -4310,7 +4384,7 @@ gse_corrected <- removeBatchEffect(
 )
 gse
 
-deg <- as.SingleCellExperiment(seurat_list[[5]], assay = "RNA")
+deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
 deg <- suppressWarnings(
   aggregateAcrossCells(
     deg, colData(deg)[ , "genotype_batch"],
@@ -4625,6 +4699,7 @@ mat <- mat[
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -4641,6 +4716,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -4657,6 +4733,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -4673,6 +4750,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -4735,6 +4813,7 @@ mat <- mat[
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -4751,6 +4830,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -4767,6 +4847,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -4783,6 +4864,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -5078,6 +5160,7 @@ rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -5094,6 +5177,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -5110,6 +5194,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -5126,6 +5211,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -5189,6 +5275,7 @@ rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -5205,6 +5292,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -5221,6 +5309,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -5237,6 +5326,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -5249,7 +5339,9 @@ draw(
 # ENT
 
 ```{r}
-gse <- as.SingleCellExperiment(seurat_list[[6]], assay = "GF")
+ctype_idx <- 6
+
+gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
@@ -5272,7 +5364,7 @@ gse_corrected <- removeBatchEffect(
 )
 gse
 
-deg <- as.SingleCellExperiment(seurat_list[[6]], assay = "RNA")
+deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
 deg <- suppressWarnings(
   aggregateAcrossCells(
     deg, colData(deg)[ , "genotype_batch"],
@@ -5589,6 +5681,7 @@ mat <- mat[
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -5605,6 +5698,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -5621,6 +5715,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -5637,6 +5732,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -5699,6 +5795,7 @@ mat <- mat[
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -5715,6 +5812,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -5731,6 +5829,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -5747,6 +5846,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -6042,6 +6142,7 @@ rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -6058,6 +6159,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -6074,6 +6176,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -6090,6 +6193,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -6153,6 +6257,7 @@ rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -6169,6 +6274,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -6185,6 +6291,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -6201,6 +6308,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -6213,7 +6321,9 @@ draw(
 # GABAergic
 
 ```{r}
-gse <- as.SingleCellExperiment(seurat_list[[7]], assay = "GF")
+ctype_idx <- 7
+
+gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
@@ -6236,7 +6346,7 @@ gse_corrected <- removeBatchEffect(
 )
 gse
 
-deg <- as.SingleCellExperiment(seurat_list[[7]], assay = "RNA")
+deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
 deg <- suppressWarnings(
   aggregateAcrossCells(
     deg, colData(deg)[ , "genotype_batch"],
@@ -6554,6 +6664,7 @@ mat <- mat[
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -6570,6 +6681,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -6586,6 +6698,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -6602,6 +6715,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -6664,6 +6778,7 @@ mat <- mat[
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -6680,6 +6795,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -6696,6 +6812,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -6712,6 +6829,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -7009,6 +7127,7 @@ rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -7025,6 +7144,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -7041,6 +7161,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -7057,6 +7178,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -7120,6 +7242,7 @@ rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -7136,6 +7259,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
@@ -7152,6 +7276,7 @@ mat <- t(
 Heatmap(
   mat,
   col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
   row_split = row_split,
@@ -7168,6 +7293,7 @@ draw(
   Heatmap(
     mat,
     col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+    column_title = names(ctypes)[ctype_idx],
     row_names_max_width = max_text_width(rownames(mat)),
     column_names_max_height = max_text_width(colnames(mat)),
     heatmap_legend_param = list(
