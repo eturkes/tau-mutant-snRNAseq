@@ -430,7 +430,12 @@ for (i in seq_along(seurat_list)) {
   deg_list[[i]] <- read.delim(file.path(cache_dir, "results.tsv"))
 }
 
-results <- do.call(rbind, args = c(gse_list, deg_list))
+results <- rbind(
+  gse_list[[1]], deg_list[[1]], gse_list[[2]], deg_list[[2]],
+  gse_list[[3]], deg_list[[3]], gse_list[[4]], deg_list[[4]],
+  gse_list[[5]], deg_list[[5]], gse_list[[6]], deg_list[[6]],
+  gse_list[[7]], deg_list[[7]]
+)
 corrections <- vector("list", length = 5)
 idx <- 13
 for (i in seq_along(corrections)) {
