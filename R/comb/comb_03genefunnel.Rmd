@@ -462,11 +462,6 @@ for (i in seq_along(corrections)) {
   corrections[[i]] <- p.adjust(results[ , idx], method = "BH")
   idx <- idx + 1
 }
-
-row_split <- factor(
-  rep(c("2-1", "3-1", "4-1", "5-2", "6-3"), each = 5),
-  levels = c("2-1", "3-1", "4-1", "5-2", "6-3")
-)
 ```
 
 # Astrocyte
@@ -581,58 +576,227 @@ results <- results[ , -1]
 results <- results[ , 1:22]
 tests <- results[ , 17:21]
 tests <- rowSums(tests < 0.05) > 0
-# results <- results[tests, ]
+results <- results[tests, ]
 results <- results[order(results$F, decreasing = TRUE), ]
 results$gene_set <- rownames(results)
 
-gse_results_list_up <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(gse_results_list_up)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] > 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(gse_results_list_up)
-  results_sub <- results_sub[keep, ]
-  gse_results_list_up[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_up <- vector("list", length = 6)
+results_down <- vector("list", length = 6)
+size <- 10
+
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(3, 4)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[1]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[1]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[1]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[1]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-gse_results_list_down <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(gse_results_list_down)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] < 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(gse_results_list_down)
-  results_sub <- results_sub[keep, ]
-  gse_results_list_down[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 3]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[2]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[2]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[2]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[2]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-gse_results_up <- results[
-  rownames(results) %in% unique(unlist(gse_results_list_up)),
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18)]
+results_sub <- results_sub[
+  results_sub[ , 5] >= 0.05 & results_sub[ , 6] < 0.05,
 ]
-gse_results_up <- gse_results_up[
-  match(unique(unlist(gse_results_list_up)), rownames(gse_results_up)),
+results_sub <- results_sub[order(results_sub[ , 4]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
 ]
-gse_results_down <- results[
-  rownames(results) %in% unique(unlist(gse_results_list_down)),
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[3]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[3]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
 ]
-gse_results_down <- gse_results_down[
-  match(unique(unlist(gse_results_list_down)), rownames(gse_results_down)),
-]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[3]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[3]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
 
-datatable_download(gse_results_up)
-datatable_download(gse_results_down)
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21)]
+results_sub <- results_sub[
+  results_sub[ , 7] < 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(4, 5, 6)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0 & results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[4]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[4]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0 & results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[4]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[4]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 5]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[5]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[5]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[5]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[5]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] >= 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 6]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[6]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[6]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[6]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[6]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
 datatable_download(results)
 ```
 
 ```{r, fig.width = 14, fig.height = 8}
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- gse_corrected[
-  rownames(gse_corrected) %in% rownames(gse_results_up), , drop = FALSE
+  rownames(gse) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(gse_results_up), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_up)), rownames(mat)), , drop = FALSE
 ]
 Heatmap(
   mat,
@@ -641,6 +805,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -672,6 +837,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -691,11 +857,56 @@ draw(
   )
 )
 
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- gse_corrected[
-  rownames(gse_corrected) %in% rownames(gse_results_down), , drop = FALSE
+  rownames(gse) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(gse_results_down), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_down)), rownames(mat)), , drop = FALSE
 ]
 Heatmap(
   mat,
@@ -704,6 +915,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -735,6 +947,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -805,7 +1018,7 @@ results <- results[ , -1]
 results <- results[ , 1:22]
 tests <- results[ , 17:21]
 tests <- rowSums(tests < 0.05) > 0
-# results <- results[tests, ]
+results <- results[tests, ]
 results <- results[order(results$F, decreasing = TRUE), ]
 gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
 gene_anno_sub <- gene_anno_sub[
@@ -813,56 +1026,225 @@ gene_anno_sub <- gene_anno_sub[
 ]
 results$symbol <- gene_anno_sub$symbol
 
-deg_results_list_up <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(deg_results_list_up)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] > 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(deg_results_list_up)
-  results_sub <- results_sub[keep, ]
-  deg_results_list_up[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_up <- vector("list", length = 6)
+results_down <- vector("list", length = 6)
+size <- 10
+
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18, 23)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(3, 4)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[1]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[1]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[1]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[1]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-deg_results_list_down <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(deg_results_list_down)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] < 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(deg_results_list_down)
-  results_sub <- results_sub[keep, ]
-  deg_results_list_down[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18, 23)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 3]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[2]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[2]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[2]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[2]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-deg_results_up <- results[
-  rownames(results) %in% unique(unlist(deg_results_list_up)),
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18, 23)]
+results_sub <- results_sub[
+  results_sub[ , 5] >= 0.05 & results_sub[ , 6] < 0.05,
 ]
-deg_results_up <- deg_results_up[
-  match(unique(unlist(deg_results_list_up)), rownames(deg_results_up)),
+results_sub <- results_sub[order(results_sub[ , 4]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
 ]
-deg_results_down <- results[
-  rownames(results) %in% unique(unlist(deg_results_list_down)),
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[3]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[3]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
 ]
-deg_results_down <- deg_results_down[
-  match(unique(unlist(deg_results_list_down)), rownames(deg_results_down)),
-]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[3]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[3]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
 
-datatable_download(deg_results_up)
-datatable_download(deg_results_down)
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21, 23)]
+results_sub <- results_sub[
+  results_sub[ , 7] < 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(4, 5, 6)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0 & results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[4]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[4]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0 & results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[4]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[4]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21, 23)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 5]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[5]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[5]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[5]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[5]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21, 23)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] >= 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 6]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[6]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[6]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[6]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[6]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
 datatable_download(results)
 ```
 
 ```{r, fig.width = 8, fig.height = 8}
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- deg_corrected[
-  rownames(deg_corrected) %in% rownames(deg_results_up), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(deg_results_up), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_up)), rownames(mat)), , drop = FALSE
 ]
-rownames(mat) <- deg_results_up$symbol
+rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
@@ -870,6 +1252,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -901,6 +1284,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -920,13 +1304,58 @@ draw(
   )
 )
 
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- deg_corrected[
-  rownames(deg_corrected) %in% rownames(deg_results_down), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(deg_results_down), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_down)), rownames(mat)), , drop = FALSE
 ]
-rownames(mat) <- deg_results_down$symbol
+rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
@@ -934,6 +1363,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -965,6 +1395,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -1097,58 +1528,227 @@ results <- results[ , -1]
 results <- results[ , 1:22]
 tests <- results[ , 17:21]
 tests <- rowSums(tests < 0.05) > 0
-# results <- results[tests, ]
+results <- results[tests, ]
 results <- results[order(results$F, decreasing = TRUE), ]
 results$gene_set <- rownames(results)
 
-gse_results_list_up <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(gse_results_list_up)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] > 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(gse_results_list_up)
-  results_sub <- results_sub[keep, ]
-  gse_results_list_up[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_up <- vector("list", length = 6)
+results_down <- vector("list", length = 6)
+size <- 10
+
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(3, 4)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[1]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[1]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[1]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[1]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-gse_results_list_down <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(gse_results_list_down)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] < 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(gse_results_list_down)
-  results_sub <- results_sub[keep, ]
-  gse_results_list_down[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 3]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[2]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[2]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[2]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[2]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-gse_results_up <- results[
-  rownames(results) %in% unique(unlist(gse_results_list_up)),
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18)]
+results_sub <- results_sub[
+  results_sub[ , 5] >= 0.05 & results_sub[ , 6] < 0.05,
 ]
-gse_results_up <- gse_results_up[
-  match(unique(unlist(gse_results_list_up)), rownames(gse_results_up)),
+results_sub <- results_sub[order(results_sub[ , 4]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
 ]
-gse_results_down <- results[
-  rownames(results) %in% unique(unlist(gse_results_list_down)),
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[3]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[3]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
 ]
-gse_results_down <- gse_results_down[
-  match(unique(unlist(gse_results_list_down)), rownames(gse_results_down)),
-]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[3]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[3]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
 
-datatable_download(gse_results_up)
-datatable_download(gse_results_down)
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21)]
+results_sub <- results_sub[
+  results_sub[ , 7] < 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(4, 5, 6)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0 & results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[4]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[4]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0 & results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[4]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[4]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 5]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[5]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[5]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[5]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[5]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] >= 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 6]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[6]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[6]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[6]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[6]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
 datatable_download(results)
 ```
 
 ```{r, fig.width = 14, fig.height = 8}
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- gse_corrected[
-  rownames(gse_corrected) %in% rownames(gse_results_up), , drop = FALSE
+  rownames(gse) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(gse_results_up), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_up)), rownames(mat)), , drop = FALSE
 ]
 Heatmap(
   mat,
@@ -1157,6 +1757,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -1188,6 +1789,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -1207,11 +1809,56 @@ draw(
   )
 )
 
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- gse_corrected[
-  rownames(gse_corrected) %in% rownames(gse_results_down), , drop = FALSE
+  rownames(gse) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(gse_results_down), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_down)), rownames(mat)), , drop = FALSE
 ]
 Heatmap(
   mat,
@@ -1220,6 +1867,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -1251,6 +1899,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -1322,7 +1971,7 @@ results <- results[ , -1]
 results <- results[ , 1:22]
 tests <- results[ , 17:21]
 tests <- rowSums(tests < 0.05) > 0
-# results <- results[tests, ]
+results <- results[tests, ]
 results <- results[order(results$F, decreasing = TRUE), ]
 gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
 gene_anno_sub <- gene_anno_sub[
@@ -1330,56 +1979,225 @@ gene_anno_sub <- gene_anno_sub[
 ]
 results$symbol <- gene_anno_sub$symbol
 
-deg_results_list_up <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(deg_results_list_up)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] > 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(deg_results_list_up)
-  results_sub <- results_sub[keep, ]
-  deg_results_list_up[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_up <- vector("list", length = 6)
+results_down <- vector("list", length = 6)
+size <- 10
+
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18, 23)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(3, 4)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[1]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[1]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[1]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[1]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-deg_results_list_down <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(deg_results_list_down)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] < 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(deg_results_list_down)
-  results_sub <- results_sub[keep, ]
-  deg_results_list_down[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18, 23)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 3]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[2]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[2]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[2]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[2]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-deg_results_up <- results[
-  rownames(results) %in% unique(unlist(deg_results_list_up)),
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18, 23)]
+results_sub <- results_sub[
+  results_sub[ , 5] >= 0.05 & results_sub[ , 6] < 0.05,
 ]
-deg_results_up <- deg_results_up[
-  match(unique(unlist(deg_results_list_up)), rownames(deg_results_up)),
+results_sub <- results_sub[order(results_sub[ , 4]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
 ]
-deg_results_down <- results[
-  rownames(results) %in% unique(unlist(deg_results_list_down)),
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[3]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[3]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
 ]
-deg_results_down <- deg_results_down[
-  match(unique(unlist(deg_results_list_down)), rownames(deg_results_down)),
-]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[3]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[3]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
 
-datatable_download(deg_results_up)
-datatable_download(deg_results_down)
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21, 23)]
+results_sub <- results_sub[
+  results_sub[ , 7] < 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(4, 5, 6)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0 & results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[4]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[4]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0 & results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[4]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[4]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21, 23)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 5]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[5]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[5]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[5]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[5]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21, 23)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] >= 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 6]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[6]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[6]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[6]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[6]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
 datatable_download(results)
 ```
 
 ```{r, fig.width = 8, fig.height = 8}
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- deg_corrected[
-  rownames(deg_corrected) %in% rownames(deg_results_up), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(deg_results_up), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_up)), rownames(mat)), , drop = FALSE
 ]
-rownames(mat) <- deg_results_up$symbol
+rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
@@ -1387,6 +2205,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -1418,6 +2237,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -1437,13 +2257,58 @@ draw(
   )
 )
 
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- deg_corrected[
-  rownames(deg_corrected) %in% rownames(deg_results_down), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(deg_results_down), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_down)), rownames(mat)), , drop = FALSE
 ]
-rownames(mat) <- deg_results_down$symbol
+rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
@@ -1451,6 +2316,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -1482,6 +2348,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -1616,58 +2483,227 @@ results <- results[ , -1]
 results <- results[ , 1:22]
 tests <- results[ , 17:21]
 tests <- rowSums(tests < 0.05) > 0
-# results <- results[tests, ]
+results <- results[tests, ]
 results <- results[order(results$F, decreasing = TRUE), ]
 results$gene_set <- rownames(results)
 
-gse_results_list_up <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(gse_results_list_up)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] > 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(gse_results_list_up)
-  results_sub <- results_sub[keep, ]
-  gse_results_list_up[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_up <- vector("list", length = 6)
+results_down <- vector("list", length = 6)
+size <- 10
+
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(3, 4)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[1]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[1]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[1]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[1]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-gse_results_list_down <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(gse_results_list_down)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] < 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(gse_results_list_down)
-  results_sub <- results_sub[keep, ]
-  gse_results_list_down[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 3]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[2]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[2]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[2]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[2]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-gse_results_up <- results[
-  rownames(results) %in% unique(unlist(gse_results_list_up)),
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18)]
+results_sub <- results_sub[
+  results_sub[ , 5] >= 0.05 & results_sub[ , 6] < 0.05,
 ]
-gse_results_up <- gse_results_up[
-  match(unique(unlist(gse_results_list_up)), rownames(gse_results_up)),
+results_sub <- results_sub[order(results_sub[ , 4]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
 ]
-gse_results_down <- results[
-  rownames(results) %in% unique(unlist(gse_results_list_down)),
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[3]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[3]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
 ]
-gse_results_down <- gse_results_down[
-  match(unique(unlist(gse_results_list_down)), rownames(gse_results_down)),
-]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[3]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[3]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
 
-datatable_download(gse_results_up)
-datatable_download(gse_results_down)
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21)]
+results_sub <- results_sub[
+  results_sub[ , 7] < 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(4, 5, 6)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0 & results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[4]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[4]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0 & results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[4]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[4]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 5]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[5]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[5]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[5]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[5]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] >= 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 6]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[6]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[6]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[6]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[6]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
 datatable_download(results)
 ```
 
 ```{r, fig.width = 14, fig.height = 8}
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- gse_corrected[
-  rownames(gse_corrected) %in% rownames(gse_results_up), , drop = FALSE
+  rownames(gse) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(gse_results_up), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_up)), rownames(mat)), , drop = FALSE
 ]
 Heatmap(
   mat,
@@ -1676,6 +2712,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -1707,6 +2744,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -1726,11 +2764,56 @@ draw(
   )
 )
 
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- gse_corrected[
-  rownames(gse_corrected) %in% rownames(gse_results_down), , drop = FALSE
+  rownames(gse) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(gse_results_down), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_down)), rownames(mat)), , drop = FALSE
 ]
 Heatmap(
   mat,
@@ -1739,6 +2822,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -1770,6 +2854,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -1842,7 +2927,7 @@ results <- results[ , -1]
 results <- results[ , 1:22]
 tests <- results[ , 17:21]
 tests <- rowSums(tests < 0.05) > 0
-# results <- results[tests, ]
+results <- results[tests, ]
 results <- results[order(results$F, decreasing = TRUE), ]
 gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
 gene_anno_sub <- gene_anno_sub[
@@ -1850,56 +2935,225 @@ gene_anno_sub <- gene_anno_sub[
 ]
 results$symbol <- gene_anno_sub$symbol
 
-deg_results_list_up <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(deg_results_list_up)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] > 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(deg_results_list_up)
-  results_sub <- results_sub[keep, ]
-  deg_results_list_up[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_up <- vector("list", length = 6)
+results_down <- vector("list", length = 6)
+size <- 10
+
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18, 23)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(3, 4)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[1]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[1]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[1]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[1]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-deg_results_list_down <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(deg_results_list_down)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] < 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(deg_results_list_down)
-  results_sub <- results_sub[keep, ]
-  deg_results_list_down[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18, 23)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 3]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[2]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[2]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[2]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[2]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-deg_results_up <- results[
-  rownames(results) %in% unique(unlist(deg_results_list_up)),
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18, 23)]
+results_sub <- results_sub[
+  results_sub[ , 5] >= 0.05 & results_sub[ , 6] < 0.05,
 ]
-deg_results_up <- deg_results_up[
-  match(unique(unlist(deg_results_list_up)), rownames(deg_results_up)),
+results_sub <- results_sub[order(results_sub[ , 4]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
 ]
-deg_results_down <- results[
-  rownames(results) %in% unique(unlist(deg_results_list_down)),
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[3]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[3]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
 ]
-deg_results_down <- deg_results_down[
-  match(unique(unlist(deg_results_list_down)), rownames(deg_results_down)),
-]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[3]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[3]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
 
-datatable_download(deg_results_up)
-datatable_download(deg_results_down)
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21, 23)]
+results_sub <- results_sub[
+  results_sub[ , 7] < 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(4, 5, 6)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0 & results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[4]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[4]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0 & results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[4]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[4]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21, 23)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 5]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[5]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[5]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[5]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[5]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21, 23)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] >= 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 6]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[6]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[6]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[6]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[6]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
 datatable_download(results)
 ```
 
 ```{r, fig.width = 8, fig.height = 8}
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- deg_corrected[
-  rownames(deg_corrected) %in% rownames(deg_results_up), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(deg_results_up), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_up)), rownames(mat)), , drop = FALSE
 ]
-rownames(mat) <- deg_results_up$symbol
+rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
@@ -1907,6 +3161,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -1938,6 +3193,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -1957,13 +3213,58 @@ draw(
   )
 )
 
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- deg_corrected[
-  rownames(deg_corrected) %in% rownames(deg_results_down), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(deg_results_down), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_down)), rownames(mat)), , drop = FALSE
 ]
-rownames(mat) <- deg_results_down$symbol
+rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
@@ -1971,6 +3272,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -2002,6 +3304,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -2137,58 +3440,227 @@ results <- results[ , -1]
 results <- results[ , 1:22]
 tests <- results[ , 17:21]
 tests <- rowSums(tests < 0.05) > 0
-# results <- results[tests, ]
+results <- results[tests, ]
 results <- results[order(results$F, decreasing = TRUE), ]
 results$gene_set <- rownames(results)
 
-gse_results_list_up <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(gse_results_list_up)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] > 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(gse_results_list_up)
-  results_sub <- results_sub[keep, ]
-  gse_results_list_up[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_up <- vector("list", length = 6)
+results_down <- vector("list", length = 6)
+size <- 10
+
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(3, 4)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[1]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[1]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[1]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[1]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-gse_results_list_down <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(gse_results_list_down)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] < 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(gse_results_list_down)
-  results_sub <- results_sub[keep, ]
-  gse_results_list_down[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 3]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[2]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[2]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[2]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[2]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-gse_results_up <- results[
-  rownames(results) %in% unique(unlist(gse_results_list_up)),
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18)]
+results_sub <- results_sub[
+  results_sub[ , 5] >= 0.05 & results_sub[ , 6] < 0.05,
 ]
-gse_results_up <- gse_results_up[
-  match(unique(unlist(gse_results_list_up)), rownames(gse_results_up)),
+results_sub <- results_sub[order(results_sub[ , 4]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
 ]
-gse_results_down <- results[
-  rownames(results) %in% unique(unlist(gse_results_list_down)),
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[3]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[3]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
 ]
-gse_results_down <- gse_results_down[
-  match(unique(unlist(gse_results_list_down)), rownames(gse_results_down)),
-]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[3]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[3]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
 
-datatable_download(gse_results_up)
-datatable_download(gse_results_down)
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21)]
+results_sub <- results_sub[
+  results_sub[ , 7] < 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(4, 5, 6)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0 & results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[4]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[4]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0 & results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[4]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[4]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 5]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[5]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[5]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[5]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[5]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] >= 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 6]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[6]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[6]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[6]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[6]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
 datatable_download(results)
 ```
 
 ```{r, fig.width = 14, fig.height = 8}
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- gse_corrected[
-  rownames(gse_corrected) %in% rownames(gse_results_up), , drop = FALSE
+  rownames(gse) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(gse_results_up), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_up)), rownames(mat)), , drop = FALSE
 ]
 Heatmap(
   mat,
@@ -2197,6 +3669,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 4),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -2228,6 +3701,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 4),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -2247,11 +3721,56 @@ draw(
   )
 )
 
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- gse_corrected[
-  rownames(gse_corrected) %in% rownames(gse_results_down), , drop = FALSE
+  rownames(gse) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(gse_results_down), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_down)), rownames(mat)), , drop = FALSE
 ]
 Heatmap(
   mat,
@@ -2260,6 +3779,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -2291,6 +3811,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -2365,7 +3886,7 @@ results <- results[ , -1]
 results <- results[ , 1:22]
 tests <- results[ , 17:21]
 tests <- rowSums(tests < 0.05) > 0
-# results <- results[tests, ]
+results <- results[tests, ]
 results <- results[order(results$F, decreasing = TRUE), ]
 gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
 gene_anno_sub <- gene_anno_sub[
@@ -2373,56 +3894,225 @@ gene_anno_sub <- gene_anno_sub[
 ]
 results$symbol <- gene_anno_sub$symbol
 
-deg_results_list_up <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(deg_results_list_up)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] > 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(deg_results_list_up)
-  results_sub <- results_sub[keep, ]
-  deg_results_list_up[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_up <- vector("list", length = 6)
+results_down <- vector("list", length = 6)
+size <- 10
+
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18, 23)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(3, 4)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[1]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[1]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[1]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[1]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-deg_results_list_down <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(deg_results_list_down)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] < 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(deg_results_list_down)
-  results_sub <- results_sub[keep, ]
-  deg_results_list_down[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18, 23)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 3]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[2]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[2]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[2]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[2]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-deg_results_up <- results[
-  rownames(results) %in% unique(unlist(deg_results_list_up)),
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18, 23)]
+results_sub <- results_sub[
+  results_sub[ , 5] >= 0.05 & results_sub[ , 6] < 0.05,
 ]
-deg_results_up <- deg_results_up[
-  match(unique(unlist(deg_results_list_up)), rownames(deg_results_up)),
+results_sub <- results_sub[order(results_sub[ , 4]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
 ]
-deg_results_down <- results[
-  rownames(results) %in% unique(unlist(deg_results_list_down)),
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[3]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[3]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
 ]
-deg_results_down <- deg_results_down[
-  match(unique(unlist(deg_results_list_down)), rownames(deg_results_down)),
-]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[3]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[3]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
 
-datatable_download(deg_results_up)
-datatable_download(deg_results_down)
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21, 23)]
+results_sub <- results_sub[
+  results_sub[ , 7] < 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(4, 5, 6)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0 & results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[4]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[4]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0 & results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[4]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[4]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21, 23)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 5]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[5]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[5]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[5]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[5]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21, 23)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] >= 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 6]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[6]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[6]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[6]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[6]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
 datatable_download(results)
 ```
 
 ```{r, fig.width = 8, fig.height = 8}
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- deg_corrected[
-  rownames(deg_corrected) %in% rownames(deg_results_up), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(deg_results_up), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_up)), rownames(mat)), , drop = FALSE
 ]
-rownames(mat) <- deg_results_up$symbol
+rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
@@ -2430,6 +4120,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -2461,6 +4152,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -2480,13 +4172,58 @@ draw(
   )
 )
 
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- deg_corrected[
-  rownames(deg_corrected) %in% rownames(deg_results_down), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(deg_results_down), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_down)), rownames(mat)), , drop = FALSE
 ]
-rownames(mat) <- deg_results_down$symbol
+rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
@@ -2494,6 +4231,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -2525,6 +4263,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -2661,58 +4400,227 @@ results <- results[ , -1]
 results <- results[ , 1:22]
 tests <- results[ , 17:21]
 tests <- rowSums(tests < 0.05) > 0
-# results <- results[tests, ]
+results <- results[tests, ]
 results <- results[order(results$F, decreasing = TRUE), ]
 results$gene_set <- rownames(results)
 
-gse_results_list_up <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(gse_results_list_up)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] > 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(gse_results_list_up)
-  results_sub <- results_sub[keep, ]
-  gse_results_list_up[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_up <- vector("list", length = 6)
+results_down <- vector("list", length = 6)
+size <- 10
+
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(3, 4)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[1]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[1]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[1]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[1]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-gse_results_list_down <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(gse_results_list_down)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] < 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(gse_results_list_down)
-  results_sub <- results_sub[keep, ]
-  gse_results_list_down[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 3]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[2]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[2]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[2]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[2]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-gse_results_up <- results[
-  rownames(results) %in% unique(unlist(gse_results_list_up)),
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18)]
+results_sub <- results_sub[
+  results_sub[ , 5] >= 0.05 & results_sub[ , 6] < 0.05,
 ]
-gse_results_up <- gse_results_up[
-  match(unique(unlist(gse_results_list_up)), rownames(gse_results_up)),
+results_sub <- results_sub[order(results_sub[ , 4]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
 ]
-gse_results_down <- results[
-  rownames(results) %in% unique(unlist(gse_results_list_down)),
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[3]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[3]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
 ]
-gse_results_down <- gse_results_down[
-  match(unique(unlist(gse_results_list_down)), rownames(gse_results_down)),
-]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[3]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[3]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
 
-datatable_download(gse_results_up)
-datatable_download(gse_results_down)
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21)]
+results_sub <- results_sub[
+  results_sub[ , 7] < 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(4, 5, 6)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0 & results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[4]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[4]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0 & results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[4]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[4]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 5]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[5]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[5]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[5]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[5]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] >= 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 6]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[6]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[6]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[6]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[6]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
 datatable_download(results)
 ```
 
 ```{r, fig.width = 14, fig.height = 8}
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- gse_corrected[
-  rownames(gse_corrected) %in% rownames(gse_results_up), , drop = FALSE
+  rownames(gse) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(gse_results_up), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_up)), rownames(mat)), , drop = FALSE
 ]
 Heatmap(
   mat,
@@ -2721,6 +4629,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -2752,6 +4661,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -2771,11 +4681,56 @@ draw(
   )
 )
 
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- gse_corrected[
-  rownames(gse_corrected) %in% rownames(gse_results_down), , drop = FALSE
+  rownames(gse) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(gse_results_down), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_down)), rownames(mat)), , drop = FALSE
 ]
 Heatmap(
   mat,
@@ -2784,6 +4739,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -2815,6 +4771,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -2885,12 +4842,13 @@ for (i in seq_along(corrections)) {
   idx <- idx + 1
 }
 
+
 rownames(results) <- results$X
 results <- results[ , -1]
 results <- results[ , 1:22]
 tests <- results[ , 17:21]
 tests <- rowSums(tests < 0.05) > 0
-# results <- results[tests, ]
+results <- results[tests, ]
 results <- results[order(results$F, decreasing = TRUE), ]
 gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
 gene_anno_sub <- gene_anno_sub[
@@ -2898,56 +4856,225 @@ gene_anno_sub <- gene_anno_sub[
 ]
 results$symbol <- gene_anno_sub$symbol
 
-deg_results_list_up <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(deg_results_list_up)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] > 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(deg_results_list_up)
-  results_sub <- results_sub[keep, ]
-  deg_results_list_up[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_up <- vector("list", length = 6)
+results_down <- vector("list", length = 6)
+size <- 10
+
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18, 23)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(3, 4)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[1]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[1]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[1]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[1]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-deg_results_list_down <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(deg_results_list_down)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] < 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(deg_results_list_down)
-  results_sub <- results_sub[keep, ]
-  deg_results_list_down[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18, 23)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 3]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[2]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[2]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[2]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[2]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-deg_results_up <- results[
-  rownames(results) %in% unique(unlist(deg_results_list_up)),
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18, 23)]
+results_sub <- results_sub[
+  results_sub[ , 5] >= 0.05 & results_sub[ , 6] < 0.05,
 ]
-deg_results_up <- deg_results_up[
-  match(unique(unlist(deg_results_list_up)), rownames(deg_results_up)),
+results_sub <- results_sub[order(results_sub[ , 4]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
 ]
-deg_results_down <- results[
-  rownames(results) %in% unique(unlist(deg_results_list_down)),
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[3]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[3]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
 ]
-deg_results_down <- deg_results_down[
-  match(unique(unlist(deg_results_list_down)), rownames(deg_results_down)),
-]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[3]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[3]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
 
-datatable_download(deg_results_up)
-datatable_download(deg_results_down)
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21, 23)]
+results_sub <- results_sub[
+  results_sub[ , 7] < 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(4, 5, 6)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0 & results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[4]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[4]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0 & results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[4]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[4]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21, 23)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 5]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[5]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[5]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[5]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[5]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21, 23)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] >= 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 6]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[6]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[6]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[6]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[6]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
 datatable_download(results)
 ```
 
 ```{r, fig.width = 8, fig.height = 8}
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- deg_corrected[
-  rownames(deg_corrected) %in% rownames(deg_results_up), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(deg_results_up), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_up)), rownames(mat)), , drop = FALSE
 ]
-rownames(mat) <- deg_results_up$symbol
+rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
@@ -2955,6 +5082,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -2986,6 +5114,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -3005,13 +5134,58 @@ draw(
   )
 )
 
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- deg_corrected[
-  rownames(deg_corrected) %in% rownames(deg_results_down), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(deg_results_down), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_down)), rownames(mat)), , drop = FALSE
 ]
-rownames(mat) <- deg_results_down$symbol
+rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
@@ -3019,6 +5193,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -3050,6 +5225,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -3188,58 +5364,227 @@ results <- results[ , -1]
 results <- results[ , 1:22]
 tests <- results[ , 17:21]
 tests <- rowSums(tests < 0.05) > 0
-# results <- results[tests, ]
+results <- results[tests, ]
 results <- results[order(results$F, decreasing = TRUE), ]
 results$gene_set <- rownames(results)
 
-gse_results_list_up <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(gse_results_list_up)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] > 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(gse_results_list_up)
-  results_sub <- results_sub[keep, ]
-  gse_results_list_up[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_up <- vector("list", length = 6)
+results_down <- vector("list", length = 6)
+size <- 10
+
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(3, 4)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[1]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[1]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[1]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[1]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-gse_results_list_down <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(gse_results_list_down)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] < 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(gse_results_list_down)
-  results_sub <- results_sub[keep, ]
-  gse_results_list_down[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 3]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[2]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[2]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[2]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[2]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-gse_results_up <- results[
-  rownames(results) %in% unique(unlist(gse_results_list_up)),
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18)]
+results_sub <- results_sub[
+  results_sub[ , 5] >= 0.05 & results_sub[ , 6] < 0.05,
 ]
-gse_results_up <- gse_results_up[
-  match(unique(unlist(gse_results_list_up)), rownames(gse_results_up)),
+results_sub <- results_sub[order(results_sub[ , 4]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
 ]
-gse_results_down <- results[
-  rownames(results) %in% unique(unlist(gse_results_list_down)),
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[3]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[3]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
 ]
-gse_results_down <- gse_results_down[
-  match(unique(unlist(gse_results_list_down)), rownames(gse_results_down)),
-]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[3]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[3]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
 
-datatable_download(gse_results_up)
-datatable_download(gse_results_down)
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21)]
+results_sub <- results_sub[
+  results_sub[ , 7] < 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(4, 5, 6)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0 & results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[4]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[4]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0 & results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[4]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[4]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 5]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[5]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[5]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[5]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[5]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] >= 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 6]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[6]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[6]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[6]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[6]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
 datatable_download(results)
 ```
 
 ```{r, fig.width = 14, fig.height = 8}
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- gse_corrected[
-  rownames(gse_corrected) %in% rownames(gse_results_up), , drop = FALSE
+  rownames(gse) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(gse_results_up), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_up)), rownames(mat)), , drop = FALSE
 ]
 Heatmap(
   mat,
@@ -3248,6 +5593,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -3279,6 +5625,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -3298,11 +5645,56 @@ draw(
   )
 )
 
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- gse_corrected[
-  rownames(gse_corrected) %in% rownames(gse_results_down), , drop = FALSE
+  rownames(gse) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(gse_results_down), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_down)), rownames(mat)), , drop = FALSE
 ]
 Heatmap(
   mat,
@@ -3311,6 +5703,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -3342,6 +5735,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -3418,7 +5812,7 @@ results <- results[ , -1]
 results <- results[ , 1:22]
 tests <- results[ , 17:21]
 tests <- rowSums(tests < 0.05) > 0
-# results <- results[tests, ]
+results <- results[tests, ]
 results <- results[order(results$F, decreasing = TRUE), ]
 gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
 gene_anno_sub <- gene_anno_sub[
@@ -3426,56 +5820,225 @@ gene_anno_sub <- gene_anno_sub[
 ]
 results$symbol <- gene_anno_sub$symbol
 
-deg_results_list_up <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(deg_results_list_up)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] > 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(deg_results_list_up)
-  results_sub <- results_sub[keep, ]
-  deg_results_list_up[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_up <- vector("list", length = 6)
+results_down <- vector("list", length = 6)
+size <- 10
+
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18, 23)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(3, 4)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[1]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[1]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[1]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[1]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-deg_results_list_down <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(deg_results_list_down)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] < 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(deg_results_list_down)
-  results_sub <- results_sub[keep, ]
-  deg_results_list_down[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18, 23)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 3]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[2]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[2]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[2]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[2]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-deg_results_up <- results[
-  rownames(results) %in% unique(unlist(deg_results_list_up)),
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18, 23)]
+results_sub <- results_sub[
+  results_sub[ , 5] >= 0.05 & results_sub[ , 6] < 0.05,
 ]
-deg_results_up <- deg_results_up[
-  match(unique(unlist(deg_results_list_up)), rownames(deg_results_up)),
+results_sub <- results_sub[order(results_sub[ , 4]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
 ]
-deg_results_down <- results[
-  rownames(results) %in% unique(unlist(deg_results_list_down)),
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[3]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[3]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
 ]
-deg_results_down <- deg_results_down[
-  match(unique(unlist(deg_results_list_down)), rownames(deg_results_down)),
-]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[3]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[3]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
 
-datatable_download(deg_results_up)
-datatable_download(deg_results_down)
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21, 23)]
+results_sub <- results_sub[
+  results_sub[ , 7] < 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(4, 5, 6)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0 & results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[4]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[4]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0 & results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[4]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[4]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21, 23)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 5]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[5]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[5]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[5]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[5]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21, 23)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] >= 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 6]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[6]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[6]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[6]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[6]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
 datatable_download(results)
 ```
 
 ```{r, fig.width = 8, fig.height = 8}
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- deg_corrected[
-  rownames(deg_corrected) %in% rownames(deg_results_up), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(deg_results_up), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_up)), rownames(mat)), , drop = FALSE
 ]
-rownames(mat) <- deg_results_up$symbol
+rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
@@ -3483,6 +6046,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -3514,6 +6078,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -3533,13 +6098,58 @@ draw(
   )
 )
 
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- deg_corrected[
-  rownames(deg_corrected) %in% rownames(deg_results_down), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(deg_results_down), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_down)), rownames(mat)), , drop = FALSE
 ]
-rownames(mat) <- deg_results_down$symbol
+rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
@@ -3547,6 +6157,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -3578,6 +6189,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -3717,58 +6329,227 @@ results <- results[ , -1]
 results <- results[ , 1:22]
 tests <- results[ , 17:21]
 tests <- rowSums(tests < 0.05) > 0
-# results <- results[tests, ]
+results <- results[tests, ]
 results <- results[order(results$F, decreasing = TRUE), ]
 results$gene_set <- rownames(results)
 
-gse_results_list_up <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(gse_results_list_up)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] > 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(gse_results_list_up)
-  results_sub <- results_sub[keep, ]
-  gse_results_list_up[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_up <- vector("list", length = 6)
+results_down <- vector("list", length = 6)
+size <- 10
+
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(3, 4)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[1]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[1]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[1]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[1]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-gse_results_list_down <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(gse_results_list_down)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] < 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(gse_results_list_down)
-  results_sub <- results_sub[keep, ]
-  gse_results_list_down[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 3]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[2]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[2]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[2]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[2]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-gse_results_up <- results[
-  rownames(results) %in% unique(unlist(gse_results_list_up)),
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18)]
+results_sub <- results_sub[
+  results_sub[ , 5] >= 0.05 & results_sub[ , 6] < 0.05,
 ]
-gse_results_up <- gse_results_up[
-  match(unique(unlist(gse_results_list_up)), rownames(gse_results_up)),
+results_sub <- results_sub[order(results_sub[ , 4]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
 ]
-gse_results_down <- results[
-  rownames(results) %in% unique(unlist(gse_results_list_down)),
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[3]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[3]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
 ]
-gse_results_down <- gse_results_down[
-  match(unique(unlist(gse_results_list_down)), rownames(gse_results_down)),
-]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[3]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[3]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
 
-datatable_download(gse_results_up)
-datatable_download(gse_results_down)
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21)]
+results_sub <- results_sub[
+  results_sub[ , 7] < 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(4, 5, 6)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0 & results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[4]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[4]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0 & results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[4]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[4]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 5]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[5]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[5]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[5]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[5]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] >= 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 6]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[6]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[6]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[6]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[6]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
 datatable_download(results)
 ```
 
 ```{r, fig.width = 14, fig.height = 8}
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- gse_corrected[
-  rownames(gse_corrected) %in% rownames(gse_results_up), , drop = FALSE
+  rownames(gse) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(gse_results_up), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_up)), rownames(mat)), , drop = FALSE
 ]
 Heatmap(
   mat,
@@ -3777,6 +6558,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -3808,6 +6590,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -3827,11 +6610,56 @@ draw(
   )
 )
 
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- gse_corrected[
-  rownames(gse_corrected) %in% rownames(gse_results_down), , drop = FALSE
+  rownames(gse) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(gse_results_down), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_down)), rownames(mat)), , drop = FALSE
 ]
 Heatmap(
   mat,
@@ -3840,6 +6668,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -3871,6 +6700,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -3949,7 +6779,7 @@ results <- results[ , -1]
 results <- results[ , 1:22]
 tests <- results[ , 17:21]
 tests <- rowSums(tests < 0.05) > 0
-# results <- results[tests, ]
+results <- results[tests, ]
 results <- results[order(results$F, decreasing = TRUE), ]
 gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
 gene_anno_sub <- gene_anno_sub[
@@ -3957,56 +6787,225 @@ gene_anno_sub <- gene_anno_sub[
 ]
 results$symbol <- gene_anno_sub$symbol
 
-deg_results_list_up <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(deg_results_list_up)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] > 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(deg_results_list_up)
-  results_sub <- results_sub[keep, ]
-  deg_results_list_up[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_up <- vector("list", length = 6)
+results_down <- vector("list", length = 6)
+size <- 10
+
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18, 23)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(3, 4)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[1]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[1]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[1]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[1]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-deg_results_list_down <- vector("list", length = 5)
-idx <- 12
-for (i in seq_along(deg_results_list_down)) {
-  results_sub <- results[ , c(idx - 10, idx)]
-  results_sub <- results_sub[results_sub[[1]] < 0, ]
-  results_sub <- results_sub[order(results_sub[[2]]), ]
-  keep <- rownames(results_sub) %notin% unlist(deg_results_list_down)
-  results_sub <- results_sub[keep, ]
-  deg_results_list_down[[i]] <- rownames(results_sub)[1:5]
-  idx <- idx + 1
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18, 23)]
+results_sub <- results_sub[
+  results_sub[ , 5] < 0.05 & results_sub[ , 6] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 3]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[2]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[2]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[2]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[2]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
 }
 
-deg_results_up <- results[
-  rownames(results) %in% unique(unlist(deg_results_list_up)),
+results_sub <- results[ , c(2, 3, 12, 13, 17, 18, 23)]
+results_sub <- results_sub[
+  results_sub[ , 5] >= 0.05 & results_sub[ , 6] < 0.05,
 ]
-deg_results_up <- deg_results_up[
-  match(unique(unlist(deg_results_list_up)), rownames(deg_results_up)),
+results_sub <- results_sub[order(results_sub[ , 4]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
 ]
-deg_results_down <- results[
-  rownames(results) %in% unique(unlist(deg_results_list_down)),
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[3]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[3]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
 ]
-deg_results_down <- deg_results_down[
-  match(unique(unlist(deg_results_list_down)), rownames(deg_results_down)),
-]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[3]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[3]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
 
-datatable_download(deg_results_up)
-datatable_download(deg_results_down)
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21, 23)]
+results_sub <- results_sub[
+  results_sub[ , 7] < 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(4, 5, 6)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 1] > 0 & results_sub[ , 2] > 0 & results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[4]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[4]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 1] < 0 & results_sub[ , 2] < 0 & results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[4]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[4]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21, 23)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] < 0.05 &
+    results_sub[ , 9] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 5]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[5]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[5]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[5]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[5]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[ , c(4, 5, 6, 14, 15, 16, 19, 20, 21, 23)]
+results_sub <- results_sub[
+  results_sub[ , 7] >= 0.05 & results_sub[ , 8] >= 0.05 &
+    results_sub[ , 9] < 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 6]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[6]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[6]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[6]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[6]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
 datatable_download(results)
 ```
 
 ```{r, fig.width = 8, fig.height = 8}
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- deg_corrected[
-  rownames(deg_corrected) %in% rownames(deg_results_up), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(deg_results_up), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_up)), rownames(mat)), , drop = FALSE
 ]
-rownames(mat) <- deg_results_up$symbol
+rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
@@ -4014,6 +7013,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -4045,6 +7045,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -4064,13 +7065,58 @@ draw(
   )
 )
 
+row_split <- factor(
+  c(
+    rep(
+      "(2 & 3) > 1",
+      times = ifelse(
+        is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
+      )
+    ),
+    rep(
+      "2 > 1 (3 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
+      )
+    ),
+    rep(
+      "3 > 1 (2 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
+      )
+    ),
+    rep(
+      "(4 & 5 & 6) > (1 & 2 & 3)",
+      times = ifelse(
+        is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
+      )
+    ),
+    rep(
+      "5 > 2 (4 & 6 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
+      )
+    ),
+    rep(
+      "6 > 3 (4 & 5 null)",
+      times = ifelse(
+        is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
+      )
+    )
+  ),
+  levels = c(
+    "(2 & 3) > 1", "2 > 1 (3 null)", "3 > 1 (2 null)",
+    "(4 & 5 & 6) > (1 & 2 & 3)", "5 > 2 (4 & 6 null)", "6 > 3 (4 & 5 null)"
+  )
+)
+
 mat <- deg_corrected[
-  rownames(deg_corrected) %in% rownames(deg_results_down), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(deg_results_down), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, results_down)), rownames(mat)), , drop = FALSE
 ]
-rownames(mat) <- deg_results_down$symbol
+rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
   col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
@@ -4078,6 +7124,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
@@ -4109,6 +7156,7 @@ Heatmap(
   cluster_columns = FALSE,
   row_split = row_split,
   column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 8),
   row_names_max_width = max_text_width(rownames(mat)),
   column_names_max_height = max_text_width(colnames(mat)),
   heatmap_legend_param = list(
