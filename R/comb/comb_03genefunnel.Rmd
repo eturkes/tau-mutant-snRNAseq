@@ -566,7 +566,7 @@ results <- read.delim(file.path(cache_dir, "results.tsv"))
 
 idx <- 18
 length1 <- 1
-length2 <-nrow(gse_list[[1]])
+length2 <- nrow(gse_list[[1]])
 length <- length1:length2
 for (i in seq_along(corrections)) {
   results[ , idx] <- corrections[[i]][length]
