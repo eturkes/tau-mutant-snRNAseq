@@ -267,6 +267,8 @@ ctypes <- list(
 
 rds <- file.path(cache_dir, "seurat_list.rds")
 if (file.exists(rds)) {
+  rm(seurat_orig)
+  gc()
   seurat_list <- readRDS(rds)
 } else {
 
@@ -316,7 +318,8 @@ if (file.exists(rds)) {
     gc()
     DefaultAssay(seurat) <- "RNA"
     scores <- calculateScores(
-      GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
+      GetAssayData(seurat, layer = "counts"), rownames(seurat),
+      geneIds(gene_sets)
     )
     gc()
     rownames(scores) <- names(gene_sets)
@@ -325,12 +328,15 @@ if (file.exists(rds)) {
     seurat[["GF"]] <- CreateAssay5Object(scores, data = log1p(scores))
     DefaultAssay(seurat) <- "GF"
     seurat$nCount_GF <- colSums(seurat, layer = "counts")
-    seurat$nFeature_GF <- colSums(GetAssayData(seurat, layer = "counts") > 0)
+    seurat$nFeature_GF <- colSums(
+      GetAssayData(seurat, layer = "counts") > 0
+    )
 
     gc()
     DefaultAssay(seurat) <- "SCT"
     scores <- calculateScores(
-      GetAssayData(seurat, layer = "counts"), rownames(seurat), geneIds(gene_sets)
+      GetAssayData(seurat, layer = "counts"), rownames(seurat),
+      geneIds(gene_sets)
     )
     gc()
     rownames(scores) <- names(gene_sets)
@@ -340,16 +346,16 @@ if (file.exists(rds)) {
     seurat[["GF_SCT"]] <- CreateAssay5Object(scores, data = log1p(scores))
     DefaultAssay(seurat) <- "GF_SCT"
     seurat$nCount_GF_SCT <- colSums(seurat, layer = "counts")
-    seurat$nFeature_GF_SCT <- colSums(GetAssayData(seurat, layer = "counts") > 0)
+    seurat$nFeature_GF_SCT <- colSums(
+      GetAssayData(seurat, layer = "counts") > 0
+    )
 
     seurat_list[[i]] <- seurat
   }
-  rm(seurat, scores)
+  rm(seurat_orig, seurat, scores)
   gc()
   saveRDS(seurat_list, file = rds)
 }
-rm(seurat_orig)
-gc()
 seurat_list
 
 gse_list <- vector("list", length = 7)
@@ -373,37 +379,51 @@ for (i in seq_along(seurat_list)) {
     )
   )
 
-  design <- model.matrix(~ gse$tau * gse$amyloid)
-  colnames(design) <- make.names(colnames(design))
-
   keep <- filterByExpr(
-    gse, design = design, min.count = 50, min.total.count = 50
+    gse, group = gse$genotype, min.count = 50, min.total.count = 50
   )
   gse <- gse[keep, ]
 
   dge <- DGEList(counts(gse))
   dge <- calcNormFactors(dge)
-  logcounts(gse, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 2)
+  logcounts(gse, withDimnames = FALSE) <- cpm(
+    dge, log = TRUE, prior.count = 2
+  )
 
   gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 
   keep <- filterByExpr(
-    deg, design = design, min.count = 200, min.total.count = 200
+    deg, group = deg$genotype, min.count = 200, min.total.count = 200
   )
   deg <- deg[keep, ]
 
   dge <- DGEList(counts(deg))
   dge <- calcNormFactors(dge)
-  logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 0.5)
+  logcounts(deg, withDimnames = FALSE) <- cpm(
+    dge, log = TRUE, prior.count = 0.5
+  )
 
   gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
   deg <- deg[rownames(deg) %in% unique(unlist(geneIds(gene_sets_sub))), ]
 
-  design <- model.matrix(~ gse$tau * gse$amyloid + gse$batch)
+  design <- model.matrix(~ 0 + gse$genotype + gse$batch)
   colnames(design) <- make.names(colnames(design))
   cont_mat <- makeContrasts(
-    "gse.tauS305N", "gse.tauP301S", "gse.amyloidNLGF",
-    "gse.tauS305N.gse.amyloidNLGF", "gse.tauP301S.gse.amyloidNLGF",
+    S305N_MAPTKI =
+      gse.genotypeS305N -
+      gse.genotypeMAPTKI,
+    P301S_MAPTKI =
+      gse.genotypeP301S -
+      gse.genotypeMAPTKI,
+    NLGF_MAPTKI_MAPTKI =
+      gse.genotypeNLGF_MAPTKI -
+      gse.genotypeMAPTKI,
+    NLGF_S305N_S305N =
+      gse.genotypeNLGF_S305N -
+      gse.genotypeS305N,
+    NLGF_P301S_P301S =
+      gse.genotypeNLGF_P301S -
+      gse.genotypeP301S,
     levels = design
   )
 
@@ -460,11 +480,8 @@ gse <- suppressWarnings(
   )
 )
 
-design <- model.matrix(~ gse$tau * gse$amyloid)
-colnames(design) <- make.names(colnames(design))
-
 keep <- filterByExpr(
-  gse, design = design, min.count = 50, min.total.count = 50
+  gse, group = gse$genotype, min.count = 50, min.total.count = 50
 )
 gse <- gse[keep, ]
 
@@ -474,7 +491,7 @@ logcounts(gse, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 2)
 
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse_corrected <- removeBatchEffect(
-  logcounts(gse), batch = gse$batch, design = design
+  logcounts(gse), batch = gse$batch, group = gse$genotype
 )
 gse
 
@@ -487,7 +504,7 @@ deg <- suppressWarnings(
 )
 
 keep <- filterByExpr(
-  deg, design = design, min.count = 200, min.total.count = 200
+  deg, group = deg$genotype, min.count = 200, min.total.count = 200
 )
 deg <- deg[keep, ]
 
@@ -498,7 +515,7 @@ logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 0.5)
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
 deg <- deg[rownames(deg) %in% unique(unlist(geneIds(gene_sets_sub))), ]
 deg_corrected <- removeBatchEffect(
-  logcounts(deg), batch = deg$batch, design = design
+  logcounts(deg), batch = deg$batch, group = deg$genotype
 )
 deg
 
@@ -517,11 +534,24 @@ deg_range <- c(
 ## GSE
 
 ```{r}
-design <- model.matrix(~ gse$tau * gse$amyloid + gse$batch)
+design <- model.matrix(~ 0 + gse$genotype + gse$batch)
 colnames(design) <- make.names(colnames(design))
 cont_mat <- makeContrasts(
-  "gse.tauS305N", "gse.tauP301S", "gse.amyloidNLGF",
-  "gse.tauS305N.gse.amyloidNLGF", "gse.tauP301S.gse.amyloidNLGF",
+  S305N_MAPTKI =
+    gse.genotypeS305N -
+    gse.genotypeMAPTKI,
+  P301S_MAPTKI =
+    gse.genotypeP301S -
+    gse.genotypeMAPTKI,
+  NLGF_MAPTKI_MAPTKI =
+    gse.genotypeNLGF_MAPTKI -
+    gse.genotypeMAPTKI,
+  NLGF_S305N_S305N =
+    gse.genotypeNLGF_S305N -
+    gse.genotypeS305N,
+  NLGF_P301S_P301S =
+    gse.genotypeNLGF_P301S -
+    gse.genotypeP301S,
   levels = design
 )
 
@@ -728,11 +758,24 @@ draw(
 ## DGE
 
 ```{r}
-design <- model.matrix(~ deg$tau * deg$amyloid + deg$batch)
+design <- model.matrix(~ 0 + deg$genotype + deg$batch)
 colnames(design) <- make.names(colnames(design))
 cont_mat <- makeContrasts(
-  "deg.tauS305N", "deg.tauP301S", "deg.amyloidNLGF",
-  "deg.tauS305N.deg.amyloidNLGF", "deg.tauP301S.deg.amyloidNLGF",
+  S305N_MAPTKI =
+    deg.genotypeS305N -
+    deg.genotypeMAPTKI,
+  P301S_MAPTKI =
+    deg.genotypeP301S -
+    deg.genotypeMAPTKI,
+  NLGF_MAPTKI_MAPTKI =
+    deg.genotypeNLGF_MAPTKI -
+    deg.genotypeMAPTKI,
+  NLGF_S305N_S305N =
+    deg.genotypeNLGF_S305N -
+    deg.genotypeS305N,
+  NLGF_P301S_P301S =
+    deg.genotypeNLGF_P301S -
+    deg.genotypeP301S,
   levels = design
 )
 
@@ -953,11 +996,8 @@ gse <- suppressWarnings(
   )
 )
 
-design <- model.matrix(~ gse$tau * gse$amyloid)
-colnames(design) <- make.names(colnames(design))
-
 keep <- filterByExpr(
-  gse, design = design, min.count = 50, min.total.count = 50
+  gse, group = gse$genotype, min.count = 50, min.total.count = 50
 )
 gse <- gse[keep, ]
 
@@ -967,7 +1007,7 @@ logcounts(gse, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 2)
 
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse_corrected <- removeBatchEffect(
-  logcounts(gse), batch = gse$batch, design = design
+  logcounts(gse), batch = gse$batch, group = gse$genotype
 )
 gse
 
@@ -980,7 +1020,7 @@ deg <- suppressWarnings(
 )
 
 keep <- filterByExpr(
-  deg, design = design, min.count = 200, min.total.count = 200
+  deg, group = deg$genotype, min.count = 200, min.total.count = 200
 )
 deg <- deg[keep, ]
 
@@ -991,7 +1031,7 @@ logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 0.5)
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
 deg <- deg[rownames(deg) %in% unique(unlist(geneIds(gene_sets_sub))), ]
 deg_corrected <- removeBatchEffect(
-  logcounts(deg), batch = deg$batch, design = design
+  logcounts(deg), batch = deg$batch, group = deg$genotype
 )
 deg
 
@@ -1010,11 +1050,24 @@ deg_range <- c(
 ## GSE
 
 ```{r}
-design <- model.matrix(~ gse$tau * gse$amyloid + gse$batch)
+design <- model.matrix(~ 0 + gse$genotype + gse$batch)
 colnames(design) <- make.names(colnames(design))
 cont_mat <- makeContrasts(
-  "gse.tauS305N", "gse.tauP301S", "gse.amyloidNLGF",
-  "gse.tauS305N.gse.amyloidNLGF", "gse.tauP301S.gse.amyloidNLGF",
+  S305N_MAPTKI =
+    gse.genotypeS305N -
+    gse.genotypeMAPTKI,
+  P301S_MAPTKI =
+    gse.genotypeP301S -
+    gse.genotypeMAPTKI,
+  NLGF_MAPTKI_MAPTKI =
+    gse.genotypeNLGF_MAPTKI -
+    gse.genotypeMAPTKI,
+  NLGF_S305N_S305N =
+    gse.genotypeNLGF_S305N -
+    gse.genotypeS305N,
+  NLGF_P301S_P301S =
+    gse.genotypeNLGF_P301S -
+    gse.genotypeP301S,
   levels = design
 )
 
@@ -1221,11 +1274,24 @@ draw(
 ## DGE
 
 ```{r}
-design <- model.matrix(~ deg$tau * deg$amyloid + deg$batch)
+design <- model.matrix(~ 0 + deg$genotype + deg$batch)
 colnames(design) <- make.names(colnames(design))
 cont_mat <- makeContrasts(
-  "deg.tauS305N", "deg.tauP301S", "deg.amyloidNLGF",
-  "deg.tauS305N.deg.amyloidNLGF", "deg.tauP301S.deg.amyloidNLGF",
+  S305N_MAPTKI =
+    deg.genotypeS305N -
+    deg.genotypeMAPTKI,
+  P301S_MAPTKI =
+    deg.genotypeP301S -
+    deg.genotypeMAPTKI,
+  NLGF_MAPTKI_MAPTKI =
+    deg.genotypeNLGF_MAPTKI -
+    deg.genotypeMAPTKI,
+  NLGF_S305N_S305N =
+    deg.genotypeNLGF_S305N -
+    deg.genotypeS305N,
+  NLGF_P301S_P301S =
+    deg.genotypeNLGF_P301S -
+    deg.genotypeP301S,
   levels = design
 )
 
@@ -1447,11 +1513,8 @@ gse <- suppressWarnings(
   )
 )
 
-design <- model.matrix(~ gse$tau * gse$amyloid)
-colnames(design) <- make.names(colnames(design))
-
 keep <- filterByExpr(
-  gse, design = design, min.count = 50, min.total.count = 50
+  gse, group = gse$genotype, min.count = 50, min.total.count = 50
 )
 gse <- gse[keep, ]
 
@@ -1461,7 +1524,7 @@ logcounts(gse, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 2)
 
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse_corrected <- removeBatchEffect(
-  logcounts(gse), batch = gse$batch, design = design
+  logcounts(gse), batch = gse$batch, group = gse$genotype
 )
 gse
 
@@ -1474,7 +1537,7 @@ deg <- suppressWarnings(
 )
 
 keep <- filterByExpr(
-  deg, design = design, min.count = 200, min.total.count = 200
+  deg, group = deg$genotype, min.count = 200, min.total.count = 200
 )
 deg <- deg[keep, ]
 
@@ -1485,7 +1548,7 @@ logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 0.5)
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
 deg <- deg[rownames(deg) %in% unique(unlist(geneIds(gene_sets_sub))), ]
 deg_corrected <- removeBatchEffect(
-  logcounts(deg), batch = deg$batch, design = design
+  logcounts(deg), batch = deg$batch, group = deg$genotype
 )
 deg
 
@@ -1504,11 +1567,24 @@ deg_range <- c(
 ## GSE
 
 ```{r}
-design <- model.matrix(~ gse$tau * gse$amyloid + gse$batch)
+design <- model.matrix(~ 0 + gse$genotype + gse$batch)
 colnames(design) <- make.names(colnames(design))
 cont_mat <- makeContrasts(
-  "gse.tauS305N", "gse.tauP301S", "gse.amyloidNLGF",
-  "gse.tauS305N.gse.amyloidNLGF", "gse.tauP301S.gse.amyloidNLGF",
+  S305N_MAPTKI =
+    gse.genotypeS305N -
+    gse.genotypeMAPTKI,
+  P301S_MAPTKI =
+    gse.genotypeP301S -
+    gse.genotypeMAPTKI,
+  NLGF_MAPTKI_MAPTKI =
+    gse.genotypeNLGF_MAPTKI -
+    gse.genotypeMAPTKI,
+  NLGF_S305N_S305N =
+    gse.genotypeNLGF_S305N -
+    gse.genotypeS305N,
+  NLGF_P301S_P301S =
+    gse.genotypeNLGF_P301S -
+    gse.genotypeP301S,
   levels = design
 )
 
@@ -1717,11 +1793,24 @@ draw(
 ## DGE
 
 ```{r}
-design <- model.matrix(~ deg$tau * deg$amyloid + deg$batch)
+design <- model.matrix(~ 0 + deg$genotype + deg$batch)
 colnames(design) <- make.names(colnames(design))
 cont_mat <- makeContrasts(
-  "deg.tauS305N", "deg.tauP301S", "deg.amyloidNLGF",
-  "deg.tauS305N.deg.amyloidNLGF", "deg.tauP301S.deg.amyloidNLGF",
+  S305N_MAPTKI =
+    deg.genotypeS305N -
+    deg.genotypeMAPTKI,
+  P301S_MAPTKI =
+    deg.genotypeP301S -
+    deg.genotypeMAPTKI,
+  NLGF_MAPTKI_MAPTKI =
+    deg.genotypeNLGF_MAPTKI -
+    deg.genotypeMAPTKI,
+  NLGF_S305N_S305N =
+    deg.genotypeNLGF_S305N -
+    deg.genotypeS305N,
+  NLGF_P301S_P301S =
+    deg.genotypeNLGF_P301S -
+    deg.genotypeP301S,
   levels = design
 )
 
@@ -1944,11 +2033,8 @@ gse <- suppressWarnings(
   )
 )
 
-design <- model.matrix(~ gse$tau * gse$amyloid)
-colnames(design) <- make.names(colnames(design))
-
 keep <- filterByExpr(
-  gse, design = design, min.count = 50, min.total.count = 50
+  gse, group = gse$genotype, min.count = 50, min.total.count = 50
 )
 gse <- gse[keep, ]
 
@@ -1958,7 +2044,7 @@ logcounts(gse, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 2)
 
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse_corrected <- removeBatchEffect(
-  logcounts(gse), batch = gse$batch, design = design
+  logcounts(gse), batch = gse$batch, group = gse$genotype
 )
 gse
 
@@ -1971,7 +2057,7 @@ deg <- suppressWarnings(
 )
 
 keep <- filterByExpr(
-  deg, design = design, min.count = 200, min.total.count = 200
+  deg, group = deg$genotype, min.count = 200, min.total.count = 200
 )
 deg <- deg[keep, ]
 
@@ -1982,7 +2068,7 @@ logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 0.5)
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
 deg <- deg[rownames(deg) %in% unique(unlist(geneIds(gene_sets_sub))), ]
 deg_corrected <- removeBatchEffect(
-  logcounts(deg), batch = deg$batch, design = design
+  logcounts(deg), batch = deg$batch, group = deg$genotype
 )
 deg
 
@@ -2001,11 +2087,24 @@ deg_range <- c(
 ## GSE
 
 ```{r}
-design <- model.matrix(~ gse$tau * gse$amyloid + gse$batch)
+design <- model.matrix(~ 0 + gse$genotype + gse$batch)
 colnames(design) <- make.names(colnames(design))
 cont_mat <- makeContrasts(
-  "gse.tauS305N", "gse.tauP301S", "gse.amyloidNLGF",
-  "gse.tauS305N.gse.amyloidNLGF", "gse.tauP301S.gse.amyloidNLGF",
+  S305N_MAPTKI =
+    gse.genotypeS305N -
+    gse.genotypeMAPTKI,
+  P301S_MAPTKI =
+    gse.genotypeP301S -
+    gse.genotypeMAPTKI,
+  NLGF_MAPTKI_MAPTKI =
+    gse.genotypeNLGF_MAPTKI -
+    gse.genotypeMAPTKI,
+  NLGF_S305N_S305N =
+    gse.genotypeNLGF_S305N -
+    gse.genotypeS305N,
+  NLGF_P301S_P301S =
+    gse.genotypeNLGF_P301S -
+    gse.genotypeP301S,
   levels = design
 )
 
@@ -2215,11 +2314,24 @@ draw(
 ## DGE
 
 ```{r}
-design <- model.matrix(~ deg$tau * deg$amyloid + deg$batch)
+design <- model.matrix(~ 0 + deg$genotype + deg$batch)
 colnames(design) <- make.names(colnames(design))
 cont_mat <- makeContrasts(
-  "deg.tauS305N", "deg.tauP301S", "deg.amyloidNLGF",
-  "deg.tauS305N.deg.amyloidNLGF", "deg.tauP301S.deg.amyloidNLGF",
+  S305N_MAPTKI =
+    deg.genotypeS305N -
+    deg.genotypeMAPTKI,
+  P301S_MAPTKI =
+    deg.genotypeP301S -
+    deg.genotypeMAPTKI,
+  NLGF_MAPTKI_MAPTKI =
+    deg.genotypeNLGF_MAPTKI -
+    deg.genotypeMAPTKI,
+  NLGF_S305N_S305N =
+    deg.genotypeNLGF_S305N -
+    deg.genotypeS305N,
+  NLGF_P301S_P301S =
+    deg.genotypeNLGF_P301S -
+    deg.genotypeP301S,
   levels = design
 )
 
@@ -2444,11 +2556,8 @@ gse <- suppressWarnings(
   )
 )
 
-design <- model.matrix(~ gse$tau * gse$amyloid)
-colnames(design) <- make.names(colnames(design))
-
 keep <- filterByExpr(
-  gse, design = design, min.count = 50, min.total.count = 50
+  gse, group = gse$genotype, min.count = 50, min.total.count = 50
 )
 gse <- gse[keep, ]
 
@@ -2458,7 +2567,7 @@ logcounts(gse, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 2)
 
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse_corrected <- removeBatchEffect(
-  logcounts(gse), batch = gse$batch, design = design
+  logcounts(gse), batch = gse$batch, group = gse$genotype
 )
 gse
 
@@ -2471,7 +2580,7 @@ deg <- suppressWarnings(
 )
 
 keep <- filterByExpr(
-  deg, design = design, min.count = 200, min.total.count = 200
+  deg, group = deg$genotype, min.count = 200, min.total.count = 200
 )
 deg <- deg[keep, ]
 
@@ -2482,7 +2591,7 @@ logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 0.5)
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
 deg <- deg[rownames(deg) %in% unique(unlist(geneIds(gene_sets_sub))), ]
 deg_corrected <- removeBatchEffect(
-  logcounts(deg), batch = deg$batch, design = design
+  logcounts(deg), batch = deg$batch, group = deg$genotype
 )
 deg
 
@@ -2501,11 +2610,24 @@ deg_range <- c(
 ## GSE
 
 ```{r}
-design <- model.matrix(~ gse$tau * gse$amyloid + gse$batch)
+design <- model.matrix(~ 0 + gse$genotype + gse$batch)
 colnames(design) <- make.names(colnames(design))
 cont_mat <- makeContrasts(
-  "gse.tauS305N", "gse.tauP301S", "gse.amyloidNLGF",
-  "gse.tauS305N.gse.amyloidNLGF", "gse.tauP301S.gse.amyloidNLGF",
+  S305N_MAPTKI =
+    gse.genotypeS305N -
+    gse.genotypeMAPTKI,
+  P301S_MAPTKI =
+    gse.genotypeP301S -
+    gse.genotypeMAPTKI,
+  NLGF_MAPTKI_MAPTKI =
+    gse.genotypeNLGF_MAPTKI -
+    gse.genotypeMAPTKI,
+  NLGF_S305N_S305N =
+    gse.genotypeNLGF_S305N -
+    gse.genotypeS305N,
+  NLGF_P301S_P301S =
+    gse.genotypeNLGF_P301S -
+    gse.genotypeP301S,
   levels = design
 )
 
@@ -2716,11 +2838,24 @@ draw(
 ## DGE
 
 ```{r}
-design <- model.matrix(~ deg$tau * deg$amyloid + deg$batch)
+design <- model.matrix(~ 0 + deg$genotype + deg$batch)
 colnames(design) <- make.names(colnames(design))
 cont_mat <- makeContrasts(
-  "deg.tauS305N", "deg.tauP301S", "deg.amyloidNLGF",
-  "deg.tauS305N.deg.amyloidNLGF", "deg.tauP301S.deg.amyloidNLGF",
+  S305N_MAPTKI =
+    deg.genotypeS305N -
+    deg.genotypeMAPTKI,
+  P301S_MAPTKI =
+    deg.genotypeP301S -
+    deg.genotypeMAPTKI,
+  NLGF_MAPTKI_MAPTKI =
+    deg.genotypeNLGF_MAPTKI -
+    deg.genotypeMAPTKI,
+  NLGF_S305N_S305N =
+    deg.genotypeNLGF_S305N -
+    deg.genotypeS305N,
+  NLGF_P301S_P301S =
+    deg.genotypeNLGF_P301S -
+    deg.genotypeP301S,
   levels = design
 )
 
@@ -2946,11 +3081,8 @@ gse <- suppressWarnings(
   )
 )
 
-design <- model.matrix(~ gse$tau * gse$amyloid)
-colnames(design) <- make.names(colnames(design))
-
 keep <- filterByExpr(
-  gse, design = design, min.count = 50, min.total.count = 50
+  gse, group = gse$genotype, min.count = 50, min.total.count = 50
 )
 gse <- gse[keep, ]
 
@@ -2960,7 +3092,7 @@ logcounts(gse, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 2)
 
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse_corrected <- removeBatchEffect(
-  logcounts(gse), batch = gse$batch, design = design
+  logcounts(gse), batch = gse$batch, group = gse$genotype
 )
 gse
 
@@ -2973,7 +3105,7 @@ deg <- suppressWarnings(
 )
 
 keep <- filterByExpr(
-  deg, design = design, min.count = 200, min.total.count = 200
+  deg, group = deg$genotype, min.count = 200, min.total.count = 200
 )
 deg <- deg[keep, ]
 
@@ -2984,7 +3116,7 @@ logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 0.5)
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
 deg <- deg[rownames(deg) %in% unique(unlist(geneIds(gene_sets_sub))), ]
 deg_corrected <- removeBatchEffect(
-  logcounts(deg), batch = deg$batch, design = design
+  logcounts(deg), batch = deg$batch, group = deg$genotype
 )
 deg
 
@@ -3003,11 +3135,24 @@ deg_range <- c(
 ## GSE
 
 ```{r}
-design <- model.matrix(~ gse$tau * gse$amyloid + gse$batch)
+design <- model.matrix(~ 0 + gse$genotype + gse$batch)
 colnames(design) <- make.names(colnames(design))
 cont_mat <- makeContrasts(
-  "gse.tauS305N", "gse.tauP301S", "gse.amyloidNLGF",
-  "gse.tauS305N.gse.amyloidNLGF", "gse.tauP301S.gse.amyloidNLGF",
+  S305N_MAPTKI =
+    gse.genotypeS305N -
+    gse.genotypeMAPTKI,
+  P301S_MAPTKI =
+    gse.genotypeP301S -
+    gse.genotypeMAPTKI,
+  NLGF_MAPTKI_MAPTKI =
+    gse.genotypeNLGF_MAPTKI -
+    gse.genotypeMAPTKI,
+  NLGF_S305N_S305N =
+    gse.genotypeNLGF_S305N -
+    gse.genotypeS305N,
+  NLGF_P301S_P301S =
+    gse.genotypeNLGF_P301S -
+    gse.genotypeP301S,
   levels = design
 )
 
@@ -3220,11 +3365,24 @@ draw(
 ## DGE
 
 ```{r}
-design <- model.matrix(~ deg$tau * deg$amyloid + deg$batch)
+design <- model.matrix(~ 0 + deg$genotype + deg$batch)
 colnames(design) <- make.names(colnames(design))
 cont_mat <- makeContrasts(
-  "deg.tauS305N", "deg.tauP301S", "deg.amyloidNLGF",
-  "deg.tauS305N.deg.amyloidNLGF", "deg.tauP301S.deg.amyloidNLGF",
+  S305N_MAPTKI =
+    deg.genotypeS305N -
+    deg.genotypeMAPTKI,
+  P301S_MAPTKI =
+    deg.genotypeP301S -
+    deg.genotypeMAPTKI,
+  NLGF_MAPTKI_MAPTKI =
+    deg.genotypeNLGF_MAPTKI -
+    deg.genotypeMAPTKI,
+  NLGF_S305N_S305N =
+    deg.genotypeNLGF_S305N -
+    deg.genotypeS305N,
+  NLGF_P301S_P301S =
+    deg.genotypeNLGF_P301S -
+    deg.genotypeP301S,
   levels = design
 )
 
@@ -3451,11 +3609,8 @@ gse <- suppressWarnings(
   )
 )
 
-design <- model.matrix(~ gse$tau * gse$amyloid)
-colnames(design) <- make.names(colnames(design))
-
 keep <- filterByExpr(
-  gse, design = design, min.count = 50, min.total.count = 50
+  gse, group = gse$genotype, min.count = 50, min.total.count = 50
 )
 gse <- gse[keep, ]
 
@@ -3465,7 +3620,7 @@ logcounts(gse, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 2)
 
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
 gse_corrected <- removeBatchEffect(
-  logcounts(gse), batch = gse$batch, design = design
+  logcounts(gse), batch = gse$batch, group = gse$genotype
 )
 gse
 
@@ -3478,7 +3633,7 @@ deg <- suppressWarnings(
 )
 
 keep <- filterByExpr(
-  deg, design = design, min.count = 200, min.total.count = 200
+  deg, group = deg$genotype, min.count = 200, min.total.count = 200
 )
 deg <- deg[keep, ]
 
@@ -3489,7 +3644,7 @@ logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE, prior.count = 0.5)
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
 deg <- deg[rownames(deg) %in% unique(unlist(geneIds(gene_sets_sub))), ]
 deg_corrected <- removeBatchEffect(
-  logcounts(deg), batch = deg$batch, design = design
+  logcounts(deg), batch = deg$batch, group = deg$genotype
 )
 deg
 
@@ -3508,11 +3663,24 @@ deg_range <- c(
 ## GSE
 
 ```{r}
-design <- model.matrix(~ gse$tau * gse$amyloid + gse$batch)
+design <- model.matrix(~ 0 + gse$genotype + gse$batch)
 colnames(design) <- make.names(colnames(design))
 cont_mat <- makeContrasts(
-  "gse.tauS305N", "gse.tauP301S", "gse.amyloidNLGF",
-  "gse.tauS305N.gse.amyloidNLGF", "gse.tauP301S.gse.amyloidNLGF",
+  S305N_MAPTKI =
+    gse.genotypeS305N -
+    gse.genotypeMAPTKI,
+  P301S_MAPTKI =
+    gse.genotypeP301S -
+    gse.genotypeMAPTKI,
+  NLGF_MAPTKI_MAPTKI =
+    gse.genotypeNLGF_MAPTKI -
+    gse.genotypeMAPTKI,
+  NLGF_S305N_S305N =
+    gse.genotypeNLGF_S305N -
+    gse.genotypeS305N,
+  NLGF_P301S_P301S =
+    gse.genotypeNLGF_P301S -
+    gse.genotypeP301S,
   levels = design
 )
 
@@ -3726,11 +3894,24 @@ draw(
 ## DGE
 
 ```{r}
-design <- model.matrix(~ deg$tau * deg$amyloid + deg$batch)
+design <- model.matrix(~ 0 + deg$genotype + deg$batch)
 colnames(design) <- make.names(colnames(design))
 cont_mat <- makeContrasts(
-  "deg.tauS305N", "deg.tauP301S", "deg.amyloidNLGF",
-  "deg.tauS305N.deg.amyloidNLGF", "deg.tauP301S.deg.amyloidNLGF",
+  S305N_MAPTKI =
+    deg.genotypeS305N -
+    deg.genotypeMAPTKI,
+  P301S_MAPTKI =
+    deg.genotypeP301S -
+    deg.genotypeMAPTKI,
+  NLGF_MAPTKI_MAPTKI =
+    deg.genotypeNLGF_MAPTKI -
+    deg.genotypeMAPTKI,
+  NLGF_S305N_S305N =
+    deg.genotypeNLGF_S305N -
+    deg.genotypeS305N,
+  NLGF_P301S_P301S =
+    deg.genotypeNLGF_P301S -
+    deg.genotypeP301S,
   levels = design
 )
 
