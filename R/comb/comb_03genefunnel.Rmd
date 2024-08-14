@@ -451,23 +451,15 @@ for (i in seq_along(seurat_list)) {
 }
 
 results <- rbind(
-  gse_list[[1]], gse_list[[2]], gse_list[[3]], gse_list[[4]],
-  gse_list[[5]], gse_list[[6]], gse_list[[7]]
+  gse_list[[1]], deg_list[[1]], gse_list[[2]], deg_list[[2]],
+  gse_list[[3]], deg_list[[3]], gse_list[[4]], deg_list[[4]],
+  gse_list[[5]], deg_list[[5]], gse_list[[6]], deg_list[[6]],
+  gse_list[[7]], deg_list[[7]]
 )
-gse_corrections <- vector("list", length = 5)
+corrections <- vector("list", length = 5)
 idx <- 13
-for (i in seq_along(gse_corrections)) {
-  gse_corrections[[i]] <- p.adjust(results[ , idx], method = "BH")
-  idx <- idx + 1
-}
-results <- rbind(
-  deg_list[[1]], deg_list[[2]], deg_list[[3]], deg_list[[4]],
-  deg_list[[5]], deg_list[[6]], deg_list[[7]]
-)
-deg_corrections <- vector("list", length = 5)
-idx <- 13
-for (i in seq_along(deg_corrections)) {
-  deg_corrections[[i]] <- p.adjust(results[ , idx], method = "BH")
+for (i in seq_along(corrections)) {
+  corrections[[i]] <- p.adjust(results[ , idx], method = "BH")
   idx <- idx + 1
 }
 ```
@@ -574,10 +566,10 @@ results <- read.delim(file.path(cache_dir, "results.tsv"))
 
 idx <- 18
 length1 <- 1
-length2 <- nrow(gse_list[[1]])
+length2 <-nrow(gse_list[[1]])
 length <- length1:length2
-for (i in seq_along(gse_corrections)) {
-  results[ , idx] <- gse_corrections[[i]][length]
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
   idx <- idx + 1
 }
 
@@ -1023,11 +1015,11 @@ write.fit(
 results <- read.delim(file.path(cache_dir, "results.tsv"))
 
 idx <- 18
-length1 <- 1
-length2 <- nrow(deg_list[[1]])
+length1 <- nrow(gse_list[[1]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]])
 length <- length1:length2
-for (i in seq_along(deg_corrections)) {
-  results[ , idx] <- deg_corrections[[i]][length]
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
   idx <- idx + 1
 }
 
@@ -1543,11 +1535,11 @@ write.fit(
 results <- read.delim(file.path(cache_dir, "results.tsv"))
 
 idx <- 18
-length1 <- nrow(gse_list[[1]]) + 1
-length2 <- nrow(gse_list[[1]]) + nrow(gse_list[[2]])
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]])
 length <- length1:length2
-for (i in seq_along(gse_corrections)) {
-  results[ , idx] <- gse_corrections[[i]][length]
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
   idx <- idx + 1
 }
 
@@ -1993,11 +1985,12 @@ write.fit(
 results <- read.delim(file.path(cache_dir, "results.tsv"))
 
 idx <- 18
-length1 <- nrow(deg_list[[1]]) + 1
-length2 <- nrow(deg_list[[1]]) + nrow(deg_list[[2]])
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]])
 length <- length1:length2
-for (i in seq_along(deg_corrections)) {
-  results[ , idx] <- deg_corrections[[i]][length]
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
   idx <- idx + 1
 }
 
@@ -2513,11 +2506,13 @@ write.fit(
 results <- read.delim(file.path(cache_dir, "results.tsv"))
 
 idx <- 18
-length1 <- nrow(gse_list[[1]]) + nrow(gse_list[[2]]) + 1
-length2 <- nrow(gse_list[[1]]) + nrow(gse_list[[2]]) + nrow(gse_list[[3]])
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]])
 length <- length1:length2
-for (i in seq_along(gse_corrections)) {
-  results[ , idx] <- gse_corrections[[i]][length]
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
   idx <- idx + 1
 }
 
@@ -2963,11 +2958,13 @@ write.fit(
 results <- read.delim(file.path(cache_dir, "results.tsv"))
 
 idx <- 18
-length1 <- nrow(deg_list[[1]]) + nrow(deg_list[[2]]) + 1
-length2 <- nrow(deg_list[[1]]) + nrow(deg_list[[2]]) + nrow(deg_list[[3]])
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]])
 length <- length1:length2
-for (i in seq_along(deg_corrections)) {
-  results[ , idx] <- deg_corrections[[i]][length]
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
   idx <- idx + 1
 }
 
@@ -3483,12 +3480,14 @@ write.fit(
 results <- read.delim(file.path(cache_dir, "results.tsv"))
 
 idx <- 18
-length1 <- nrow(gse_list[[1]]) + nrow(gse_list[[2]]) + nrow(gse_list[[3]]) + 1
-length2 <- nrow(gse_list[[1]]) + nrow(gse_list[[2]]) + nrow(gse_list[[3]]) +
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
   nrow(gse_list[[4]])
 length <- length1:length2
-for (i in seq_along(gse_corrections)) {
-  results[ , idx] <- gse_corrections[[i]][length]
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
   idx <- idx + 1
 }
 
@@ -3934,12 +3933,15 @@ write.fit(
 results <- read.delim(file.path(cache_dir, "results.tsv"))
 
 idx <- 18
-length1 <- nrow(deg_list[[1]]) + nrow(deg_list[[2]]) + nrow(deg_list[[3]]) + 1
-length2 <- nrow(deg_list[[1]]) + nrow(deg_list[[2]]) + nrow(deg_list[[3]]) +
-  nrow(deg_list[[4]])
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]])
 length <- length1:length2
-for (i in seq_along(deg_corrections)) {
-  results[ , idx] <- deg_corrections[[i]][length]
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
   idx <- idx + 1
 }
 
@@ -4455,13 +4457,15 @@ write.fit(
 results <- read.delim(file.path(cache_dir, "results.tsv"))
 
 idx <- 18
-length1 <- nrow(gse_list[[1]]) + nrow(gse_list[[2]]) + nrow(gse_list[[3]]) +
-  nrow(gse_list[[4]]) + 1
-length2 <- nrow(gse_list[[1]]) + nrow(gse_list[[2]]) + nrow(gse_list[[3]]) +
-  nrow(gse_list[[4]]) + nrow(gse_list[[5]])
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]])
 length <- length1:length2
-for (i in seq_along(gse_corrections)) {
-  results[ , idx] <- gse_corrections[[i]][length]
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
   idx <- idx + 1
 }
 
@@ -4907,13 +4911,16 @@ write.fit(
 results <- read.delim(file.path(cache_dir, "results.tsv"))
 
 idx <- 18
-length1 <- nrow(deg_list[[1]]) + nrow(deg_list[[2]]) + nrow(deg_list[[3]]) +
-  nrow(deg_list[[4]]) + 1
-length2 <- nrow(deg_list[[1]]) + nrow(deg_list[[2]]) + nrow(deg_list[[3]]) +
-  nrow(deg_list[[4]]) + nrow(deg_list[[5]])
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]])
 length <- length1:length2
-for (i in seq_along(deg_corrections)) {
-  results[ , idx] <- deg_corrections[[i]][length]
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
   idx <- idx + 1
 }
 
@@ -5430,13 +5437,17 @@ write.fit(
 results <- read.delim(file.path(cache_dir, "results.tsv"))
 
 idx <- 18
-length1 <- nrow(gse_list[[1]]) + nrow(gse_list[[2]]) + nrow(gse_list[[3]]) +
-  nrow(gse_list[[4]]) + nrow(gse_list[[5]]) + 1
-length2 <- nrow(gse_list[[1]]) + nrow(gse_list[[2]]) + nrow(gse_list[[3]]) +
-  nrow(gse_list[[4]]) + nrow(gse_list[[5]]) + nrow(gse_list[[6]])
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]])
 length <- length1:length2
-for (i in seq_along(gse_corrections)) {
-  results[ , idx] <- gse_corrections[[i]][length]
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
   idx <- idx + 1
 }
 
@@ -5882,13 +5893,17 @@ write.fit(
 results <- read.delim(file.path(cache_dir, "results.tsv"))
 
 idx <- 18
-length1 <- nrow(deg_list[[1]]) + nrow(deg_list[[2]]) + nrow(deg_list[[3]]) +
-  nrow(deg_list[[4]]) + nrow(deg_list[[5]]) + 1
-length2 <- nrow(deg_list[[1]]) + nrow(deg_list[[2]]) + nrow(deg_list[[3]]) +
-  nrow(deg_list[[4]]) + nrow(deg_list[[5]]) + nrow(deg_list[[6]])
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]])
 length <- length1:length2
-for (i in seq_along(deg_corrections)) {
-  results[ , idx] <- deg_corrections[[i]][length]
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
   idx <- idx + 1
 }
 
@@ -6404,14 +6419,18 @@ write.fit(
 results <- read.delim(file.path(cache_dir, "results.tsv"))
 
 idx <- 18
-length1 <- nrow(gse_list[[1]]) + nrow(gse_list[[2]]) + nrow(gse_list[[3]]) +
-  nrow(gse_list[[4]]) + nrow(gse_list[[5]]) + nrow(gse_list[[6]]) + 1
-length2 <- nrow(gse_list[[1]]) + nrow(gse_list[[2]]) + nrow(gse_list[[3]]) +
-  nrow(gse_list[[4]]) + nrow(gse_list[[5]]) + nrow(gse_list[[6]]) +
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]]) +
   nrow(gse_list[[7]])
 length <- length1:length2
-for (i in seq_along(gse_corrections)) {
-  results[ , idx] <- gse_corrections[[i]][length]
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
   idx <- idx + 1
 }
 
@@ -6857,14 +6876,19 @@ write.fit(
 results <- read.delim(file.path(cache_dir, "results.tsv"))
 
 idx <- 18
-length1 <- nrow(deg_list[[1]]) + nrow(deg_list[[2]]) + nrow(deg_list[[3]]) +
-  nrow(deg_list[[4]]) + nrow(deg_list[[5]]) + nrow(deg_list[[6]]) + 1
-length2 <- nrow(deg_list[[1]]) + nrow(deg_list[[2]]) + nrow(deg_list[[3]]) +
-  nrow(deg_list[[4]]) + nrow(deg_list[[5]]) + nrow(deg_list[[6]]) +
-  nrow(deg_list[[7]])
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]]) +
+  nrow(gse_list[[7]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]]) +
+  nrow(gse_list[[7]]) + nrow(deg_list[[7]])
 length <- length1:length2
-for (i in seq_along(deg_corrections)) {
-  results[ , idx] <- deg_corrections[[i]][length]
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
   idx <- idx + 1
 }
 
