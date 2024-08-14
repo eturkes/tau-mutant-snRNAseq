@@ -525,10 +525,10 @@ fit <- contrasts.fit(fit, cont_mat)
 fit <- eBayes(fit, trend = TRUE, robust = TRUE)
 plotSA(fit)
 
-tests <- decideTests(fit, method = "separate")
+tests <- decideTests(fit, method = "global")
 write.fit(
   fit, tests, file.path(cache_dir, "results.tsv"),
-  adjust = "BH", F.adjust = "BH", method = "separate"
+  adjust = "BH", F.adjust = "BH", method = "global"
 )
 results <- read.delim(file.path(cache_dir, "results.tsv"))
 
