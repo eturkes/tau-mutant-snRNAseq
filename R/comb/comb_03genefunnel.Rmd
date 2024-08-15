@@ -880,61 +880,61 @@ datatable_download(results)
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[7]])), yes = 0, no = nrow(results_up[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[8]])), yes = 0, no = nrow(results_up[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[9]])), yes = 0, no = nrow(results_up[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[10]])), yes = 0,
         no = nrow(results_up[[10]])
@@ -942,16 +942,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -1005,61 +1005,61 @@ Heatmap(
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[7]])), yes = 0, no = nrow(results_down[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[8]])), yes = 0, no = nrow(results_down[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[9]])), yes = 0, no = nrow(results_down[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[10]])), yes = 0,
         no = nrow(results_down[[10]])
@@ -1067,16 +1067,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -1464,61 +1464,61 @@ datatable_download(results)
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[7]])), yes = 0, no = nrow(results_up[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[8]])), yes = 0, no = nrow(results_up[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[9]])), yes = 0, no = nrow(results_up[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[10]])), yes = 0,
         no = nrow(results_up[[10]])
@@ -1526,16 +1526,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -1590,61 +1590,61 @@ Heatmap(
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[7]])), yes = 0, no = nrow(results_down[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[8]])), yes = 0, no = nrow(results_down[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[9]])), yes = 0, no = nrow(results_down[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[10]])), yes = 0,
         no = nrow(results_down[[10]])
@@ -1652,16 +1652,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -2128,61 +2128,61 @@ datatable_download(results)
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[7]])), yes = 0, no = nrow(results_up[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[8]])), yes = 0, no = nrow(results_up[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[9]])), yes = 0, no = nrow(results_up[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[10]])), yes = 0,
         no = nrow(results_up[[10]])
@@ -2190,16 +2190,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -2253,61 +2253,61 @@ Heatmap(
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[7]])), yes = 0, no = nrow(results_down[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[8]])), yes = 0, no = nrow(results_down[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[9]])), yes = 0, no = nrow(results_down[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[10]])), yes = 0,
         no = nrow(results_down[[10]])
@@ -2315,16 +2315,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -2713,61 +2713,61 @@ datatable_download(results)
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[7]])), yes = 0, no = nrow(results_up[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[8]])), yes = 0, no = nrow(results_up[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[9]])), yes = 0, no = nrow(results_up[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[10]])), yes = 0,
         no = nrow(results_up[[10]])
@@ -2775,16 +2775,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -2839,61 +2839,61 @@ Heatmap(
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[7]])), yes = 0, no = nrow(results_down[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[8]])), yes = 0, no = nrow(results_down[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[9]])), yes = 0, no = nrow(results_down[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[10]])), yes = 0,
         no = nrow(results_down[[10]])
@@ -2901,16 +2901,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -3379,61 +3379,61 @@ datatable_download(results)
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[7]])), yes = 0, no = nrow(results_up[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[8]])), yes = 0, no = nrow(results_up[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[9]])), yes = 0, no = nrow(results_up[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[10]])), yes = 0,
         no = nrow(results_up[[10]])
@@ -3441,16 +3441,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -3504,61 +3504,61 @@ Heatmap(
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[7]])), yes = 0, no = nrow(results_down[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[8]])), yes = 0, no = nrow(results_down[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[9]])), yes = 0, no = nrow(results_down[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[10]])), yes = 0,
         no = nrow(results_down[[10]])
@@ -3566,16 +3566,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -3965,61 +3965,61 @@ datatable_download(results)
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[7]])), yes = 0, no = nrow(results_up[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[8]])), yes = 0, no = nrow(results_up[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[9]])), yes = 0, no = nrow(results_up[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[10]])), yes = 0,
         no = nrow(results_up[[10]])
@@ -4027,16 +4027,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -4091,61 +4091,61 @@ Heatmap(
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[7]])), yes = 0, no = nrow(results_down[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[8]])), yes = 0, no = nrow(results_down[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[9]])), yes = 0, no = nrow(results_down[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[10]])), yes = 0,
         no = nrow(results_down[[10]])
@@ -4153,16 +4153,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -4632,61 +4632,61 @@ datatable_download(results)
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[7]])), yes = 0, no = nrow(results_up[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[8]])), yes = 0, no = nrow(results_up[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[9]])), yes = 0, no = nrow(results_up[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[10]])), yes = 0,
         no = nrow(results_up[[10]])
@@ -4694,16 +4694,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -4757,61 +4757,61 @@ Heatmap(
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[7]])), yes = 0, no = nrow(results_down[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[8]])), yes = 0, no = nrow(results_down[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[9]])), yes = 0, no = nrow(results_down[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[10]])), yes = 0,
         no = nrow(results_down[[10]])
@@ -4819,16 +4819,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -5220,61 +5220,61 @@ datatable_download(results)
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[7]])), yes = 0, no = nrow(results_up[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[8]])), yes = 0, no = nrow(results_up[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[9]])), yes = 0, no = nrow(results_up[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[10]])), yes = 0,
         no = nrow(results_up[[10]])
@@ -5282,16 +5282,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -5346,61 +5346,61 @@ Heatmap(
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[7]])), yes = 0, no = nrow(results_down[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[8]])), yes = 0, no = nrow(results_down[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[9]])), yes = 0, no = nrow(results_down[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[10]])), yes = 0,
         no = nrow(results_down[[10]])
@@ -5408,16 +5408,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -5888,61 +5888,61 @@ datatable_download(results)
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[7]])), yes = 0, no = nrow(results_up[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[8]])), yes = 0, no = nrow(results_up[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[9]])), yes = 0, no = nrow(results_up[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[10]])), yes = 0,
         no = nrow(results_up[[10]])
@@ -5950,16 +5950,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -6013,61 +6013,61 @@ Heatmap(
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[7]])), yes = 0, no = nrow(results_down[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[8]])), yes = 0, no = nrow(results_down[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[9]])), yes = 0, no = nrow(results_down[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[10]])), yes = 0,
         no = nrow(results_down[[10]])
@@ -6075,16 +6075,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -6477,61 +6477,61 @@ datatable_download(results)
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[7]])), yes = 0, no = nrow(results_up[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[8]])), yes = 0, no = nrow(results_up[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[9]])), yes = 0, no = nrow(results_up[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[10]])), yes = 0,
         no = nrow(results_up[[10]])
@@ -6539,16 +6539,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -6603,61 +6603,61 @@ Heatmap(
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[7]])), yes = 0, no = nrow(results_down[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[8]])), yes = 0, no = nrow(results_down[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[9]])), yes = 0, no = nrow(results_down[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[10]])), yes = 0,
         no = nrow(results_down[[10]])
@@ -6665,16 +6665,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -7147,61 +7147,61 @@ datatable_download(results)
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[7]])), yes = 0, no = nrow(results_up[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[8]])), yes = 0, no = nrow(results_up[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[9]])), yes = 0, no = nrow(results_up[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[10]])), yes = 0,
         no = nrow(results_up[[10]])
@@ -7209,16 +7209,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -7272,61 +7272,61 @@ Heatmap(
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[7]])), yes = 0, no = nrow(results_down[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[8]])), yes = 0, no = nrow(results_down[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[9]])), yes = 0, no = nrow(results_down[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[10]])), yes = 0,
         no = nrow(results_down[[10]])
@@ -7334,16 +7334,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -7737,61 +7737,61 @@ datatable_download(results)
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[7]])), yes = 0, no = nrow(results_up[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[8]])), yes = 0, no = nrow(results_up[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[9]])), yes = 0, no = nrow(results_up[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[10]])), yes = 0,
         no = nrow(results_up[[10]])
@@ -7799,16 +7799,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -7863,61 +7863,61 @@ Heatmap(
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[7]])), yes = 0, no = nrow(results_down[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[8]])), yes = 0, no = nrow(results_down[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[9]])), yes = 0, no = nrow(results_down[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[10]])), yes = 0,
         no = nrow(results_down[[10]])
@@ -7925,16 +7925,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -8408,61 +8408,61 @@ datatable_download(results)
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[7]])), yes = 0, no = nrow(results_up[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[8]])), yes = 0, no = nrow(results_up[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[9]])), yes = 0, no = nrow(results_up[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[10]])), yes = 0,
         no = nrow(results_up[[10]])
@@ -8470,16 +8470,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -8533,61 +8533,61 @@ Heatmap(
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[7]])), yes = 0, no = nrow(results_down[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[8]])), yes = 0, no = nrow(results_down[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[9]])), yes = 0, no = nrow(results_down[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[10]])), yes = 0,
         no = nrow(results_down[[10]])
@@ -8595,16 +8595,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -9000,61 +9000,61 @@ datatable_download(results)
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_up[[1]])), yes = 0, no = nrow(results_up[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_up[[2]])), yes = 0, no = nrow(results_up[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_up[[3]])), yes = 0, no = nrow(results_up[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_up[[4]])), yes = 0, no = nrow(results_up[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[5]])), yes = 0, no = nrow(results_up[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[6]])), yes = 0, no = nrow(results_up[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_up[[7]])), yes = 0, no = nrow(results_up[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[8]])), yes = 0, no = nrow(results_up[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[9]])), yes = 0, no = nrow(results_up[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_up[[10]])), yes = 0,
         no = nrow(results_up[[10]])
@@ -9062,16 +9062,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
@@ -9126,61 +9126,61 @@ Heatmap(
 row_split <- factor(
   c(
     rep(
-      "S305N\nvs\nMAPTKI",
+      "S305N",
       times = ifelse(
         is.null(nrow(results_down[[1]])), yes = 0, no = nrow(results_down[[1]])
       )
     ),
     rep(
-      "P301S\nvs\nMAPTKI",
+      "P301S",
       times = ifelse(
         is.null(nrow(results_down[[2]])), yes = 0, no = nrow(results_down[[2]])
       )
     ),
     rep(
-      "S305N\nP301S\nvs\nMAPTKI",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(results_down[[3]])), yes = 0, no = nrow(results_down[[3]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nvs\nMAPTKI",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(results_down[[4]])), yes = 0, no = nrow(results_down[[4]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[5]])), yes = 0, no = nrow(results_down[[5]])
       )
     ),
     rep(
-      "NLGF S305N\nvs\nMAPTKI",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[6]])), yes = 0, no = nrow(results_down[[6]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(results_down[[7]])), yes = 0, no = nrow(results_down[[7]])
       )
     ),
     rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[8]])), yes = 0, no = nrow(results_down[[8]])
       )
     ),
     rep(
-      "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[9]])), yes = 0, no = nrow(results_down[[9]])
       )
     ),
     rep(
-      "NLGF P301S\nvs\nMAPTKI",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(results_down[[10]])), yes = 0,
         no = nrow(results_down[[10]])
@@ -9188,16 +9188,16 @@ row_split <- factor(
     )
   ),
   levels = c(
-    "S305N\nvs\nMAPTKI",
-    "P301S\nvs\nMAPTKI",
-    "S305N\nP301S\nvs\nMAPTKI",
-    "NLGF MAPTKI\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nvs\nMAPTKI",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF S305N\nNLGF P301S\nvs\nMAPTKI",
-    "NLGF P301S\nvs\nMAPTKI"
+    "S305N",
+    "P301S",
+    "S305N\nP301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
   )
 )
 
