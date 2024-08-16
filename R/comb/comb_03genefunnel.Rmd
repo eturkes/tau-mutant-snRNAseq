@@ -357,6 +357,7 @@ deg_list <- vector("list", length = 7)
 for (i in seq_along(seurat_list)) {
 
   gse <- as.SingleCellExperiment(seurat_list[[i]], assay = "GF")
+  thresh <- min(table(gse$genotype_batch))
   gse <- suppressWarnings(
     aggregateAcrossCells(
       gse, colData(gse)[ , "genotype_batch"],
@@ -371,8 +372,6 @@ for (i in seq_along(seurat_list)) {
       use_exprs_values = "counts", statistics = "sum"
     )
   )
-
-  thresh <- min(table(gse$genotype_batch))
 
   keep <- filterByExpr(
     gse, group = gse$genotype,
@@ -471,14 +470,13 @@ corrections <- split(
 ctype_idx <- 1
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
+thresh <- min(table(gse$genotype_batch))
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
     use_exprs_values = "counts", statistics = "sum"
   )
 )
-
-thresh <- min(table(gse$genotype_batch))
 
 keep <- filterByExpr(
   gse, group = gse$genotype,
@@ -2005,14 +2003,13 @@ Heatmap(
 ctype_idx <- 2
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
+thresh <- min(table(gse$genotype_batch))
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
     use_exprs_values = "counts", statistics = "sum"
   )
 )
-
-thresh <- min(table(gse$genotype_batch))
 
 keep <- filterByExpr(
   gse, group = gse$genotype,
@@ -3540,14 +3537,13 @@ Heatmap(
 ctype_idx <- 3
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
+thresh <- min(table(gse$genotype_batch))
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
     use_exprs_values = "counts", statistics = "sum"
   )
 )
-
-thresh <- min(table(gse$genotype_batch))
 
 keep <- filterByExpr(
   gse, group = gse$genotype,
@@ -5078,14 +5074,13 @@ Heatmap(
 ctype_idx <- 4
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
+thresh <- min(table(gse$genotype_batch))
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
     use_exprs_values = "counts", statistics = "sum"
   )
 )
-
-thresh <- min(table(gse$genotype_batch))
 
 keep <- filterByExpr(
   gse, group = gse$genotype,
@@ -6619,14 +6614,13 @@ Heatmap(
 ctype_idx <- 5
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
+thresh <- min(table(gse$genotype_batch))
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
     use_exprs_values = "counts", statistics = "sum"
   )
 )
-
-thresh <- min(table(gse$genotype_batch))
 
 keep <- filterByExpr(
   gse, group = gse$genotype,
@@ -8162,14 +8156,13 @@ Heatmap(
 ctype_idx <- 6
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
+thresh <- min(table(gse$genotype_batch))
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
     use_exprs_values = "counts", statistics = "sum"
   )
 )
-
-thresh <- min(table(gse$genotype_batch))
 
 keep <- filterByExpr(
   gse, group = gse$genotype,
@@ -9708,14 +9701,13 @@ Heatmap(
 ctype_idx <- 7
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
+thresh <- min(table(gse$genotype_batch))
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
     use_exprs_values = "counts", statistics = "sum"
   )
 )
-
-thresh <- min(table(gse$genotype_batch))
 
 keep <- filterByExpr(
   gse, group = gse$genotype,
