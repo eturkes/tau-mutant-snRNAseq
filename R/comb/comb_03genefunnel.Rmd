@@ -202,13 +202,9 @@ rds <- file.path(cache_dir, "gene_sets_keep.rds")
 if (file.exists(rds)) {
   gene_sets_keep <- readRDS(rds)
 } else {
-  keep <- filterGeneSets(gene_sets, min.sz = 3, max.sz = 30)
-  gene_sets_keep <- gene_sets[names(gene_sets) %in% names(keep)]
 
-  remove <- grep("regulation", names(gene_sets_keep))
-  if (length(remove) > 0) {
-    gene_sets_keep <- gene_sets_keep[-remove]
-  }
+  remove <- grep("regulation", names(gene_sets))
+  gene_sets_keep <- gene_sets[-remove]
 
   mart <- useEnsembl("ensembl", "mmusculus_gene_ensembl")
   attributes <- c("ensembl_gene_id", "chromosome_name")
@@ -231,7 +227,7 @@ if (file.exists(rds)) {
   gene_sets_keep[upper.tri(gene_sets_keep)] <- 0
   diag(gene_sets_keep) <- 0
   gene_sets_keep <- apply(gene_sets_keep, MARGIN = 1, FUN = max)
-  gene_sets_keep <- gene_sets_keep[gene_sets_keep < 0.35]
+  gene_sets_keep <- gene_sets_keep[gene_sets_keep < 0.7]
 
   saveRDS(gene_sets_keep, file = rds)
 }
