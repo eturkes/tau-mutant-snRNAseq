@@ -67,15 +67,10 @@ The toggle at the start of the document controls the visibility of all chunks.
 # Load required packages, suppressing startup messages.
 # -----------------------------------------------------
 library(conflicted)
-conflicts_prefer(
-  AnnotationDbi::select, edgeR::cpm, DT::JS,
-  base::intersect, reshape2::melt, .quiet = TRUE
-)
+conflicts_prefer(edgeR::cpm, .quiet = TRUE)
 packages <- c(
-  "GSEABase", "Seurat", "ggplot2", "dplyr", "ggrepel", "scuttle", "GO.db", "tm",
-  "pals", "ComplexHeatmap", "edgeR", "DT", "circlize", "purrr", "networkD3",
-  "factoextra", "reshape2", "dendextend", "data.table", "scales", "igraph",
-  "qgraph", "multienrichjam", "GSVA", "Rcpp", "biomaRt"
+  "GSEABase", "Seurat", "scuttle", "scales", "ComplexHeatmap", "edgeR", "DT",
+  "GSVA", "Rcpp", "biomaRt", "circlize"
 )
 invisible(
   suppressPackageStartupMessages(
