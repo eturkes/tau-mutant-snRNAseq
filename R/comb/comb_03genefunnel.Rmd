@@ -462,12 +462,16 @@ results <- rbind(
   gse_list[[5]], deg_list[[5]], gse_list[[6]], deg_list[[6]],
   gse_list[[7]], deg_list[[7]]
 )
-corrections <- vector("list", length = 5)
-idx <- 13
-for (i in seq_along(corrections)) {
-  corrections[[i]] <- p.adjust(results[ , idx], method = "BH")
-  idx <- idx + 1
-}
+
+corrections <- c(
+  results[ , 13], results[ , 14], results[ , 15],
+  results[ , 16], results[ , 17]
+)
+corrections <- p.adjust(corrections, method = "BH")
+corrections <- split(
+  corrections,
+  f = gl(5, k = length(corrections) / 5, length = length(corrections))
+)
 ```
 
 # Astrocyte
