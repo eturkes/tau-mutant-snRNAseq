@@ -965,7 +965,7 @@ if (nrow(results_sub_down) > 0) {
 datatable_download(results)
 ```
 
-```{r, fig.width = 18, fig.height = 12}
+```{r, fig.width = 18, fig.height = 14}
 row_split <- factor(
   c(
     rep(
@@ -1688,7 +1688,7 @@ if (nrow(results_sub_down) > 0) {
 datatable_download(results)
 ```
 
-```{r, fig.width = 11, fig.height = 12}
+```{r, fig.width = 11, fig.height = 14}
 row_split <- factor(
   c(
     rep(
@@ -2499,7 +2499,7 @@ if (nrow(results_sub_down) > 0) {
 datatable_download(results)
 ```
 
-```{r, fig.width = 18, fig.height = 12}
+```{r, fig.width = 18, fig.height = 14}
 row_split <- factor(
   c(
     rep(
@@ -3223,7 +3223,7 @@ if (nrow(results_sub_down) > 0) {
 datatable_download(results)
 ```
 
-```{r, fig.width = 11, fig.height = 12}
+```{r, fig.width = 11, fig.height = 14}
 row_split <- factor(
   c(
     rep(
@@ -4036,7 +4036,7 @@ if (nrow(results_sub_down) > 0) {
 datatable_download(results)
 ```
 
-```{r, fig.width = 18, fig.height = 12}
+```{r, fig.width = 18, fig.height = 14}
 row_split <- factor(
   c(
     rep(
@@ -4761,7 +4761,7 @@ if (nrow(results_sub_down) > 0) {
 datatable_download(results)
 ```
 
-```{r, fig.width = 11, fig.height = 12}
+```{r, fig.width = 11, fig.height = 14}
 row_split <- factor(
   c(
     rep(
@@ -5575,7 +5575,7 @@ if (nrow(results_sub_down) > 0) {
 datatable_download(results)
 ```
 
-```{r, fig.width = 18, fig.height = 12}
+```{r, fig.width = 18, fig.height = 14}
 row_split <- factor(
   c(
     rep(
@@ -6302,7 +6302,7 @@ if (nrow(results_sub_down) > 0) {
 datatable_download(results)
 ```
 
-```{r, fig.width = 11, fig.height = 12}
+```{r, fig.width = 11, fig.height = 14}
 row_split <- factor(
   c(
     rep(
@@ -7117,7 +7117,7 @@ if (nrow(results_sub_down) > 0) {
 datatable_download(results)
 ```
 
-```{r, fig.width = 18, fig.height = 12}
+```{r, fig.width = 18, fig.height = 14}
 row_split <- factor(
   c(
     rep(
@@ -7845,7 +7845,7 @@ if (nrow(results_sub_down) > 0) {
 datatable_download(results)
 ```
 
-```{r, fig.width = 11, fig.height = 12}
+```{r, fig.width = 11, fig.height = 14}
 row_split <- factor(
   c(
     rep(
@@ -8662,7 +8662,7 @@ if (nrow(results_sub_down) > 0) {
 datatable_download(results)
 ```
 
-```{r, fig.width = 18, fig.height = 12}
+```{r, fig.width = 18, fig.height = 14}
 row_split <- factor(
   c(
     rep(
@@ -9391,7 +9391,7 @@ if (nrow(results_sub_down) > 0) {
 datatable_download(results)
 ```
 
-```{r, fig.width = 11, fig.height = 12}
+```{r, fig.width = 11, fig.height = 14}
 row_split <- factor(
   c(
     rep(
@@ -10209,7 +10209,7 @@ if (nrow(results_sub_down) > 0) {
 datatable_download(results)
 ```
 
-```{r, fig.width = 18, fig.height = 12}
+```{r, fig.width = 18, fig.height = 14}
 row_split <- factor(
   c(
     rep(
@@ -10940,7 +10940,7 @@ if (nrow(results_sub_down) > 0) {
 datatable_download(results)
 ```
 
-```{r, fig.width = 11, fig.height = 12}
+```{r, fig.width = 11, fig.height = 14}
 row_split <- factor(
   c(
     rep(
