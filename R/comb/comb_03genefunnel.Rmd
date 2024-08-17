@@ -356,8 +356,9 @@ deg_list <- vector("list", length = 7)
 
 for (i in seq_along(seurat_list)) {
 
+  thresh <- min(table(seurat_list[[i]]$genotype_batch))
+
   gse <- as.SingleCellExperiment(seurat_list[[i]], assay = "GF")
-  thresh <- min(table(gse$genotype_batch))
   gse <- suppressWarnings(
     aggregateAcrossCells(
       gse, colData(gse)[ , "genotype_batch"],
@@ -469,8 +470,10 @@ corrections <- split(
 ```{r}
 ctype_idx <- 1
 
+thresh <- min(table(seurat_list[[ctype_idx]]$genotype_batch))
+thresh
+
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
-thresh <- min(table(gse$genotype_batch))
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
@@ -2002,8 +2005,10 @@ Heatmap(
 ```{r}
 ctype_idx <- 2
 
+thresh <- min(table(seurat_list[[ctype_idx]]$genotype_batch))
+thresh
+
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
-thresh <- min(table(gse$genotype_batch))
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
@@ -3536,8 +3541,10 @@ Heatmap(
 ```{r}
 ctype_idx <- 3
 
+thresh <- min(table(seurat_list[[ctype_idx]]$genotype_batch))
+thresh
+
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
-thresh <- min(table(gse$genotype_batch))
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
@@ -5073,8 +5080,10 @@ Heatmap(
 ```{r}
 ctype_idx <- 4
 
+thresh <- min(table(seurat_list[[ctype_idx]]$genotype_batch))
+thresh
+
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
-thresh <- min(table(gse$genotype_batch))
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
@@ -6613,8 +6622,10 @@ Heatmap(
 ```{r}
 ctype_idx <- 5
 
+thresh <- min(table(seurat_list[[ctype_idx]]$genotype_batch))
+thresh
+
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
-thresh <- min(table(gse$genotype_batch))
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
@@ -8155,8 +8166,10 @@ Heatmap(
 ```{r}
 ctype_idx <- 6
 
+thresh <- min(table(seurat_list[[ctype_idx]]$genotype_batch))
+thresh
+
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
-thresh <- min(table(gse$genotype_batch))
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
@@ -9700,8 +9713,10 @@ Heatmap(
 ```{r}
 ctype_idx <- 7
 
+thresh <- min(table(seurat_list[[ctype_idx]]$genotype_batch))
+thresh
+
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
-thresh <- min(table(gse$genotype_batch))
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
