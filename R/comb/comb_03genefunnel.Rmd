@@ -70,7 +70,7 @@ library(conflicted)
 conflicts_prefer(edgeR::cpm, .quiet = TRUE)
 packages <- c(
   "GSEABase", "Seurat", "scuttle", "scales", "ComplexHeatmap", "edgeR", "DT",
-  "GSVA", "Rcpp", "biomaRt", "circlize"
+  "GSVA", "Rcpp", "biomaRt", "circlize", "IHW"
 )
 invisible(
   suppressPackageStartupMessages(
@@ -467,7 +467,9 @@ corrections <- c(
   results[ , 13], results[ , 14], results[ , 15],
   results[ , 16], results[ , 17]
 )
-corrections <- p.adjust(corrections, method = "BH")
+corrections <- data.frame(mean = rep(results[ , 2], times = 5), p = corrections)
+corrections <- ihw(p ~ mean,  data = corrections, alpha = 0.05)
+corrections <- adj_pvalues(corrections)
 corrections <- split(
   corrections,
   f = gl(5, k = length(corrections) / 5, length = length(corrections))

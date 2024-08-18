@@ -41,6 +41,7 @@ RUN apt-get update \
         -e "BiocManager::install('biomaRt')" \
         -e "BiocManager::install('GSEABase')" \
         -e "BiocManager::install('GSVA')" \
+        -e "BiocManager::install('IHW')" \
         -e "remotes::install_github('immunogenomics/presto')" \
     && apt-get clean \
     && rm -Rf /var/lib/apt/lists/ \
