@@ -203,8 +203,13 @@ if (file.exists(rds)) {
   gene_sets_keep <- readRDS(rds)
 } else {
 
-  remove <- grep("regulation", names(gene_sets))
-  gene_sets_keep <- gene_sets[-remove]
+  gene_sets_keep <- gene_sets
+
+  remove <- grep("positive regulation", names(gene_sets_keep))
+  gene_sets_keep <- gene_sets_keep[-remove]
+
+  remove <- grep("negative regulation", names(gene_sets_keep))
+  gene_sets_keep <- gene_sets_keep[-remove]
 
   mart <- useEnsembl("ensembl", "mmusculus_gene_ensembl")
   attributes <- c("ensembl_gene_id", "chromosome_name")
@@ -220,14 +225,6 @@ if (file.exists(rds)) {
     sapply(geneIds(gene_sets_keep), FUN = function(x) any(x %in% remove))
   )
   gene_sets_keep <- gene_sets_keep[-remove]
-
-  gene_sets_keep <- computeGeneSetsOverlapMax(
-    gene_sets_keep, uniqGenes = unique(unlist(geneIds(gene_sets_keep)))
-  )
-  gene_sets_keep[upper.tri(gene_sets_keep)] <- 0
-  diag(gene_sets_keep) <- 0
-  gene_sets_keep <- apply(gene_sets_keep, MARGIN = 1, FUN = max)
-  gene_sets_keep <- gene_sets_keep[gene_sets_keep < 0.7]
 
   saveRDS(gene_sets_keep, file = rds)
 }
