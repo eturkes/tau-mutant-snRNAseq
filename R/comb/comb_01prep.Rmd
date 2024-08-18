@@ -155,7 +155,9 @@ if (file.exists(rds)) {
   gc()
   seurat <- JoinLayers(seurat)
 
-  gene_anno <- read.delim(file.path(data_dir, "features.tsv.gz"), header = FALSE)
+  gene_anno <- read.delim(
+    file.path(data_dir, "features.tsv.gz"), header = FALSE
+  )
   gene_anno <- gene_anno[gene_anno$V1 %in% rownames(seurat[["RNA"]]), ]
   dup <- gene_anno[
     duplicated(gene_anno$V2) | duplicated(gene_anno$V2, fromLast = TRUE),
