@@ -356,6 +356,11 @@ for (i in seq_along(seurat_list)) {
   thresh <- min(table(seurat_list[[i]]$genotype_batch))
 
   gse <- as.SingleCellExperiment(seurat_list[[i]], assay = "GF")
+  keep <- filterByExpr(
+    counts(gse), group = gse$genotype, min.prop = 0.1,
+    min.count = 1, min.total.count = 1
+  )
+  gse <- gse[keep, ]
   gse <- suppressWarnings(
     aggregateAcrossCells(
       gse, colData(gse)[ , "genotype_batch"],
@@ -364,6 +369,11 @@ for (i in seq_along(seurat_list)) {
   )
 
   deg <- as.SingleCellExperiment(seurat_list[[i]], assay = "RNA")
+  keep <- filterByExpr(
+    counts(deg), group = deg$genotype, min.prop = 0.1,
+    min.count = 1, min.total.count = 1
+  )
+  deg <- deg[keep, ]
   deg <- suppressWarnings(
     aggregateAcrossCells(
       deg, colData(deg)[ , "genotype_batch"],
@@ -485,6 +495,11 @@ thresh <- min(table(seurat_list[[ctype_idx]]$genotype_batch))
 thresh
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
+keep <- filterByExpr(
+  counts(gse), group = gse$genotype, min.prop = 0.1,
+  min.count = 1, min.total.count = 1
+)
+gse <- gse[keep, ]
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
@@ -517,6 +532,11 @@ gse_corrected <- removeBatchEffect(
 gse
 
 deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
+keep <- filterByExpr(
+  counts(deg), group = deg$genotype, min.prop = 0.1,
+  min.count = 1, min.total.count = 1
+)
+deg <- deg[keep, ]
 deg <- suppressWarnings(
   aggregateAcrossCells(
     deg, colData(deg)[ , "genotype_batch"],
@@ -2032,6 +2052,11 @@ thresh <- min(table(seurat_list[[ctype_idx]]$genotype_batch))
 thresh
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
+keep <- filterByExpr(
+  counts(gse), group = gse$genotype, min.prop = 0.1,
+  min.count = 1, min.total.count = 1
+)
+gse <- gse[keep, ]
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
@@ -2064,6 +2089,11 @@ gse_corrected <- removeBatchEffect(
 gse
 
 deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
+keep <- filterByExpr(
+  counts(deg), group = deg$genotype, min.prop = 0.1,
+  min.count = 1, min.total.count = 1
+)
+deg <- deg[keep, ]
 deg <- suppressWarnings(
   aggregateAcrossCells(
     deg, colData(deg)[ , "genotype_batch"],
@@ -3580,6 +3610,11 @@ thresh <- min(table(seurat_list[[ctype_idx]]$genotype_batch))
 thresh
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
+keep <- filterByExpr(
+  counts(gse), group = gse$genotype, min.prop = 0.1,
+  min.count = 1, min.total.count = 1
+)
+gse <- gse[keep, ]
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
@@ -3612,6 +3647,11 @@ gse_corrected <- removeBatchEffect(
 gse
 
 deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
+keep <- filterByExpr(
+  counts(deg), group = deg$genotype, min.prop = 0.1,
+  min.count = 1, min.total.count = 1
+)
+deg <- deg[keep, ]
 deg <- suppressWarnings(
   aggregateAcrossCells(
     deg, colData(deg)[ , "genotype_batch"],
@@ -5131,6 +5171,11 @@ thresh <- min(table(seurat_list[[ctype_idx]]$genotype_batch))
 thresh
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
+keep <- filterByExpr(
+  counts(gse), group = gse$genotype, min.prop = 0.1,
+  min.count = 1, min.total.count = 1
+)
+gse <- gse[keep, ]
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
@@ -5163,6 +5208,11 @@ gse_corrected <- removeBatchEffect(
 gse
 
 deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
+keep <- filterByExpr(
+  counts(deg), group = deg$genotype, min.prop = 0.1,
+  min.count = 1, min.total.count = 1
+)
+deg <- deg[keep, ]
 deg <- suppressWarnings(
   aggregateAcrossCells(
     deg, colData(deg)[ , "genotype_batch"],
@@ -6685,6 +6735,11 @@ thresh <- min(table(seurat_list[[ctype_idx]]$genotype_batch))
 thresh
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
+keep <- filterByExpr(
+  counts(gse), group = gse$genotype, min.prop = 0.1,
+  min.count = 1, min.total.count = 1
+)
+gse <- gse[keep, ]
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
@@ -6717,6 +6772,11 @@ gse_corrected <- removeBatchEffect(
 gse
 
 deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
+keep <- filterByExpr(
+  counts(deg), group = deg$genotype, min.prop = 0.1,
+  min.count = 1, min.total.count = 1
+)
+deg <- deg[keep, ]
 deg <- suppressWarnings(
   aggregateAcrossCells(
     deg, colData(deg)[ , "genotype_batch"],
@@ -8241,6 +8301,11 @@ thresh <- min(table(seurat_list[[ctype_idx]]$genotype_batch))
 thresh
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
+keep <- filterByExpr(
+  counts(gse), group = gse$genotype, min.prop = 0.1,
+  min.count = 1, min.total.count = 1
+)
+gse <- gse[keep, ]
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
@@ -8273,6 +8338,11 @@ gse_corrected <- removeBatchEffect(
 gse
 
 deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
+keep <- filterByExpr(
+  counts(deg), group = deg$genotype, min.prop = 0.1,
+  min.count = 1, min.total.count = 1
+)
+deg <- deg[keep, ]
 deg <- suppressWarnings(
   aggregateAcrossCells(
     deg, colData(deg)[ , "genotype_batch"],
@@ -9800,6 +9870,11 @@ thresh <- min(table(seurat_list[[ctype_idx]]$genotype_batch))
 thresh
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
+keep <- filterByExpr(
+  counts(gse), group = gse$genotype, min.prop = 0.1,
+  min.count = 1, min.total.count = 1
+)
+gse <- gse[keep, ]
 gse <- suppressWarnings(
   aggregateAcrossCells(
     gse, colData(gse)[ , "genotype_batch"],
@@ -9832,6 +9907,11 @@ gse_corrected <- removeBatchEffect(
 gse
 
 deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
+keep <- filterByExpr(
+  counts(deg), group = deg$genotype, min.prop = 0.1,
+  min.count = 1, min.total.count = 1
+)
+deg <- deg[keep, ]
 deg <- suppressWarnings(
   aggregateAcrossCells(
     deg, colData(deg)[ , "genotype_batch"],
