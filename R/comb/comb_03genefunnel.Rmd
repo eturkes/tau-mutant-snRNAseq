@@ -377,19 +377,19 @@ for (i in seq_along(seurat_list)) {
   dge <- DGEList(counts(gse))
   keep <- filterByExpr(
     dge, group = gse$genotype,
-    min.count = thresh, min.total.count = thresh
+    min.count = 10, min.total.count = 10
   )
   dge <- dge[keep, ]
   dge <- calcNormFactors(dge)
   keep <- filterByExpr(
     dge, group = gse$genotype,
-    min.count = thresh, min.total.count = thresh
+    min.count = 10, min.total.count = 10
   )
   dge <- dge[keep, , keep.lib.sizes = FALSE]
 
   gse <- gse[rownames(gse) %in% rownames(dge)]
   logcounts(gse, withDimnames = FALSE) <- cpm(
-    dge, log = TRUE, prior.count = sqrt(sqrt(thresh))
+    dge, log = TRUE, prior.count = 2
   )
 
   gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
@@ -397,19 +397,19 @@ for (i in seq_along(seurat_list)) {
   dge <- DGEList(counts(deg))
   keep <- filterByExpr(
     dge, group = deg$genotype,
-    min.count = thresh / 10, min.total.count = thresh / 10
+    min.count = 10, min.total.count = 10
   )
   dge <- dge[keep, ]
   dge <- calcNormFactors(dge)
   keep <- filterByExpr(
     dge, group = gse$genotype,
-    min.count = thresh / 10, min.total.count = thresh / 10
+    min.count = 10, min.total.count = 10
   )
   dge <- dge[keep, , keep.lib.sizes = FALSE]
 
   deg <- deg[rownames(deg) %in% rownames(dge)]
   logcounts(deg, withDimnames = FALSE) <- cpm(
-    dge, log = TRUE, prior.count = sqrt(sqrt(sqrt(thresh)))
+    dge, log = TRUE, prior.count = 2
   )
 
   gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
@@ -496,19 +496,19 @@ gse <- suppressWarnings(
 dge <- DGEList(counts(gse))
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = thresh, min.total.count = thresh
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = thresh, min.total.count = thresh
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
 gse <- gse[rownames(gse) %in% rownames(dge)]
 logcounts(gse, withDimnames = FALSE) <- cpm(
-  dge, log = TRUE, prior.count = sqrt(sqrt(thresh))
+  dge, log = TRUE, prior.count = 2
 )
 
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
@@ -528,19 +528,19 @@ deg <- suppressWarnings(
 dge <- DGEList(counts(deg))
 keep <- filterByExpr(
   dge, group = deg$genotype,
-  min.count = thresh / 10, min.total.count = thresh / 10
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = thresh / 10, min.total.count = thresh / 10
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
 deg <- deg[rownames(deg) %in% rownames(dge)]
 logcounts(deg, withDimnames = FALSE) <- cpm(
-  dge, log = TRUE, prior.count = sqrt(sqrt(sqrt(thresh)))
+  dge, log = TRUE, prior.count = 2
 )
 
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
@@ -2043,19 +2043,19 @@ gse <- suppressWarnings(
 dge <- DGEList(counts(gse))
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = thresh, min.total.count = thresh
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = thresh, min.total.count = thresh
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
 gse <- gse[rownames(gse) %in% rownames(dge)]
 logcounts(gse, withDimnames = FALSE) <- cpm(
-  dge, log = TRUE, prior.count = sqrt(sqrt(thresh))
+  dge, log = TRUE, prior.count = 2
 )
 
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
@@ -2075,19 +2075,19 @@ deg <- suppressWarnings(
 dge <- DGEList(counts(deg))
 keep <- filterByExpr(
   dge, group = deg$genotype,
-  min.count = thresh / 10, min.total.count = thresh / 10
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = thresh / 10, min.total.count = thresh / 10
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
 deg <- deg[rownames(deg) %in% rownames(dge)]
 logcounts(deg, withDimnames = FALSE) <- cpm(
-  dge, log = TRUE, prior.count = sqrt(sqrt(sqrt(thresh)))
+  dge, log = TRUE, prior.count = 2
 )
 
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
@@ -3591,19 +3591,19 @@ gse <- suppressWarnings(
 dge <- DGEList(counts(gse))
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = thresh, min.total.count = thresh
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = thresh, min.total.count = thresh
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
 gse <- gse[rownames(gse) %in% rownames(dge)]
 logcounts(gse, withDimnames = FALSE) <- cpm(
-  dge, log = TRUE, prior.count = sqrt(sqrt(thresh))
+  dge, log = TRUE, prior.count = 2
 )
 
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
@@ -3623,19 +3623,19 @@ deg <- suppressWarnings(
 dge <- DGEList(counts(deg))
 keep <- filterByExpr(
   dge, group = deg$genotype,
-  min.count = thresh / 10, min.total.count = thresh / 10
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = thresh / 10, min.total.count = thresh / 10
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
 deg <- deg[rownames(deg) %in% rownames(dge)]
 logcounts(deg, withDimnames = FALSE) <- cpm(
-  dge, log = TRUE, prior.count = sqrt(sqrt(sqrt(thresh)))
+  dge, log = TRUE, prior.count = 2
 )
 
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
@@ -5142,19 +5142,19 @@ gse <- suppressWarnings(
 dge <- DGEList(counts(gse))
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = thresh, min.total.count = thresh
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = thresh, min.total.count = thresh
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
 gse <- gse[rownames(gse) %in% rownames(dge)]
 logcounts(gse, withDimnames = FALSE) <- cpm(
-  dge, log = TRUE, prior.count = sqrt(sqrt(thresh))
+  dge, log = TRUE, prior.count = 2
 )
 
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
@@ -5174,19 +5174,19 @@ deg <- suppressWarnings(
 dge <- DGEList(counts(deg))
 keep <- filterByExpr(
   dge, group = deg$genotype,
-  min.count = thresh / 10, min.total.count = thresh / 10
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = thresh / 10, min.total.count = thresh / 10
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
 deg <- deg[rownames(deg) %in% rownames(dge)]
 logcounts(deg, withDimnames = FALSE) <- cpm(
-  dge, log = TRUE, prior.count = sqrt(sqrt(sqrt(thresh)))
+  dge, log = TRUE, prior.count = 2
 )
 
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
@@ -6696,19 +6696,19 @@ gse <- suppressWarnings(
 dge <- DGEList(counts(gse))
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = thresh, min.total.count = thresh
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = thresh, min.total.count = thresh
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
 gse <- gse[rownames(gse) %in% rownames(dge)]
 logcounts(gse, withDimnames = FALSE) <- cpm(
-  dge, log = TRUE, prior.count = sqrt(sqrt(thresh))
+  dge, log = TRUE, prior.count = 2
 )
 
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
@@ -6728,19 +6728,19 @@ deg <- suppressWarnings(
 dge <- DGEList(counts(deg))
 keep <- filterByExpr(
   dge, group = deg$genotype,
-  min.count = thresh / 10, min.total.count = thresh / 10
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = thresh / 10, min.total.count = thresh / 10
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
 deg <- deg[rownames(deg) %in% rownames(dge)]
 logcounts(deg, withDimnames = FALSE) <- cpm(
-  dge, log = TRUE, prior.count = sqrt(sqrt(sqrt(thresh)))
+  dge, log = TRUE, prior.count = 2
 )
 
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
@@ -8252,19 +8252,19 @@ gse <- suppressWarnings(
 dge <- DGEList(counts(gse))
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = thresh, min.total.count = thresh
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = thresh, min.total.count = thresh
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
 gse <- gse[rownames(gse) %in% rownames(dge)]
 logcounts(gse, withDimnames = FALSE) <- cpm(
-  dge, log = TRUE, prior.count = sqrt(sqrt(thresh))
+  dge, log = TRUE, prior.count = 2
 )
 
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
@@ -8284,19 +8284,19 @@ deg <- suppressWarnings(
 dge <- DGEList(counts(deg))
 keep <- filterByExpr(
   dge, group = deg$genotype,
-  min.count = thresh / 10, min.total.count = thresh / 10
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = thresh / 10, min.total.count = thresh / 10
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
 deg <- deg[rownames(deg) %in% rownames(dge)]
 logcounts(deg, withDimnames = FALSE) <- cpm(
-  dge, log = TRUE, prior.count = sqrt(sqrt(sqrt(thresh)))
+  dge, log = TRUE, prior.count = 2
 )
 
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
@@ -9811,19 +9811,19 @@ gse <- suppressWarnings(
 dge <- DGEList(counts(gse))
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = thresh, min.total.count = thresh
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = thresh, min.total.count = thresh
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
 gse <- gse[rownames(gse) %in% rownames(dge)]
 logcounts(gse, withDimnames = FALSE) <- cpm(
-  dge, log = TRUE, prior.count = sqrt(sqrt(thresh))
+  dge, log = TRUE, prior.count = 2
 )
 
 gse <- gse[rownames(gse) %in% names(gene_sets_keep), ]
@@ -9843,19 +9843,19 @@ deg <- suppressWarnings(
 dge <- DGEList(counts(deg))
 keep <- filterByExpr(
   dge, group = deg$genotype,
-  min.count = thresh / 10, min.total.count = thresh / 10
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = thresh / 10, min.total.count = thresh / 10
+  min.count = 10, min.total.count = 10
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
 deg <- deg[rownames(deg) %in% rownames(dge)]
 logcounts(deg, withDimnames = FALSE) <- cpm(
-  dge, log = TRUE, prior.count = sqrt(sqrt(sqrt(thresh)))
+  dge, log = TRUE, prior.count = 2
 )
 
 gene_sets_sub <- gene_sets[names(gene_sets) %in% rownames(gse)]
