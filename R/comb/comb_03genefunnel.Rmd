@@ -353,10 +353,20 @@ deg_list <- vector("list", length = 7)
 
 for (i in seq_along(seurat_list)) {
 
+  seurat_sub <- seurat_list[[i]]
+  seurat_sub@active.ident <- seurat_sub$genotype
+  seurat_sub <- subset(
+    seurat_sub, downsample = min(table(seurat_sub$genotype))
+  )
+
   gse <- as.SingleCellExperiment(seurat_list[[i]], assay = "GF")
   keep <- filterByExpr(
-    counts(gse), group = gse$genotype, min.prop = 0.1,
-    min.count = 1, min.total.count = 1
+    GetAssayData(seurat_sub, assay = "GF", layer = "counts"),
+    group = seurat_sub$genotype,
+    min.prop = 0.1,
+    min.count = 1,
+    min.total.count = 1.5,
+    large.n = 0
   )
   gse <- gse[keep, ]
   gse <- suppressWarnings(
@@ -368,8 +378,12 @@ for (i in seq_along(seurat_list)) {
 
   deg <- as.SingleCellExperiment(seurat_list[[i]], assay = "RNA")
   keep <- filterByExpr(
-    counts(deg), group = deg$genotype, min.prop = 0.1,
-    min.count = 1, min.total.count = 1
+    GetAssayData(seurat_sub, assay = "RNA", layer = "counts"),
+    group = seurat_sub$genotype,
+    min.prop = 0.1,
+    min.count = 1,
+    min.total.count = 1.5,
+    large.n = 0
   )
   deg <- deg[keep, ]
   deg <- suppressWarnings(
@@ -382,13 +396,13 @@ for (i in seq_along(seurat_list)) {
   dge <- DGEList(counts(gse))
   keep <- filterByExpr(
     dge, group = gse$genotype,
-    min.count = 10, min.total.count = 10
+    min.count = 10, min.total.count = 15
   )
   dge <- dge[keep, ]
   dge <- calcNormFactors(dge)
   keep <- filterByExpr(
     dge, group = gse$genotype,
-    min.count = 10, min.total.count = 10
+    min.count = 10, min.total.count = 15
   )
   dge <- dge[keep, , keep.lib.sizes = FALSE]
 
@@ -402,13 +416,13 @@ for (i in seq_along(seurat_list)) {
   dge <- DGEList(counts(deg))
   keep <- filterByExpr(
     dge, group = deg$genotype,
-    min.count = 10, min.total.count = 10
+    min.count = 10, min.total.count = 15
   )
   dge <- dge[keep, ]
   dge <- calcNormFactors(dge)
   keep <- filterByExpr(
     dge, group = gse$genotype,
-    min.count = 10, min.total.count = 10
+    min.count = 10, min.total.count = 15
   )
   dge <- dge[keep, , keep.lib.sizes = FALSE]
 
@@ -488,12 +502,20 @@ corrections <- split(
 
 ```{r}
 ctype_idx <- 1
-min(table(seurat_list[[ctype_idx]]$genotype_batch))
+seurat_sub <- seurat_list[[ctype_idx]]
+min <- min(table(seurat_sub$genotype))
+seurat_sub@active.ident <- seurat_sub$genotype
+seurat_sub <- subset(seurat_sub, downsample = min)
+min
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
 keep <- filterByExpr(
-  counts(gse), group = gse$genotype, min.prop = 0.1,
-  min.count = 1, min.total.count = 1
+  GetAssayData(seurat_sub, assay = "GF", layer = "counts"),
+  group = seurat_sub$genotype,
+  min.prop = 0.1,
+  min.count = 1,
+  min.total.count = 1.5,
+  large.n = 0
 )
 gse <- gse[keep, ]
 gse <- suppressWarnings(
@@ -506,13 +528,13 @@ gse <- suppressWarnings(
 dge <- DGEList(counts(gse))
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
@@ -529,8 +551,12 @@ gse
 
 deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
 keep <- filterByExpr(
-  counts(deg), group = deg$genotype, min.prop = 0.1,
-  min.count = 1, min.total.count = 1
+  GetAssayData(seurat_sub, assay = "RNA", layer = "counts"),
+  group = seurat_sub$genotype,
+  min.prop = 0.1,
+  min.count = 1,
+  min.total.count = 1.5,
+  large.n = 0
 )
 deg <- deg[keep, ]
 deg <- suppressWarnings(
@@ -543,13 +569,13 @@ deg <- suppressWarnings(
 dge <- DGEList(counts(deg))
 keep <- filterByExpr(
   dge, group = deg$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
@@ -2043,12 +2069,20 @@ Heatmap(
 
 ```{r}
 ctype_idx <- 2
-min(table(seurat_list[[ctype_idx]]$genotype_batch))
+seurat_sub <- seurat_list[[ctype_idx]]
+min <- min(table(seurat_sub$genotype))
+seurat_sub@active.ident <- seurat_sub$genotype
+seurat_sub <- subset(seurat_sub, downsample = min)
+min
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
 keep <- filterByExpr(
-  counts(gse), group = gse$genotype, min.prop = 0.1,
-  min.count = 1, min.total.count = 1
+  GetAssayData(seurat_sub, assay = "GF", layer = "counts"),
+  group = seurat_sub$genotype,
+  min.prop = 0.1,
+  min.count = 1,
+  min.total.count = 1.5,
+  large.n = 0
 )
 gse <- gse[keep, ]
 gse <- suppressWarnings(
@@ -2061,13 +2095,13 @@ gse <- suppressWarnings(
 dge <- DGEList(counts(gse))
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
@@ -2084,8 +2118,12 @@ gse
 
 deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
 keep <- filterByExpr(
-  counts(deg), group = deg$genotype, min.prop = 0.1,
-  min.count = 1, min.total.count = 1
+  GetAssayData(seurat_sub, assay = "RNA", layer = "counts"),
+  group = seurat_sub$genotype,
+  min.prop = 0.1,
+  min.count = 1,
+  min.total.count = 1.5,
+  large.n = 0
 )
 deg <- deg[keep, ]
 deg <- suppressWarnings(
@@ -2098,13 +2136,13 @@ deg <- suppressWarnings(
 dge <- DGEList(counts(deg))
 keep <- filterByExpr(
   dge, group = deg$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
@@ -3599,12 +3637,20 @@ Heatmap(
 
 ```{r}
 ctype_idx <- 3
-min(table(seurat_list[[ctype_idx]]$genotype_batch))
+seurat_sub <- seurat_list[[ctype_idx]]
+min <- min(table(seurat_sub$genotype))
+seurat_sub@active.ident <- seurat_sub$genotype
+seurat_sub <- subset(seurat_sub, downsample = min)
+min
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
 keep <- filterByExpr(
-  counts(gse), group = gse$genotype, min.prop = 0.1,
-  min.count = 1, min.total.count = 1
+  GetAssayData(seurat_sub, assay = "GF", layer = "counts"),
+  group = seurat_sub$genotype,
+  min.prop = 0.1,
+  min.count = 1,
+  min.total.count = 1.5,
+  large.n = 0
 )
 gse <- gse[keep, ]
 gse <- suppressWarnings(
@@ -3617,13 +3663,13 @@ gse <- suppressWarnings(
 dge <- DGEList(counts(gse))
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
@@ -3640,8 +3686,12 @@ gse
 
 deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
 keep <- filterByExpr(
-  counts(deg), group = deg$genotype, min.prop = 0.1,
-  min.count = 1, min.total.count = 1
+  GetAssayData(seurat_sub, assay = "RNA", layer = "counts"),
+  group = seurat_sub$genotype,
+  min.prop = 0.1,
+  min.count = 1,
+  min.total.count = 1.5,
+  large.n = 0
 )
 deg <- deg[keep, ]
 deg <- suppressWarnings(
@@ -3654,13 +3704,13 @@ deg <- suppressWarnings(
 dge <- DGEList(counts(deg))
 keep <- filterByExpr(
   dge, group = deg$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
@@ -5158,12 +5208,20 @@ Heatmap(
 
 ```{r}
 ctype_idx <- 4
-min(table(seurat_list[[ctype_idx]]$genotype_batch))
+seurat_sub <- seurat_list[[ctype_idx]]
+min <- min(table(seurat_sub$genotype))
+seurat_sub@active.ident <- seurat_sub$genotype
+seurat_sub <- subset(seurat_sub, downsample = min)
+min
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
 keep <- filterByExpr(
-  counts(gse), group = gse$genotype, min.prop = 0.1,
-  min.count = 1, min.total.count = 1
+  GetAssayData(seurat_sub, assay = "GF", layer = "counts"),
+  group = seurat_sub$genotype,
+  min.prop = 0.1,
+  min.count = 1,
+  min.total.count = 1.5,
+  large.n = 0
 )
 gse <- gse[keep, ]
 gse <- suppressWarnings(
@@ -5176,13 +5234,13 @@ gse <- suppressWarnings(
 dge <- DGEList(counts(gse))
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
@@ -5199,8 +5257,12 @@ gse
 
 deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
 keep <- filterByExpr(
-  counts(deg), group = deg$genotype, min.prop = 0.1,
-  min.count = 1, min.total.count = 1
+  GetAssayData(seurat_sub, assay = "RNA", layer = "counts"),
+  group = seurat_sub$genotype,
+  min.prop = 0.1,
+  min.count = 1,
+  min.total.count = 1.5,
+  large.n = 0
 )
 deg <- deg[keep, ]
 deg <- suppressWarnings(
@@ -5213,13 +5275,13 @@ deg <- suppressWarnings(
 dge <- DGEList(counts(deg))
 keep <- filterByExpr(
   dge, group = deg$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
@@ -6720,12 +6782,20 @@ Heatmap(
 
 ```{r}
 ctype_idx <- 5
-min(table(seurat_list[[ctype_idx]]$genotype_batch))
+seurat_sub <- seurat_list[[ctype_idx]]
+min <- min(table(seurat_sub$genotype))
+seurat_sub@active.ident <- seurat_sub$genotype
+seurat_sub <- subset(seurat_sub, downsample = min)
+min
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
 keep <- filterByExpr(
-  counts(gse), group = gse$genotype, min.prop = 0.1,
-  min.count = 1, min.total.count = 1
+  GetAssayData(seurat_sub, assay = "GF", layer = "counts"),
+  group = seurat_sub$genotype,
+  min.prop = 0.1,
+  min.count = 1,
+  min.total.count = 1.5,
+  large.n = 0
 )
 gse <- gse[keep, ]
 gse <- suppressWarnings(
@@ -6738,13 +6808,13 @@ gse <- suppressWarnings(
 dge <- DGEList(counts(gse))
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
@@ -6761,8 +6831,12 @@ gse
 
 deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
 keep <- filterByExpr(
-  counts(deg), group = deg$genotype, min.prop = 0.1,
-  min.count = 1, min.total.count = 1
+  GetAssayData(seurat_sub, assay = "RNA", layer = "counts"),
+  group = seurat_sub$genotype,
+  min.prop = 0.1,
+  min.count = 1,
+  min.total.count = 1.5,
+  large.n = 0
 )
 deg <- deg[keep, ]
 deg <- suppressWarnings(
@@ -6775,13 +6849,13 @@ deg <- suppressWarnings(
 dge <- DGEList(counts(deg))
 keep <- filterByExpr(
   dge, group = deg$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
@@ -8284,12 +8358,20 @@ Heatmap(
 
 ```{r}
 ctype_idx <- 6
-min(table(seurat_list[[ctype_idx]]$genotype_batch))
+seurat_sub <- seurat_list[[ctype_idx]]
+min <- min(table(seurat_sub$genotype))
+seurat_sub@active.ident <- seurat_sub$genotype
+seurat_sub <- subset(seurat_sub, downsample = min)
+min
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
 keep <- filterByExpr(
-  counts(gse), group = gse$genotype, min.prop = 0.1,
-  min.count = 1, min.total.count = 1
+  GetAssayData(seurat_sub, assay = "GF", layer = "counts"),
+  group = seurat_sub$genotype,
+  min.prop = 0.1,
+  min.count = 1,
+  min.total.count = 1.5,
+  large.n = 0
 )
 gse <- gse[keep, ]
 gse <- suppressWarnings(
@@ -8302,13 +8384,13 @@ gse <- suppressWarnings(
 dge <- DGEList(counts(gse))
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
@@ -8325,8 +8407,12 @@ gse
 
 deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
 keep <- filterByExpr(
-  counts(deg), group = deg$genotype, min.prop = 0.1,
-  min.count = 1, min.total.count = 1
+  GetAssayData(seurat_sub, assay = "RNA", layer = "counts"),
+  group = seurat_sub$genotype,
+  min.prop = 0.1,
+  min.count = 1,
+  min.total.count = 1.5,
+  large.n = 0
 )
 deg <- deg[keep, ]
 deg <- suppressWarnings(
@@ -8339,13 +8425,13 @@ deg <- suppressWarnings(
 dge <- DGEList(counts(deg))
 keep <- filterByExpr(
   dge, group = deg$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
@@ -9851,12 +9937,20 @@ Heatmap(
 
 ```{r}
 ctype_idx <- 7
-min(table(seurat_list[[ctype_idx]]$genotype_batch))
+seurat_sub <- seurat_list[[ctype_idx]]
+min <- min(table(seurat_sub$genotype))
+seurat_sub@active.ident <- seurat_sub$genotype
+seurat_sub <- subset(seurat_sub, downsample = min)
+min
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
 keep <- filterByExpr(
-  counts(gse), group = gse$genotype, min.prop = 0.1,
-  min.count = 1, min.total.count = 1
+  GetAssayData(seurat_sub, assay = "GF", layer = "counts"),
+  group = seurat_sub$genotype,
+  min.prop = 0.1,
+  min.count = 1,
+  min.total.count = 1.5,
+  large.n = 0
 )
 gse <- gse[keep, ]
 gse <- suppressWarnings(
@@ -9869,13 +9963,13 @@ gse <- suppressWarnings(
 dge <- DGEList(counts(gse))
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
@@ -9892,8 +9986,12 @@ gse
 
 deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
 keep <- filterByExpr(
-  counts(deg), group = deg$genotype, min.prop = 0.1,
-  min.count = 1, min.total.count = 1
+  GetAssayData(seurat_sub, assay = "RNA", layer = "counts"),
+  group = seurat_sub$genotype,
+  min.prop = 0.1,
+  min.count = 1,
+  min.total.count = 1.5,
+  large.n = 0
 )
 deg <- deg[keep, ]
 deg <- suppressWarnings(
@@ -9906,13 +10004,13 @@ deg <- suppressWarnings(
 dge <- DGEList(counts(deg))
 keep <- filterByExpr(
   dge, group = deg$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, ]
 dge <- calcNormFactors(dge)
 keep <- filterByExpr(
   dge, group = gse$genotype,
-  min.count = 10, min.total.count = 10
+  min.count = 10, min.total.count = 15
 )
 dge <- dge[keep, , keep.lib.sizes = FALSE]
 
