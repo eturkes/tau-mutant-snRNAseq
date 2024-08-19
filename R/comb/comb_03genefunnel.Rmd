@@ -371,17 +371,15 @@ deg_list <- vector("list", length = 7)
 
 for (i in seq_along(seurat_list)) {
 
-  seurat_sub <- seurat_list[[i]]
-  seurat_sub@active.ident <- seurat_sub$genotype
   seurat_sub <- subset(
-    seurat_sub, downsample = min(table(seurat_sub$genotype))
+    seurat_list[[i]], downsample = min(table(seurat_list[[i]]$genotype_batch))
   )
 
   gse <- as.SingleCellExperiment(seurat_list[[i]], assay = "GF")
   keep <- filterByExpr(
     GetAssayData(seurat_sub, assay = "GF", layer = "counts"),
     group = seurat_sub$genotype,
-    min.prop = 0.1,
+    min.prop = 0.01,
     min.count = 1,
     min.total.count = 1.5,
     large.n = 0
@@ -398,7 +396,7 @@ for (i in seq_along(seurat_list)) {
   keep <- filterByExpr(
     GetAssayData(seurat_sub, assay = "RNA", layer = "counts"),
     group = seurat_sub$genotype,
-    min.prop = 0.1,
+    min.prop = 0.01,
     min.count = 1,
     min.total.count = 1.5,
     large.n = 0
@@ -520,17 +518,15 @@ corrections <- split(
 
 ```{r}
 ctype_idx <- 1
-seurat_sub <- seurat_list[[ctype_idx]]
-min <- min(table(seurat_sub$genotype))
-seurat_sub@active.ident <- seurat_sub$genotype
-seurat_sub <- subset(seurat_sub, downsample = min)
+min <- min(table(seurat_list[[ctype_idx]]$genotype_batch))
+seurat_sub <- subset(seurat_list[[ctype_idx]], downsample = min)
 min
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
 keep <- filterByExpr(
   GetAssayData(seurat_sub, assay = "GF", layer = "counts"),
   group = seurat_sub$genotype,
-  min.prop = 0.1,
+  min.prop = 0.01,
   min.count = 1,
   min.total.count = 1.5,
   large.n = 0
@@ -571,7 +567,7 @@ deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
 keep <- filterByExpr(
   GetAssayData(seurat_sub, assay = "RNA", layer = "counts"),
   group = seurat_sub$genotype,
-  min.prop = 0.1,
+  min.prop = 0.01,
   min.count = 1,
   min.total.count = 1.5,
   large.n = 0
@@ -3817,17 +3813,15 @@ Heatmap(
 
 ```{r}
 ctype_idx <- 2
-seurat_sub <- seurat_list[[ctype_idx]]
-min <- min(table(seurat_sub$genotype))
-seurat_sub@active.ident <- seurat_sub$genotype
-seurat_sub <- subset(seurat_sub, downsample = min)
+min <- min(table(seurat_list[[ctype_idx]]$genotype_batch))
+seurat_sub <- subset(seurat_list[[ctype_idx]], downsample = min)
 min
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
 keep <- filterByExpr(
   GetAssayData(seurat_sub, assay = "GF", layer = "counts"),
   group = seurat_sub$genotype,
-  min.prop = 0.1,
+  min.prop = 0.01,
   min.count = 1,
   min.total.count = 1.5,
   large.n = 0
@@ -3868,7 +3862,7 @@ deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
 keep <- filterByExpr(
   GetAssayData(seurat_sub, assay = "RNA", layer = "counts"),
   group = seurat_sub$genotype,
-  min.prop = 0.1,
+  min.prop = 0.01,
   min.count = 1,
   min.total.count = 1.5,
   large.n = 0
@@ -7116,17 +7110,15 @@ Heatmap(
 
 ```{r}
 ctype_idx <- 3
-seurat_sub <- seurat_list[[ctype_idx]]
-min <- min(table(seurat_sub$genotype))
-seurat_sub@active.ident <- seurat_sub$genotype
-seurat_sub <- subset(seurat_sub, downsample = min)
+min <- min(table(seurat_list[[ctype_idx]]$genotype_batch))
+seurat_sub <- subset(seurat_list[[ctype_idx]], downsample = min)
 min
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
 keep <- filterByExpr(
   GetAssayData(seurat_sub, assay = "GF", layer = "counts"),
   group = seurat_sub$genotype,
-  min.prop = 0.1,
+  min.prop = 0.01,
   min.count = 1,
   min.total.count = 1.5,
   large.n = 0
@@ -7167,7 +7159,7 @@ deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
 keep <- filterByExpr(
   GetAssayData(seurat_sub, assay = "RNA", layer = "counts"),
   group = seurat_sub$genotype,
-  min.prop = 0.1,
+  min.prop = 0.01,
   min.count = 1,
   min.total.count = 1.5,
   large.n = 0
@@ -10421,17 +10413,15 @@ Heatmap(
 
 ```{r}
 ctype_idx <- 4
-seurat_sub <- seurat_list[[ctype_idx]]
-min <- min(table(seurat_sub$genotype))
-seurat_sub@active.ident <- seurat_sub$genotype
-seurat_sub <- subset(seurat_sub, downsample = min)
+min <- min(table(seurat_list[[ctype_idx]]$genotype_batch))
+seurat_sub <- subset(seurat_list[[ctype_idx]], downsample = min)
 min
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
 keep <- filterByExpr(
   GetAssayData(seurat_sub, assay = "GF", layer = "counts"),
   group = seurat_sub$genotype,
-  min.prop = 0.1,
+  min.prop = 0.01,
   min.count = 1,
   min.total.count = 1.5,
   large.n = 0
@@ -10472,7 +10462,7 @@ deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
 keep <- filterByExpr(
   GetAssayData(seurat_sub, assay = "RNA", layer = "counts"),
   group = seurat_sub$genotype,
-  min.prop = 0.1,
+  min.prop = 0.01,
   min.count = 1,
   min.total.count = 1.5,
   large.n = 0
@@ -13732,17 +13722,15 @@ Heatmap(
 
 ```{r}
 ctype_idx <- 5
-seurat_sub <- seurat_list[[ctype_idx]]
-min <- min(table(seurat_sub$genotype))
-seurat_sub@active.ident <- seurat_sub$genotype
-seurat_sub <- subset(seurat_sub, downsample = min)
+min <- min(table(seurat_list[[ctype_idx]]$genotype_batch))
+seurat_sub <- subset(seurat_list[[ctype_idx]], downsample = min)
 min
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
 keep <- filterByExpr(
   GetAssayData(seurat_sub, assay = "GF", layer = "counts"),
   group = seurat_sub$genotype,
-  min.prop = 0.1,
+  min.prop = 0.01,
   min.count = 1,
   min.total.count = 1.5,
   large.n = 0
@@ -13783,7 +13771,7 @@ deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
 keep <- filterByExpr(
   GetAssayData(seurat_sub, assay = "RNA", layer = "counts"),
   group = seurat_sub$genotype,
-  min.prop = 0.1,
+  min.prop = 0.01,
   min.count = 1,
   min.total.count = 1.5,
   large.n = 0
@@ -17047,17 +17035,15 @@ Heatmap(
 
 ```{r}
 ctype_idx <- 6
-seurat_sub <- seurat_list[[ctype_idx]]
-min <- min(table(seurat_sub$genotype))
-seurat_sub@active.ident <- seurat_sub$genotype
-seurat_sub <- subset(seurat_sub, downsample = min)
+min <- min(table(seurat_list[[ctype_idx]]$genotype_batch))
+seurat_sub <- subset(seurat_list[[ctype_idx]], downsample = min)
 min
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
 keep <- filterByExpr(
   GetAssayData(seurat_sub, assay = "GF", layer = "counts"),
   group = seurat_sub$genotype,
-  min.prop = 0.1,
+  min.prop = 0.01,
   min.count = 1,
   min.total.count = 1.5,
   large.n = 0
@@ -17098,7 +17084,7 @@ deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
 keep <- filterByExpr(
   GetAssayData(seurat_sub, assay = "RNA", layer = "counts"),
   group = seurat_sub$genotype,
-  min.prop = 0.1,
+  min.prop = 0.01,
   min.count = 1,
   min.total.count = 1.5,
   large.n = 0
@@ -20368,17 +20354,15 @@ Heatmap(
 
 ```{r}
 ctype_idx <- 7
-seurat_sub <- seurat_list[[ctype_idx]]
-min <- min(table(seurat_sub$genotype))
-seurat_sub@active.ident <- seurat_sub$genotype
-seurat_sub <- subset(seurat_sub, downsample = min)
+min <- min(table(seurat_list[[ctype_idx]]$genotype_batch))
+seurat_sub <- subset(seurat_list[[ctype_idx]], downsample = min)
 min
 
 gse <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "GF")
 keep <- filterByExpr(
   GetAssayData(seurat_sub, assay = "GF", layer = "counts"),
   group = seurat_sub$genotype,
-  min.prop = 0.1,
+  min.prop = 0.01,
   min.count = 1,
   min.total.count = 1.5,
   large.n = 0
@@ -20419,7 +20403,7 @@ deg <- as.SingleCellExperiment(seurat_list[[ctype_idx]], assay = "RNA")
 keep <- filterByExpr(
   GetAssayData(seurat_sub, assay = "RNA", layer = "counts"),
   group = seurat_sub$genotype,
-  min.prop = 0.1,
+  min.prop = 0.01,
   min.count = 1,
   min.total.count = 1.5,
   large.n = 0
