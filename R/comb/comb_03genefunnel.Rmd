@@ -233,16 +233,17 @@ rds <- file.path(cache_dir, "gene_sets_keep.rds")
 if (file.exists(rds)) {
   gene_sets_keep <- readRDS(rds)
 } else {
-
   gene_sets_keep <- gene_sets
-  remove <- grep("^regulation", names(gene_sets_keep))
-  if (length(remove) > 0) {
-    gene_sets_keep <- gene_sets_keep[-remove]
-  }
-  remove <- grep("^negative regulation", names(gene_sets_keep))
-  if (length(remove) > 0) {
-    gene_sets_keep <- gene_sets_keep[-remove]
-  }
+
+  gene_sets_keep <- gene_sets_keep[
+    !grepl("regulation", x = names(gene_sets_keep)) |
+      grepl("positive regulation", x = names(gene_sets_keep))
+  ]
+
+  gene_sets_keep <- gene_sets_keep[
+    !grepl("selection", x = names(gene_sets_keep)) |
+      grepl("positive selection", x = names(gene_sets_keep))
+  ]
 
   mart <- useEnsembl("ensembl", "mmusculus_gene_ensembl")
   attributes <- c("ensembl_gene_id", "chromosome_name")
