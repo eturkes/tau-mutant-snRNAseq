@@ -109,8 +109,8 @@ priority <- c(
   "synap", "axon", "dendrit", "senescen", "apopto", "exocyt", "endocyt",
   "phagocyt", "proteasom", "lysosom", "endoplasmic", "Golgi", "Hsp",
   "heat shock", "ESCRT", "ubiqui", "heparan", "chondroitin", "sulfotransferase",
-  "glycosaminoglycan", "transcript", "translation", "amyloid", "apolipoprotein",
-  "lipoprotein", "fatty", "cholesterol", "insulin", "pruning",
+  "glycosaminoglycan", "transcription", "translation", "amyloid",
+  "apolipoprotein", "lipoprotein", "fatty", "cholesterol", "insulin", "pruning",
   "phosphatidylserine", "complement", "T cell", "B cell", "immun", "inflammat",
   "stress", "cortisol", "interleukin", "leukocyte", "myeloid", "NF-kappaB",
   "toll-like", "macrophage", "astrocyte", "oligodendrocyte", "Schwann", "myelin"
