@@ -4785,92 +4785,92 @@ row_split <- factor(
     rep(
       "S305N",
       times = ifelse(
-        is.null(nrow(results_up[[1]])), yes = 0,
-        no = nrow(results_up[[1]])
+        is.null(nrow(deg_results_up[[1]])), yes = 0,
+        no = nrow(deg_results_up[[1]])
       )
     ),
     rep(
       "S305N\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_up[[2]])), yes = 0,
-        no = nrow(results_up[[2]])
+        is.null(nrow(deg_results_up[[2]])), yes = 0,
+        no = nrow(deg_results_up[[2]])
       )
     ),
     rep(
       "P301S",
       times = ifelse(
-        is.null(nrow(results_up[[3]])), yes = 0,
-        no = nrow(results_up[[3]])
+        is.null(nrow(deg_results_up[[3]])), yes = 0,
+        no = nrow(deg_results_up[[3]])
       )
     ),
     rep(
       "P301S\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[4]])), yes = 0,
-        no = nrow(results_up[[4]])
+        is.null(nrow(deg_results_up[[4]])), yes = 0,
+        no = nrow(deg_results_up[[4]])
       )
     ),
     rep(
       "S305N\nP301S",
       times = ifelse(
-        is.null(nrow(results_up[[5]])), yes = 0,
-        no = nrow(results_up[[5]])
+        is.null(nrow(deg_results_up[[5]])), yes = 0,
+        no = nrow(deg_results_up[[5]])
       )
     ),
     rep(
       "S305N\nP301S\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[6]])), yes = 0,
-        no = nrow(results_up[[6]])
+        is.null(nrow(deg_results_up[[6]])), yes = 0,
+        no = nrow(deg_results_up[[6]])
       )
     ),
     rep(
       "NLGF MAPTKI",
       times = ifelse(
-        is.null(nrow(results_up[[7]])), yes = 0,
-        no = nrow(results_up[[7]])
+        is.null(nrow(deg_results_up[[7]])), yes = 0,
+        no = nrow(deg_results_up[[7]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[8]])), yes = 0,
-        no = nrow(results_up[[8]])
+        is.null(nrow(deg_results_up[[8]])), yes = 0,
+        no = nrow(deg_results_up[[8]])
       )
     ),
     rep(
       "NLGF S305N",
       times = ifelse(
-        is.null(nrow(results_up[[9]])), yes = 0,
-        no = nrow(results_up[[9]])
+        is.null(nrow(deg_results_up[[9]])), yes = 0,
+        no = nrow(deg_results_up[[9]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_up[[10]])), yes = 0,
-        no = nrow(results_up[[10]])
+        is.null(nrow(deg_results_up[[10]])), yes = 0,
+        no = nrow(deg_results_up[[10]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[11]])), yes = 0,
-        no = nrow(results_up[[11]])
+        is.null(nrow(deg_results_up[[11]])), yes = 0,
+        no = nrow(deg_results_up[[11]])
       )
     ),
     rep(
       "NLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[12]])), yes = 0,
-        no = nrow(results_up[[12]])
+        is.null(nrow(deg_results_up[[12]])), yes = 0,
+        no = nrow(deg_results_up[[12]])
       )
     ),
     rep(
       "NLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[13]])), yes = 0,
-        no = nrow(results_up[[13]])
+        is.null(nrow(deg_results_up[[13]])), yes = 0,
+        no = nrow(deg_results_up[[13]])
       )
     )
   ),
@@ -4892,12 +4892,12 @@ row_split <- factor(
 )
 
 mat <- deg_corrected[
-  rownames(deg) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_up)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(do.call(rbind, results_up)), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, deg_results_up)), rownames(mat)), , drop = FALSE
 ]
-rownames(mat) <- do.call(rbind, results_up)$symbol
+rownames(mat) <- do.call(rbind, deg_results_up)$symbol
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
@@ -4944,92 +4944,92 @@ row_split <- factor(
     rep(
       "S305N",
       times = ifelse(
-        is.null(nrow(results_down[[1]])), yes = 0,
-        no = nrow(results_down[[1]])
+        is.null(nrow(deg_results_down[[1]])), yes = 0,
+        no = nrow(deg_results_down[[1]])
       )
     ),
     rep(
       "S305N\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_down[[2]])), yes = 0,
-        no = nrow(results_down[[2]])
+        is.null(nrow(deg_results_down[[2]])), yes = 0,
+        no = nrow(deg_results_down[[2]])
       )
     ),
     rep(
       "P301S",
       times = ifelse(
-        is.null(nrow(results_down[[3]])), yes = 0,
-        no = nrow(results_down[[3]])
+        is.null(nrow(deg_results_down[[3]])), yes = 0,
+        no = nrow(deg_results_down[[3]])
       )
     ),
     rep(
       "P301S\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[4]])), yes = 0,
-        no = nrow(results_down[[4]])
+        is.null(nrow(deg_results_down[[4]])), yes = 0,
+        no = nrow(deg_results_down[[4]])
       )
     ),
     rep(
       "S305N\nP301S",
       times = ifelse(
-        is.null(nrow(results_down[[5]])), yes = 0,
-        no = nrow(results_down[[5]])
+        is.null(nrow(deg_results_down[[5]])), yes = 0,
+        no = nrow(deg_results_down[[5]])
       )
     ),
     rep(
       "S305N\nP301S\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[6]])), yes = 0,
-        no = nrow(results_down[[6]])
+        is.null(nrow(deg_results_down[[6]])), yes = 0,
+        no = nrow(deg_results_down[[6]])
       )
     ),
     rep(
       "NLGF MAPTKI",
       times = ifelse(
-        is.null(nrow(results_down[[7]])), yes = 0,
-        no = nrow(results_down[[7]])
+        is.null(nrow(deg_results_down[[7]])), yes = 0,
+        no = nrow(deg_results_down[[7]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[8]])), yes = 0,
-        no = nrow(results_down[[8]])
+        is.null(nrow(deg_results_down[[8]])), yes = 0,
+        no = nrow(deg_results_down[[8]])
       )
     ),
     rep(
       "NLGF S305N",
       times = ifelse(
-        is.null(nrow(results_down[[9]])), yes = 0,
-        no = nrow(results_down[[9]])
+        is.null(nrow(deg_results_down[[9]])), yes = 0,
+        no = nrow(deg_results_down[[9]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_down[[10]])), yes = 0,
-        no = nrow(results_down[[10]])
+        is.null(nrow(deg_results_down[[10]])), yes = 0,
+        no = nrow(deg_results_down[[10]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[11]])), yes = 0,
-        no = nrow(results_down[[11]])
+        is.null(nrow(deg_results_down[[11]])), yes = 0,
+        no = nrow(deg_results_down[[11]])
       )
     ),
     rep(
       "NLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[12]])), yes = 0,
-        no = nrow(results_down[[12]])
+        is.null(nrow(deg_results_down[[12]])), yes = 0,
+        no = nrow(deg_results_down[[12]])
       )
     ),
     rep(
       "NLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[13]])), yes = 0,
-        no = nrow(results_down[[13]])
+        is.null(nrow(deg_results_down[[13]])), yes = 0,
+        no = nrow(deg_results_down[[13]])
       )
     )
   ),
@@ -5051,12 +5051,14 @@ row_split <- factor(
 )
 
 mat <- deg_corrected[
-  rownames(deg) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_down)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(do.call(rbind, results_down)), rownames(mat)), , drop = FALSE
+  match(
+    rownames(do.call(rbind, deg_results_down)), rownames(mat)
+  ), , drop = FALSE
 ]
-rownames(mat) <- do.call(rbind, results_down)$symbol
+rownames(mat) <- do.call(rbind, deg_results_down)$symbol
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
@@ -9450,92 +9452,92 @@ row_split <- factor(
     rep(
       "S305N",
       times = ifelse(
-        is.null(nrow(results_up[[1]])), yes = 0,
-        no = nrow(results_up[[1]])
+        is.null(nrow(deg_results_up[[1]])), yes = 0,
+        no = nrow(deg_results_up[[1]])
       )
     ),
     rep(
       "S305N\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_up[[2]])), yes = 0,
-        no = nrow(results_up[[2]])
+        is.null(nrow(deg_results_up[[2]])), yes = 0,
+        no = nrow(deg_results_up[[2]])
       )
     ),
     rep(
       "P301S",
       times = ifelse(
-        is.null(nrow(results_up[[3]])), yes = 0,
-        no = nrow(results_up[[3]])
+        is.null(nrow(deg_results_up[[3]])), yes = 0,
+        no = nrow(deg_results_up[[3]])
       )
     ),
     rep(
       "P301S\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[4]])), yes = 0,
-        no = nrow(results_up[[4]])
+        is.null(nrow(deg_results_up[[4]])), yes = 0,
+        no = nrow(deg_results_up[[4]])
       )
     ),
     rep(
       "S305N\nP301S",
       times = ifelse(
-        is.null(nrow(results_up[[5]])), yes = 0,
-        no = nrow(results_up[[5]])
+        is.null(nrow(deg_results_up[[5]])), yes = 0,
+        no = nrow(deg_results_up[[5]])
       )
     ),
     rep(
       "S305N\nP301S\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[6]])), yes = 0,
-        no = nrow(results_up[[6]])
+        is.null(nrow(deg_results_up[[6]])), yes = 0,
+        no = nrow(deg_results_up[[6]])
       )
     ),
     rep(
       "NLGF MAPTKI",
       times = ifelse(
-        is.null(nrow(results_up[[7]])), yes = 0,
-        no = nrow(results_up[[7]])
+        is.null(nrow(deg_results_up[[7]])), yes = 0,
+        no = nrow(deg_results_up[[7]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[8]])), yes = 0,
-        no = nrow(results_up[[8]])
+        is.null(nrow(deg_results_up[[8]])), yes = 0,
+        no = nrow(deg_results_up[[8]])
       )
     ),
     rep(
       "NLGF S305N",
       times = ifelse(
-        is.null(nrow(results_up[[9]])), yes = 0,
-        no = nrow(results_up[[9]])
+        is.null(nrow(deg_results_up[[9]])), yes = 0,
+        no = nrow(deg_results_up[[9]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_up[[10]])), yes = 0,
-        no = nrow(results_up[[10]])
+        is.null(nrow(deg_results_up[[10]])), yes = 0,
+        no = nrow(deg_results_up[[10]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[11]])), yes = 0,
-        no = nrow(results_up[[11]])
+        is.null(nrow(deg_results_up[[11]])), yes = 0,
+        no = nrow(deg_results_up[[11]])
       )
     ),
     rep(
       "NLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[12]])), yes = 0,
-        no = nrow(results_up[[12]])
+        is.null(nrow(deg_results_up[[12]])), yes = 0,
+        no = nrow(deg_results_up[[12]])
       )
     ),
     rep(
       "NLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[13]])), yes = 0,
-        no = nrow(results_up[[13]])
+        is.null(nrow(deg_results_up[[13]])), yes = 0,
+        no = nrow(deg_results_up[[13]])
       )
     )
   ),
@@ -9557,12 +9559,12 @@ row_split <- factor(
 )
 
 mat <- deg_corrected[
-  rownames(deg) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_up)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(do.call(rbind, results_up)), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, deg_results_up)), rownames(mat)), , drop = FALSE
 ]
-rownames(mat) <- do.call(rbind, results_up)$symbol
+rownames(mat) <- do.call(rbind, deg_results_up)$symbol
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
@@ -9609,92 +9611,92 @@ row_split <- factor(
     rep(
       "S305N",
       times = ifelse(
-        is.null(nrow(results_down[[1]])), yes = 0,
-        no = nrow(results_down[[1]])
+        is.null(nrow(deg_results_down[[1]])), yes = 0,
+        no = nrow(deg_results_down[[1]])
       )
     ),
     rep(
       "S305N\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_down[[2]])), yes = 0,
-        no = nrow(results_down[[2]])
+        is.null(nrow(deg_results_down[[2]])), yes = 0,
+        no = nrow(deg_results_down[[2]])
       )
     ),
     rep(
       "P301S",
       times = ifelse(
-        is.null(nrow(results_down[[3]])), yes = 0,
-        no = nrow(results_down[[3]])
+        is.null(nrow(deg_results_down[[3]])), yes = 0,
+        no = nrow(deg_results_down[[3]])
       )
     ),
     rep(
       "P301S\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[4]])), yes = 0,
-        no = nrow(results_down[[4]])
+        is.null(nrow(deg_results_down[[4]])), yes = 0,
+        no = nrow(deg_results_down[[4]])
       )
     ),
     rep(
       "S305N\nP301S",
       times = ifelse(
-        is.null(nrow(results_down[[5]])), yes = 0,
-        no = nrow(results_down[[5]])
+        is.null(nrow(deg_results_down[[5]])), yes = 0,
+        no = nrow(deg_results_down[[5]])
       )
     ),
     rep(
       "S305N\nP301S\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[6]])), yes = 0,
-        no = nrow(results_down[[6]])
+        is.null(nrow(deg_results_down[[6]])), yes = 0,
+        no = nrow(deg_results_down[[6]])
       )
     ),
     rep(
       "NLGF MAPTKI",
       times = ifelse(
-        is.null(nrow(results_down[[7]])), yes = 0,
-        no = nrow(results_down[[7]])
+        is.null(nrow(deg_results_down[[7]])), yes = 0,
+        no = nrow(deg_results_down[[7]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[8]])), yes = 0,
-        no = nrow(results_down[[8]])
+        is.null(nrow(deg_results_down[[8]])), yes = 0,
+        no = nrow(deg_results_down[[8]])
       )
     ),
     rep(
       "NLGF S305N",
       times = ifelse(
-        is.null(nrow(results_down[[9]])), yes = 0,
-        no = nrow(results_down[[9]])
+        is.null(nrow(deg_results_down[[9]])), yes = 0,
+        no = nrow(deg_results_down[[9]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_down[[10]])), yes = 0,
-        no = nrow(results_down[[10]])
+        is.null(nrow(deg_results_down[[10]])), yes = 0,
+        no = nrow(deg_results_down[[10]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[11]])), yes = 0,
-        no = nrow(results_down[[11]])
+        is.null(nrow(deg_results_down[[11]])), yes = 0,
+        no = nrow(deg_results_down[[11]])
       )
     ),
     rep(
       "NLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[12]])), yes = 0,
-        no = nrow(results_down[[12]])
+        is.null(nrow(deg_results_down[[12]])), yes = 0,
+        no = nrow(deg_results_down[[12]])
       )
     ),
     rep(
       "NLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[13]])), yes = 0,
-        no = nrow(results_down[[13]])
+        is.null(nrow(deg_results_down[[13]])), yes = 0,
+        no = nrow(deg_results_down[[13]])
       )
     )
   ),
@@ -9716,12 +9718,14 @@ row_split <- factor(
 )
 
 mat <- deg_corrected[
-  rownames(deg) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_down)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(do.call(rbind, results_down)), rownames(mat)), , drop = FALSE
+  match(
+    rownames(do.call(rbind, deg_results_down)), rownames(mat)
+  ), , drop = FALSE
 ]
-rownames(mat) <- do.call(rbind, results_down)$symbol
+rownames(mat) <- do.call(rbind, deg_results_down)$symbol
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
@@ -14124,92 +14128,92 @@ row_split <- factor(
     rep(
       "S305N",
       times = ifelse(
-        is.null(nrow(results_up[[1]])), yes = 0,
-        no = nrow(results_up[[1]])
+        is.null(nrow(deg_results_up[[1]])), yes = 0,
+        no = nrow(deg_results_up[[1]])
       )
     ),
     rep(
       "S305N\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_up[[2]])), yes = 0,
-        no = nrow(results_up[[2]])
+        is.null(nrow(deg_results_up[[2]])), yes = 0,
+        no = nrow(deg_results_up[[2]])
       )
     ),
     rep(
       "P301S",
       times = ifelse(
-        is.null(nrow(results_up[[3]])), yes = 0,
-        no = nrow(results_up[[3]])
+        is.null(nrow(deg_results_up[[3]])), yes = 0,
+        no = nrow(deg_results_up[[3]])
       )
     ),
     rep(
       "P301S\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[4]])), yes = 0,
-        no = nrow(results_up[[4]])
+        is.null(nrow(deg_results_up[[4]])), yes = 0,
+        no = nrow(deg_results_up[[4]])
       )
     ),
     rep(
       "S305N\nP301S",
       times = ifelse(
-        is.null(nrow(results_up[[5]])), yes = 0,
-        no = nrow(results_up[[5]])
+        is.null(nrow(deg_results_up[[5]])), yes = 0,
+        no = nrow(deg_results_up[[5]])
       )
     ),
     rep(
       "S305N\nP301S\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[6]])), yes = 0,
-        no = nrow(results_up[[6]])
+        is.null(nrow(deg_results_up[[6]])), yes = 0,
+        no = nrow(deg_results_up[[6]])
       )
     ),
     rep(
       "NLGF MAPTKI",
       times = ifelse(
-        is.null(nrow(results_up[[7]])), yes = 0,
-        no = nrow(results_up[[7]])
+        is.null(nrow(deg_results_up[[7]])), yes = 0,
+        no = nrow(deg_results_up[[7]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[8]])), yes = 0,
-        no = nrow(results_up[[8]])
+        is.null(nrow(deg_results_up[[8]])), yes = 0,
+        no = nrow(deg_results_up[[8]])
       )
     ),
     rep(
       "NLGF S305N",
       times = ifelse(
-        is.null(nrow(results_up[[9]])), yes = 0,
-        no = nrow(results_up[[9]])
+        is.null(nrow(deg_results_up[[9]])), yes = 0,
+        no = nrow(deg_results_up[[9]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_up[[10]])), yes = 0,
-        no = nrow(results_up[[10]])
+        is.null(nrow(deg_results_up[[10]])), yes = 0,
+        no = nrow(deg_results_up[[10]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[11]])), yes = 0,
-        no = nrow(results_up[[11]])
+        is.null(nrow(deg_results_up[[11]])), yes = 0,
+        no = nrow(deg_results_up[[11]])
       )
     ),
     rep(
       "NLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[12]])), yes = 0,
-        no = nrow(results_up[[12]])
+        is.null(nrow(deg_results_up[[12]])), yes = 0,
+        no = nrow(deg_results_up[[12]])
       )
     ),
     rep(
       "NLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[13]])), yes = 0,
-        no = nrow(results_up[[13]])
+        is.null(nrow(deg_results_up[[13]])), yes = 0,
+        no = nrow(deg_results_up[[13]])
       )
     )
   ),
@@ -14231,12 +14235,12 @@ row_split <- factor(
 )
 
 mat <- deg_corrected[
-  rownames(deg) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_up)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(do.call(rbind, results_up)), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, deg_results_up)), rownames(mat)), , drop = FALSE
 ]
-rownames(mat) <- do.call(rbind, results_up)$symbol
+rownames(mat) <- do.call(rbind, deg_results_up)$symbol
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
@@ -14283,92 +14287,92 @@ row_split <- factor(
     rep(
       "S305N",
       times = ifelse(
-        is.null(nrow(results_down[[1]])), yes = 0,
-        no = nrow(results_down[[1]])
+        is.null(nrow(deg_results_down[[1]])), yes = 0,
+        no = nrow(deg_results_down[[1]])
       )
     ),
     rep(
       "S305N\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_down[[2]])), yes = 0,
-        no = nrow(results_down[[2]])
+        is.null(nrow(deg_results_down[[2]])), yes = 0,
+        no = nrow(deg_results_down[[2]])
       )
     ),
     rep(
       "P301S",
       times = ifelse(
-        is.null(nrow(results_down[[3]])), yes = 0,
-        no = nrow(results_down[[3]])
+        is.null(nrow(deg_results_down[[3]])), yes = 0,
+        no = nrow(deg_results_down[[3]])
       )
     ),
     rep(
       "P301S\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[4]])), yes = 0,
-        no = nrow(results_down[[4]])
+        is.null(nrow(deg_results_down[[4]])), yes = 0,
+        no = nrow(deg_results_down[[4]])
       )
     ),
     rep(
       "S305N\nP301S",
       times = ifelse(
-        is.null(nrow(results_down[[5]])), yes = 0,
-        no = nrow(results_down[[5]])
+        is.null(nrow(deg_results_down[[5]])), yes = 0,
+        no = nrow(deg_results_down[[5]])
       )
     ),
     rep(
       "S305N\nP301S\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[6]])), yes = 0,
-        no = nrow(results_down[[6]])
+        is.null(nrow(deg_results_down[[6]])), yes = 0,
+        no = nrow(deg_results_down[[6]])
       )
     ),
     rep(
       "NLGF MAPTKI",
       times = ifelse(
-        is.null(nrow(results_down[[7]])), yes = 0,
-        no = nrow(results_down[[7]])
+        is.null(nrow(deg_results_down[[7]])), yes = 0,
+        no = nrow(deg_results_down[[7]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[8]])), yes = 0,
-        no = nrow(results_down[[8]])
+        is.null(nrow(deg_results_down[[8]])), yes = 0,
+        no = nrow(deg_results_down[[8]])
       )
     ),
     rep(
       "NLGF S305N",
       times = ifelse(
-        is.null(nrow(results_down[[9]])), yes = 0,
-        no = nrow(results_down[[9]])
+        is.null(nrow(deg_results_down[[9]])), yes = 0,
+        no = nrow(deg_results_down[[9]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_down[[10]])), yes = 0,
-        no = nrow(results_down[[10]])
+        is.null(nrow(deg_results_down[[10]])), yes = 0,
+        no = nrow(deg_results_down[[10]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[11]])), yes = 0,
-        no = nrow(results_down[[11]])
+        is.null(nrow(deg_results_down[[11]])), yes = 0,
+        no = nrow(deg_results_down[[11]])
       )
     ),
     rep(
       "NLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[12]])), yes = 0,
-        no = nrow(results_down[[12]])
+        is.null(nrow(deg_results_down[[12]])), yes = 0,
+        no = nrow(deg_results_down[[12]])
       )
     ),
     rep(
       "NLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[13]])), yes = 0,
-        no = nrow(results_down[[13]])
+        is.null(nrow(deg_results_down[[13]])), yes = 0,
+        no = nrow(deg_results_down[[13]])
       )
     )
   ),
@@ -14390,12 +14394,14 @@ row_split <- factor(
 )
 
 mat <- deg_corrected[
-  rownames(deg) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_down)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(do.call(rbind, results_down)), rownames(mat)), , drop = FALSE
+  match(
+    rownames(do.call(rbind, deg_results_down)), rownames(mat)
+  ), , drop = FALSE
 ]
-rownames(mat) <- do.call(rbind, results_down)$symbol
+rownames(mat) <- do.call(rbind, deg_results_down)$symbol
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
@@ -18812,241 +18818,97 @@ row_split <- factor(
       )
     ),
     rep(
-      "P301S",
+      "S305N\nNLGF S305N",
       times = ifelse(
         is.null(nrow(deg_results_up[[2]])), yes = 0,
         no = nrow(deg_results_up[[2]])
       )
     ),
     rep(
-      "S305N\nP301S",
+      "P301S",
       times = ifelse(
         is.null(nrow(deg_results_up[[3]])), yes = 0,
         no = nrow(deg_results_up[[3]])
       )
     ),
     rep(
-      "S305N\nNLGF MAPTKI",
+      "P301S\nNLGF P301S",
       times = ifelse(
         is.null(nrow(deg_results_up[[4]])), yes = 0,
         no = nrow(deg_results_up[[4]])
       )
     ),
     rep(
-      "S305N\nNLGF MAPTKI\nNLGF P301S",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(deg_results_up[[5]])), yes = 0,
         no = nrow(deg_results_up[[5]])
       )
     ),
     rep(
-      "S305N\nNLGF S305N",
+      "S305N\nP301S\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(deg_results_up[[6]])), yes = 0,
         no = nrow(deg_results_up[[6]])
       )
     ),
     rep(
-      "S305N\nNLGF MAPTKI\nNLGF S305N",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(deg_results_up[[7]])), yes = 0,
         no = nrow(deg_results_up[[7]])
       )
     ),
     rep(
-      "S305N\nNLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(deg_results_up[[8]])), yes = 0,
         no = nrow(deg_results_up[[8]])
       )
     ),
     rep(
-      "S305N\nNLGF S305N\nNLGF P301S",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(deg_results_up[[9]])), yes = 0,
         no = nrow(deg_results_up[[9]])
       )
     ),
     rep(
-      "S305N\nNLGF P301S",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(deg_results_up[[10]])), yes = 0,
         no = nrow(deg_results_up[[10]])
       )
     ),
     rep(
-      "P301S\nNLGF MAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(deg_results_up[[11]])), yes = 0,
         no = nrow(deg_results_up[[11]])
       )
     ),
     rep(
-      "P301S\nNLGF MAPTKI\nNLGF P301S",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(deg_results_up[[12]])), yes = 0,
         no = nrow(deg_results_up[[12]])
       )
     ),
     rep(
-      "P301S\nNLGF S305N",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(deg_results_up[[13]])), yes = 0,
         no = nrow(deg_results_up[[13]])
-      )
-    ),
-    rep(
-      "P301S\nNLGF MAPTKI\nNLGF S305N",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[14]])), yes = 0,
-        no = nrow(deg_results_up[[14]])
-      )
-    ),
-    rep(
-      "P301S\nNLGF MAPTKI\nNLGF S305N\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[15]])), yes = 0,
-        no = nrow(deg_results_up[[15]])
-      )
-    ),
-    rep(
-      "P301S\nNLGF S305N\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[16]])), yes = 0,
-        no = nrow(deg_results_up[[16]])
-      )
-    ),
-    rep(
-      "P301S\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[17]])), yes = 0,
-        no = nrow(deg_results_up[[17]])
-      )
-    ),
-    rep(
-      "S305N\nP301S\nNLGF MAPTKI",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[18]])), yes = 0,
-        no = nrow(deg_results_up[[18]])
-      )
-    ),
-    rep(
-      "S305N\nP301S\nNLGF MAPTKI\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[19]])), yes = 0,
-        no = nrow(deg_results_up[[19]])
-      )
-    ),
-    rep(
-      "S305N\nP301S\nNLGF S305N",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[20]])), yes = 0,
-        no = nrow(deg_results_up[[20]])
-      )
-    ),
-    rep(
-      "S305N\nP301S\nNLGF MAPTKI\nNLGF S305N",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[21]])), yes = 0,
-        no = nrow(deg_results_up[[21]])
-      )
-    ),
-    rep(
-      "S305N\nP301S\nNLGF MAPTKI\nNLGF S305N\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[22]])), yes = 0,
-        no = nrow(deg_results_up[[22]])
-      )
-    ),
-    rep(
-      "S305N\nP301S\nNLGF S305N\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[23]])), yes = 0,
-        no = nrow(deg_results_up[[23]])
-      )
-    ),
-    rep(
-      "S305N\nP301S\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[24]])), yes = 0,
-        no = nrow(deg_results_up[[24]])
-      )
-    ),
-    rep(
-      "NLGF MAPTKI",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[25]])), yes = 0,
-        no = nrow(deg_results_up[[25]])
-      )
-    ),
-    rep(
-      "NLGF MAPTKI\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[26]])), yes = 0,
-        no = nrow(deg_results_up[[26]])
-      )
-    ),
-    rep(
-      "NLGF S305N",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[27]])), yes = 0,
-        no = nrow(deg_results_up[[27]])
-      )
-    ),
-    rep(
-      "NLGF MAPTKI\nNLGF S305N",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[28]])), yes = 0,
-        no = nrow(deg_results_up[[28]])
-      )
-    ),
-    rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[29]])), yes = 0,
-        no = nrow(deg_results_up[[29]])
-      )
-    ),
-    rep(
-      "NLGF S305N\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[30]])), yes = 0,
-        no = nrow(deg_results_up[[30]])
-      )
-    ),
-    rep(
-      "NLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[31]])), yes = 0,
-        no = nrow(deg_results_up[[31]])
       )
     )
   ),
   levels = c(
     "S305N",
-    "P301S",
-    "S305N\nP301S",
-    "S305N\nNLGF MAPTKI",
-    "S305N\nNLGF MAPTKI\nNLGF P301S",
     "S305N\nNLGF S305N",
-    "S305N\nNLGF MAPTKI\nNLGF S305N",
-    "S305N\nNLGF MAPTKI\nNLGF S305N\nNLGF P301S",
-    "S305N\nNLGF S305N\nNLGF P301S",
-    "S305N\nNLGF P301S",
-    "P301S\nNLGF MAPTKI",
-    "P301S\nNLGF MAPTKI\nNLGF P301S",
-    "P301S\nNLGF S305N",
-    "P301S\nNLGF MAPTKI\nNLGF S305N",
-    "P301S\nNLGF MAPTKI\nNLGF S305N\nNLGF P301S",
-    "P301S\nNLGF S305N\nNLGF P301S",
+    "P301S",
     "P301S\nNLGF P301S",
-    "S305N\nP301S\nNLGF MAPTKI",
-    "S305N\nP301S\nNLGF MAPTKI\nNLGF P301S",
-    "S305N\nP301S\nNLGF S305N",
-    "S305N\nP301S\nNLGF MAPTKI\nNLGF S305N",
-    "S305N\nP301S\nNLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "S305N\nP301S",
     "S305N\nP301S\nNLGF S305N\nNLGF P301S",
-    "S305N\nP301S\nNLGF P301S",
     "NLGF MAPTKI",
     "NLGF MAPTKI\nNLGF P301S",
     "NLGF S305N",
@@ -19061,9 +18923,7 @@ mat <- deg_corrected[
   rownames(deg) %in% rownames(do.call(rbind, deg_results_up)), , drop = FALSE
 ]
 mat <- mat[
-  match(
-    rownames(do.call(rbind, deg_results_up)), rownames(mat)
-  ), , drop = FALSE
+  match(rownames(do.call(rbind, deg_results_up)), rownames(mat)), , drop = FALSE
 ]
 rownames(mat) <- do.call(rbind, deg_results_up)$symbol
 Heatmap(
@@ -19117,241 +18977,97 @@ row_split <- factor(
       )
     ),
     rep(
-      "P301S",
+      "S305N\nNLGF S305N",
       times = ifelse(
         is.null(nrow(deg_results_down[[2]])), yes = 0,
         no = nrow(deg_results_down[[2]])
       )
     ),
     rep(
-      "S305N\nP301S",
+      "P301S",
       times = ifelse(
         is.null(nrow(deg_results_down[[3]])), yes = 0,
         no = nrow(deg_results_down[[3]])
       )
     ),
     rep(
-      "S305N\nNLGF MAPTKI",
+      "P301S\nNLGF P301S",
       times = ifelse(
         is.null(nrow(deg_results_down[[4]])), yes = 0,
         no = nrow(deg_results_down[[4]])
       )
     ),
     rep(
-      "S305N\nNLGF MAPTKI\nNLGF P301S",
+      "S305N\nP301S",
       times = ifelse(
         is.null(nrow(deg_results_down[[5]])), yes = 0,
         no = nrow(deg_results_down[[5]])
       )
     ),
     rep(
-      "S305N\nNLGF S305N",
+      "S305N\nP301S\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(deg_results_down[[6]])), yes = 0,
         no = nrow(deg_results_down[[6]])
       )
     ),
     rep(
-      "S305N\nNLGF MAPTKI\nNLGF S305N",
+      "NLGF MAPTKI",
       times = ifelse(
         is.null(nrow(deg_results_down[[7]])), yes = 0,
         no = nrow(deg_results_down[[7]])
       )
     ),
     rep(
-      "S305N\nNLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+      "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
         is.null(nrow(deg_results_down[[8]])), yes = 0,
         no = nrow(deg_results_down[[8]])
       )
     ),
     rep(
-      "S305N\nNLGF S305N\nNLGF P301S",
+      "NLGF S305N",
       times = ifelse(
         is.null(nrow(deg_results_down[[9]])), yes = 0,
         no = nrow(deg_results_down[[9]])
       )
     ),
     rep(
-      "S305N\nNLGF P301S",
+      "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
         is.null(nrow(deg_results_down[[10]])), yes = 0,
         no = nrow(deg_results_down[[10]])
       )
     ),
     rep(
-      "P301S\nNLGF MAPTKI",
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(deg_results_down[[11]])), yes = 0,
         no = nrow(deg_results_down[[11]])
       )
     ),
     rep(
-      "P301S\nNLGF MAPTKI\nNLGF P301S",
+      "NLGF S305N\nNLGF P301S",
       times = ifelse(
         is.null(nrow(deg_results_down[[12]])), yes = 0,
         no = nrow(deg_results_down[[12]])
       )
     ),
     rep(
-      "P301S\nNLGF S305N",
+      "NLGF P301S",
       times = ifelse(
         is.null(nrow(deg_results_down[[13]])), yes = 0,
         no = nrow(deg_results_down[[13]])
-      )
-    ),
-    rep(
-      "P301S\nNLGF MAPTKI\nNLGF S305N",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[14]])), yes = 0,
-        no = nrow(deg_results_down[[14]])
-      )
-    ),
-    rep(
-      "P301S\nNLGF MAPTKI\nNLGF S305N\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[15]])), yes = 0,
-        no = nrow(deg_results_down[[15]])
-      )
-    ),
-    rep(
-      "P301S\nNLGF S305N\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[16]])), yes = 0,
-        no = nrow(deg_results_down[[16]])
-      )
-    ),
-    rep(
-      "P301S\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[17]])), yes = 0,
-        no = nrow(deg_results_down[[17]])
-      )
-    ),
-    rep(
-      "S305N\nP301S\nNLGF MAPTKI",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[18]])), yes = 0,
-        no = nrow(deg_results_down[[18]])
-      )
-    ),
-    rep(
-      "S305N\nP301S\nNLGF MAPTKI\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[19]])), yes = 0,
-        no = nrow(deg_results_down[[19]])
-      )
-    ),
-    rep(
-      "S305N\nP301S\nNLGF S305N",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[20]])), yes = 0,
-        no = nrow(deg_results_down[[20]])
-      )
-    ),
-    rep(
-      "S305N\nP301S\nNLGF MAPTKI\nNLGF S305N",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[21]])), yes = 0,
-        no = nrow(deg_results_down[[21]])
-      )
-    ),
-    rep(
-      "S305N\nP301S\nNLGF MAPTKI\nNLGF S305N\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[22]])), yes = 0,
-        no = nrow(deg_results_down[[22]])
-      )
-    ),
-    rep(
-      "S305N\nP301S\nNLGF S305N\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[23]])), yes = 0,
-        no = nrow(deg_results_down[[23]])
-      )
-    ),
-    rep(
-      "S305N\nP301S\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[24]])), yes = 0,
-        no = nrow(deg_results_down[[24]])
-      )
-    ),
-    rep(
-      "NLGF MAPTKI",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[25]])), yes = 0,
-        no = nrow(deg_results_down[[25]])
-      )
-    ),
-    rep(
-      "NLGF MAPTKI\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[26]])), yes = 0,
-        no = nrow(deg_results_down[[26]])
-      )
-    ),
-    rep(
-      "NLGF S305N",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[27]])), yes = 0,
-        no = nrow(deg_results_down[[27]])
-      )
-    ),
-    rep(
-      "NLGF MAPTKI\nNLGF S305N",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[28]])), yes = 0,
-        no = nrow(deg_results_down[[28]])
-      )
-    ),
-    rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[29]])), yes = 0,
-        no = nrow(deg_results_down[[29]])
-      )
-    ),
-    rep(
-      "NLGF S305N\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[30]])), yes = 0,
-        no = nrow(deg_results_down[[30]])
-      )
-    ),
-    rep(
-      "NLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[31]])), yes = 0,
-        no = nrow(deg_results_down[[31]])
       )
     )
   ),
   levels = c(
     "S305N",
-    "P301S",
-    "S305N\nP301S",
-    "S305N\nNLGF MAPTKI",
-    "S305N\nNLGF MAPTKI\nNLGF P301S",
     "S305N\nNLGF S305N",
-    "S305N\nNLGF MAPTKI\nNLGF S305N",
-    "S305N\nNLGF MAPTKI\nNLGF S305N\nNLGF P301S",
-    "S305N\nNLGF S305N\nNLGF P301S",
-    "S305N\nNLGF P301S",
-    "P301S\nNLGF MAPTKI",
-    "P301S\nNLGF MAPTKI\nNLGF P301S",
-    "P301S\nNLGF S305N",
-    "P301S\nNLGF MAPTKI\nNLGF S305N",
-    "P301S\nNLGF MAPTKI\nNLGF S305N\nNLGF P301S",
-    "P301S\nNLGF S305N\nNLGF P301S",
+    "P301S",
     "P301S\nNLGF P301S",
-    "S305N\nP301S\nNLGF MAPTKI",
-    "S305N\nP301S\nNLGF MAPTKI\nNLGF P301S",
-    "S305N\nP301S\nNLGF S305N",
-    "S305N\nP301S\nNLGF MAPTKI\nNLGF S305N",
-    "S305N\nP301S\nNLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "S305N\nP301S",
     "S305N\nP301S\nNLGF S305N\nNLGF P301S",
-    "S305N\nP301S\nNLGF P301S",
     "NLGF MAPTKI",
     "NLGF MAPTKI\nNLGF P301S",
     "NLGF S305N",
@@ -23788,92 +23504,92 @@ row_split <- factor(
     rep(
       "S305N",
       times = ifelse(
-        is.null(nrow(results_up[[1]])), yes = 0,
-        no = nrow(results_up[[1]])
+        is.null(nrow(deg_results_up[[1]])), yes = 0,
+        no = nrow(deg_results_up[[1]])
       )
     ),
     rep(
       "S305N\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_up[[2]])), yes = 0,
-        no = nrow(results_up[[2]])
+        is.null(nrow(deg_results_up[[2]])), yes = 0,
+        no = nrow(deg_results_up[[2]])
       )
     ),
     rep(
       "P301S",
       times = ifelse(
-        is.null(nrow(results_up[[3]])), yes = 0,
-        no = nrow(results_up[[3]])
+        is.null(nrow(deg_results_up[[3]])), yes = 0,
+        no = nrow(deg_results_up[[3]])
       )
     ),
     rep(
       "P301S\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[4]])), yes = 0,
-        no = nrow(results_up[[4]])
+        is.null(nrow(deg_results_up[[4]])), yes = 0,
+        no = nrow(deg_results_up[[4]])
       )
     ),
     rep(
       "S305N\nP301S",
       times = ifelse(
-        is.null(nrow(results_up[[5]])), yes = 0,
-        no = nrow(results_up[[5]])
+        is.null(nrow(deg_results_up[[5]])), yes = 0,
+        no = nrow(deg_results_up[[5]])
       )
     ),
     rep(
       "S305N\nP301S\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[6]])), yes = 0,
-        no = nrow(results_up[[6]])
+        is.null(nrow(deg_results_up[[6]])), yes = 0,
+        no = nrow(deg_results_up[[6]])
       )
     ),
     rep(
       "NLGF MAPTKI",
       times = ifelse(
-        is.null(nrow(results_up[[7]])), yes = 0,
-        no = nrow(results_up[[7]])
+        is.null(nrow(deg_results_up[[7]])), yes = 0,
+        no = nrow(deg_results_up[[7]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[8]])), yes = 0,
-        no = nrow(results_up[[8]])
+        is.null(nrow(deg_results_up[[8]])), yes = 0,
+        no = nrow(deg_results_up[[8]])
       )
     ),
     rep(
       "NLGF S305N",
       times = ifelse(
-        is.null(nrow(results_up[[9]])), yes = 0,
-        no = nrow(results_up[[9]])
+        is.null(nrow(deg_results_up[[9]])), yes = 0,
+        no = nrow(deg_results_up[[9]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_up[[10]])), yes = 0,
-        no = nrow(results_up[[10]])
+        is.null(nrow(deg_results_up[[10]])), yes = 0,
+        no = nrow(deg_results_up[[10]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[11]])), yes = 0,
-        no = nrow(results_up[[11]])
+        is.null(nrow(deg_results_up[[11]])), yes = 0,
+        no = nrow(deg_results_up[[11]])
       )
     ),
     rep(
       "NLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[12]])), yes = 0,
-        no = nrow(results_up[[12]])
+        is.null(nrow(deg_results_up[[12]])), yes = 0,
+        no = nrow(deg_results_up[[12]])
       )
     ),
     rep(
       "NLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[13]])), yes = 0,
-        no = nrow(results_up[[13]])
+        is.null(nrow(deg_results_up[[13]])), yes = 0,
+        no = nrow(deg_results_up[[13]])
       )
     )
   ),
@@ -23895,12 +23611,12 @@ row_split <- factor(
 )
 
 mat <- deg_corrected[
-  rownames(deg) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_up)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(do.call(rbind, results_up)), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, deg_results_up)), rownames(mat)), , drop = FALSE
 ]
-rownames(mat) <- do.call(rbind, results_up)$symbol
+rownames(mat) <- do.call(rbind, deg_results_up)$symbol
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
@@ -23947,92 +23663,92 @@ row_split <- factor(
     rep(
       "S305N",
       times = ifelse(
-        is.null(nrow(results_down[[1]])), yes = 0,
-        no = nrow(results_down[[1]])
+        is.null(nrow(deg_results_down[[1]])), yes = 0,
+        no = nrow(deg_results_down[[1]])
       )
     ),
     rep(
       "S305N\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_down[[2]])), yes = 0,
-        no = nrow(results_down[[2]])
+        is.null(nrow(deg_results_down[[2]])), yes = 0,
+        no = nrow(deg_results_down[[2]])
       )
     ),
     rep(
       "P301S",
       times = ifelse(
-        is.null(nrow(results_down[[3]])), yes = 0,
-        no = nrow(results_down[[3]])
+        is.null(nrow(deg_results_down[[3]])), yes = 0,
+        no = nrow(deg_results_down[[3]])
       )
     ),
     rep(
       "P301S\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[4]])), yes = 0,
-        no = nrow(results_down[[4]])
+        is.null(nrow(deg_results_down[[4]])), yes = 0,
+        no = nrow(deg_results_down[[4]])
       )
     ),
     rep(
       "S305N\nP301S",
       times = ifelse(
-        is.null(nrow(results_down[[5]])), yes = 0,
-        no = nrow(results_down[[5]])
+        is.null(nrow(deg_results_down[[5]])), yes = 0,
+        no = nrow(deg_results_down[[5]])
       )
     ),
     rep(
       "S305N\nP301S\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[6]])), yes = 0,
-        no = nrow(results_down[[6]])
+        is.null(nrow(deg_results_down[[6]])), yes = 0,
+        no = nrow(deg_results_down[[6]])
       )
     ),
     rep(
       "NLGF MAPTKI",
       times = ifelse(
-        is.null(nrow(results_down[[7]])), yes = 0,
-        no = nrow(results_down[[7]])
+        is.null(nrow(deg_results_down[[7]])), yes = 0,
+        no = nrow(deg_results_down[[7]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[8]])), yes = 0,
-        no = nrow(results_down[[8]])
+        is.null(nrow(deg_results_down[[8]])), yes = 0,
+        no = nrow(deg_results_down[[8]])
       )
     ),
     rep(
       "NLGF S305N",
       times = ifelse(
-        is.null(nrow(results_down[[9]])), yes = 0,
-        no = nrow(results_down[[9]])
+        is.null(nrow(deg_results_down[[9]])), yes = 0,
+        no = nrow(deg_results_down[[9]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_down[[10]])), yes = 0,
-        no = nrow(results_down[[10]])
+        is.null(nrow(deg_results_down[[10]])), yes = 0,
+        no = nrow(deg_results_down[[10]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[11]])), yes = 0,
-        no = nrow(results_down[[11]])
+        is.null(nrow(deg_results_down[[11]])), yes = 0,
+        no = nrow(deg_results_down[[11]])
       )
     ),
     rep(
       "NLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[12]])), yes = 0,
-        no = nrow(results_down[[12]])
+        is.null(nrow(deg_results_down[[12]])), yes = 0,
+        no = nrow(deg_results_down[[12]])
       )
     ),
     rep(
       "NLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[13]])), yes = 0,
-        no = nrow(results_down[[13]])
+        is.null(nrow(deg_results_down[[13]])), yes = 0,
+        no = nrow(deg_results_down[[13]])
       )
     )
   ),
@@ -24054,12 +23770,14 @@ row_split <- factor(
 )
 
 mat <- deg_corrected[
-  rownames(deg) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_down)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(do.call(rbind, results_down)), rownames(mat)), , drop = FALSE
+  match(
+    rownames(do.call(rbind, deg_results_down)), rownames(mat)
+  ), , drop = FALSE
 ]
-rownames(mat) <- do.call(rbind, results_down)$symbol
+rownames(mat) <- do.call(rbind, deg_results_down)$symbol
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
@@ -28486,92 +28204,92 @@ row_split <- factor(
     rep(
       "S305N",
       times = ifelse(
-        is.null(nrow(results_up[[1]])), yes = 0,
-        no = nrow(results_up[[1]])
+        is.null(nrow(deg_results_up[[1]])), yes = 0,
+        no = nrow(deg_results_up[[1]])
       )
     ),
     rep(
       "S305N\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_up[[2]])), yes = 0,
-        no = nrow(results_up[[2]])
+        is.null(nrow(deg_results_up[[2]])), yes = 0,
+        no = nrow(deg_results_up[[2]])
       )
     ),
     rep(
       "P301S",
       times = ifelse(
-        is.null(nrow(results_up[[3]])), yes = 0,
-        no = nrow(results_up[[3]])
+        is.null(nrow(deg_results_up[[3]])), yes = 0,
+        no = nrow(deg_results_up[[3]])
       )
     ),
     rep(
       "P301S\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[4]])), yes = 0,
-        no = nrow(results_up[[4]])
+        is.null(nrow(deg_results_up[[4]])), yes = 0,
+        no = nrow(deg_results_up[[4]])
       )
     ),
     rep(
       "S305N\nP301S",
       times = ifelse(
-        is.null(nrow(results_up[[5]])), yes = 0,
-        no = nrow(results_up[[5]])
+        is.null(nrow(deg_results_up[[5]])), yes = 0,
+        no = nrow(deg_results_up[[5]])
       )
     ),
     rep(
       "S305N\nP301S\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[6]])), yes = 0,
-        no = nrow(results_up[[6]])
+        is.null(nrow(deg_results_up[[6]])), yes = 0,
+        no = nrow(deg_results_up[[6]])
       )
     ),
     rep(
       "NLGF MAPTKI",
       times = ifelse(
-        is.null(nrow(results_up[[7]])), yes = 0,
-        no = nrow(results_up[[7]])
+        is.null(nrow(deg_results_up[[7]])), yes = 0,
+        no = nrow(deg_results_up[[7]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[8]])), yes = 0,
-        no = nrow(results_up[[8]])
+        is.null(nrow(deg_results_up[[8]])), yes = 0,
+        no = nrow(deg_results_up[[8]])
       )
     ),
     rep(
       "NLGF S305N",
       times = ifelse(
-        is.null(nrow(results_up[[9]])), yes = 0,
-        no = nrow(results_up[[9]])
+        is.null(nrow(deg_results_up[[9]])), yes = 0,
+        no = nrow(deg_results_up[[9]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_up[[10]])), yes = 0,
-        no = nrow(results_up[[10]])
+        is.null(nrow(deg_results_up[[10]])), yes = 0,
+        no = nrow(deg_results_up[[10]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[11]])), yes = 0,
-        no = nrow(results_up[[11]])
+        is.null(nrow(deg_results_up[[11]])), yes = 0,
+        no = nrow(deg_results_up[[11]])
       )
     ),
     rep(
       "NLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[12]])), yes = 0,
-        no = nrow(results_up[[12]])
+        is.null(nrow(deg_results_up[[12]])), yes = 0,
+        no = nrow(deg_results_up[[12]])
       )
     ),
     rep(
       "NLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[13]])), yes = 0,
-        no = nrow(results_up[[13]])
+        is.null(nrow(deg_results_up[[13]])), yes = 0,
+        no = nrow(deg_results_up[[13]])
       )
     )
   ),
@@ -28593,12 +28311,12 @@ row_split <- factor(
 )
 
 mat <- deg_corrected[
-  rownames(deg) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_up)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(do.call(rbind, results_up)), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, deg_results_up)), rownames(mat)), , drop = FALSE
 ]
-rownames(mat) <- do.call(rbind, results_up)$symbol
+rownames(mat) <- do.call(rbind, deg_results_up)$symbol
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
@@ -28645,92 +28363,92 @@ row_split <- factor(
     rep(
       "S305N",
       times = ifelse(
-        is.null(nrow(results_down[[1]])), yes = 0,
-        no = nrow(results_down[[1]])
+        is.null(nrow(deg_results_down[[1]])), yes = 0,
+        no = nrow(deg_results_down[[1]])
       )
     ),
     rep(
       "S305N\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_down[[2]])), yes = 0,
-        no = nrow(results_down[[2]])
+        is.null(nrow(deg_results_down[[2]])), yes = 0,
+        no = nrow(deg_results_down[[2]])
       )
     ),
     rep(
       "P301S",
       times = ifelse(
-        is.null(nrow(results_down[[3]])), yes = 0,
-        no = nrow(results_down[[3]])
+        is.null(nrow(deg_results_down[[3]])), yes = 0,
+        no = nrow(deg_results_down[[3]])
       )
     ),
     rep(
       "P301S\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[4]])), yes = 0,
-        no = nrow(results_down[[4]])
+        is.null(nrow(deg_results_down[[4]])), yes = 0,
+        no = nrow(deg_results_down[[4]])
       )
     ),
     rep(
       "S305N\nP301S",
       times = ifelse(
-        is.null(nrow(results_down[[5]])), yes = 0,
-        no = nrow(results_down[[5]])
+        is.null(nrow(deg_results_down[[5]])), yes = 0,
+        no = nrow(deg_results_down[[5]])
       )
     ),
     rep(
       "S305N\nP301S\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[6]])), yes = 0,
-        no = nrow(results_down[[6]])
+        is.null(nrow(deg_results_down[[6]])), yes = 0,
+        no = nrow(deg_results_down[[6]])
       )
     ),
     rep(
       "NLGF MAPTKI",
       times = ifelse(
-        is.null(nrow(results_down[[7]])), yes = 0,
-        no = nrow(results_down[[7]])
+        is.null(nrow(deg_results_down[[7]])), yes = 0,
+        no = nrow(deg_results_down[[7]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[8]])), yes = 0,
-        no = nrow(results_down[[8]])
+        is.null(nrow(deg_results_down[[8]])), yes = 0,
+        no = nrow(deg_results_down[[8]])
       )
     ),
     rep(
       "NLGF S305N",
       times = ifelse(
-        is.null(nrow(results_down[[9]])), yes = 0,
-        no = nrow(results_down[[9]])
+        is.null(nrow(deg_results_down[[9]])), yes = 0,
+        no = nrow(deg_results_down[[9]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_down[[10]])), yes = 0,
-        no = nrow(results_down[[10]])
+        is.null(nrow(deg_results_down[[10]])), yes = 0,
+        no = nrow(deg_results_down[[10]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[11]])), yes = 0,
-        no = nrow(results_down[[11]])
+        is.null(nrow(deg_results_down[[11]])), yes = 0,
+        no = nrow(deg_results_down[[11]])
       )
     ),
     rep(
       "NLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[12]])), yes = 0,
-        no = nrow(results_down[[12]])
+        is.null(nrow(deg_results_down[[12]])), yes = 0,
+        no = nrow(deg_results_down[[12]])
       )
     ),
     rep(
       "NLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[13]])), yes = 0,
-        no = nrow(results_down[[13]])
+        is.null(nrow(deg_results_down[[13]])), yes = 0,
+        no = nrow(deg_results_down[[13]])
       )
     )
   ),
@@ -28752,12 +28470,14 @@ row_split <- factor(
 )
 
 mat <- deg_corrected[
-  rownames(deg) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_down)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(do.call(rbind, results_down)), rownames(mat)), , drop = FALSE
+  match(
+    rownames(do.call(rbind, deg_results_down)), rownames(mat)
+  ), , drop = FALSE
 ]
-rownames(mat) <- do.call(rbind, results_down)$symbol
+rownames(mat) <- do.call(rbind, deg_results_down)$symbol
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
@@ -33192,92 +32912,92 @@ row_split <- factor(
     rep(
       "S305N",
       times = ifelse(
-        is.null(nrow(results_up[[1]])), yes = 0,
-        no = nrow(results_up[[1]])
+        is.null(nrow(deg_results_up[[1]])), yes = 0,
+        no = nrow(deg_results_up[[1]])
       )
     ),
     rep(
       "S305N\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_up[[2]])), yes = 0,
-        no = nrow(results_up[[2]])
+        is.null(nrow(deg_results_up[[2]])), yes = 0,
+        no = nrow(deg_results_up[[2]])
       )
     ),
     rep(
       "P301S",
       times = ifelse(
-        is.null(nrow(results_up[[3]])), yes = 0,
-        no = nrow(results_up[[3]])
+        is.null(nrow(deg_results_up[[3]])), yes = 0,
+        no = nrow(deg_results_up[[3]])
       )
     ),
     rep(
       "P301S\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[4]])), yes = 0,
-        no = nrow(results_up[[4]])
+        is.null(nrow(deg_results_up[[4]])), yes = 0,
+        no = nrow(deg_results_up[[4]])
       )
     ),
     rep(
       "S305N\nP301S",
       times = ifelse(
-        is.null(nrow(results_up[[5]])), yes = 0,
-        no = nrow(results_up[[5]])
+        is.null(nrow(deg_results_up[[5]])), yes = 0,
+        no = nrow(deg_results_up[[5]])
       )
     ),
     rep(
       "S305N\nP301S\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[6]])), yes = 0,
-        no = nrow(results_up[[6]])
+        is.null(nrow(deg_results_up[[6]])), yes = 0,
+        no = nrow(deg_results_up[[6]])
       )
     ),
     rep(
       "NLGF MAPTKI",
       times = ifelse(
-        is.null(nrow(results_up[[7]])), yes = 0,
-        no = nrow(results_up[[7]])
+        is.null(nrow(deg_results_up[[7]])), yes = 0,
+        no = nrow(deg_results_up[[7]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[8]])), yes = 0,
-        no = nrow(results_up[[8]])
+        is.null(nrow(deg_results_up[[8]])), yes = 0,
+        no = nrow(deg_results_up[[8]])
       )
     ),
     rep(
       "NLGF S305N",
       times = ifelse(
-        is.null(nrow(results_up[[9]])), yes = 0,
-        no = nrow(results_up[[9]])
+        is.null(nrow(deg_results_up[[9]])), yes = 0,
+        no = nrow(deg_results_up[[9]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_up[[10]])), yes = 0,
-        no = nrow(results_up[[10]])
+        is.null(nrow(deg_results_up[[10]])), yes = 0,
+        no = nrow(deg_results_up[[10]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[11]])), yes = 0,
-        no = nrow(results_up[[11]])
+        is.null(nrow(deg_results_up[[11]])), yes = 0,
+        no = nrow(deg_results_up[[11]])
       )
     ),
     rep(
       "NLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[12]])), yes = 0,
-        no = nrow(results_up[[12]])
+        is.null(nrow(deg_results_up[[12]])), yes = 0,
+        no = nrow(deg_results_up[[12]])
       )
     ),
     rep(
       "NLGF P301S",
       times = ifelse(
-        is.null(nrow(results_up[[13]])), yes = 0,
-        no = nrow(results_up[[13]])
+        is.null(nrow(deg_results_up[[13]])), yes = 0,
+        no = nrow(deg_results_up[[13]])
       )
     )
   ),
@@ -33299,12 +33019,12 @@ row_split <- factor(
 )
 
 mat <- deg_corrected[
-  rownames(deg) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_up)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(do.call(rbind, results_up)), rownames(mat)), , drop = FALSE
+  match(rownames(do.call(rbind, deg_results_up)), rownames(mat)), , drop = FALSE
 ]
-rownames(mat) <- do.call(rbind, results_up)$symbol
+rownames(mat) <- do.call(rbind, deg_results_up)$symbol
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
@@ -33351,92 +33071,92 @@ row_split <- factor(
     rep(
       "S305N",
       times = ifelse(
-        is.null(nrow(results_down[[1]])), yes = 0,
-        no = nrow(results_down[[1]])
+        is.null(nrow(deg_results_down[[1]])), yes = 0,
+        no = nrow(deg_results_down[[1]])
       )
     ),
     rep(
       "S305N\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_down[[2]])), yes = 0,
-        no = nrow(results_down[[2]])
+        is.null(nrow(deg_results_down[[2]])), yes = 0,
+        no = nrow(deg_results_down[[2]])
       )
     ),
     rep(
       "P301S",
       times = ifelse(
-        is.null(nrow(results_down[[3]])), yes = 0,
-        no = nrow(results_down[[3]])
+        is.null(nrow(deg_results_down[[3]])), yes = 0,
+        no = nrow(deg_results_down[[3]])
       )
     ),
     rep(
       "P301S\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[4]])), yes = 0,
-        no = nrow(results_down[[4]])
+        is.null(nrow(deg_results_down[[4]])), yes = 0,
+        no = nrow(deg_results_down[[4]])
       )
     ),
     rep(
       "S305N\nP301S",
       times = ifelse(
-        is.null(nrow(results_down[[5]])), yes = 0,
-        no = nrow(results_down[[5]])
+        is.null(nrow(deg_results_down[[5]])), yes = 0,
+        no = nrow(deg_results_down[[5]])
       )
     ),
     rep(
       "S305N\nP301S\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[6]])), yes = 0,
-        no = nrow(results_down[[6]])
+        is.null(nrow(deg_results_down[[6]])), yes = 0,
+        no = nrow(deg_results_down[[6]])
       )
     ),
     rep(
       "NLGF MAPTKI",
       times = ifelse(
-        is.null(nrow(results_down[[7]])), yes = 0,
-        no = nrow(results_down[[7]])
+        is.null(nrow(deg_results_down[[7]])), yes = 0,
+        no = nrow(deg_results_down[[7]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[8]])), yes = 0,
-        no = nrow(results_down[[8]])
+        is.null(nrow(deg_results_down[[8]])), yes = 0,
+        no = nrow(deg_results_down[[8]])
       )
     ),
     rep(
       "NLGF S305N",
       times = ifelse(
-        is.null(nrow(results_down[[9]])), yes = 0,
-        no = nrow(results_down[[9]])
+        is.null(nrow(deg_results_down[[9]])), yes = 0,
+        no = nrow(deg_results_down[[9]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N",
       times = ifelse(
-        is.null(nrow(results_down[[10]])), yes = 0,
-        no = nrow(results_down[[10]])
+        is.null(nrow(deg_results_down[[10]])), yes = 0,
+        no = nrow(deg_results_down[[10]])
       )
     ),
     rep(
       "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[11]])), yes = 0,
-        no = nrow(results_down[[11]])
+        is.null(nrow(deg_results_down[[11]])), yes = 0,
+        no = nrow(deg_results_down[[11]])
       )
     ),
     rep(
       "NLGF S305N\nNLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[12]])), yes = 0,
-        no = nrow(results_down[[12]])
+        is.null(nrow(deg_results_down[[12]])), yes = 0,
+        no = nrow(deg_results_down[[12]])
       )
     ),
     rep(
       "NLGF P301S",
       times = ifelse(
-        is.null(nrow(results_down[[13]])), yes = 0,
-        no = nrow(results_down[[13]])
+        is.null(nrow(deg_results_down[[13]])), yes = 0,
+        no = nrow(deg_results_down[[13]])
       )
     )
   ),
@@ -33458,12 +33178,14 @@ row_split <- factor(
 )
 
 mat <- deg_corrected[
-  rownames(deg) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_down)), , drop = FALSE
 ]
 mat <- mat[
-  match(rownames(do.call(rbind, results_down)), rownames(mat)), , drop = FALSE
+  match(
+    rownames(do.call(rbind, deg_results_down)), rownames(mat)
+  ), , drop = FALSE
 ]
-rownames(mat) <- do.call(rbind, results_down)$symbol
+rownames(mat) <- do.call(rbind, deg_results_down)$symbol
 Heatmap(
   mat,
   col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
