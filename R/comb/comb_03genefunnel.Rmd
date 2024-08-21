@@ -151,6 +151,21 @@ if (file.exists(rds)) {
   rm(files)
   gc()
 
+  seurat_orig <- PrepSCTFindMarkers(seurat_orig, verbose = FALSE)
+  gc()
+
+  counts_mat <- GetAssayData(seurat_orig)
+  counts_mat[is.na(counts_mat)] <- 0
+  seurat_orig <- SetAssayData(seurat_orig, new.data = counts_mat)
+  counts_mat <- GetAssayData(seurat_orig, slot = "counts")
+  counts_mat[is.na(counts_mat)] <- 0
+  seurat_orig <- SetAssayData(
+    seurat_orig, slot = "counts", new.data = counts_mat
+  )
+
+  seurat_orig$nCount_SCT <- colSums(seurat_orig, layer = "counts")
+  seurat_orig$nFeature_SCT <- colSums(counts_mat > 0)
+
   seurat_anno <- readRDS(
     file.path(cache_dir, "..", "step02", "annotated_seurat.rds")
   )
@@ -285,17 +300,6 @@ if (file.exists(rds)) {
   for (i in seq_along(ctypes)) {
 
     seurat <- subset(seurat_orig, idents = ctypes[[i]])
-    seurat <- PrepSCTFindMarkers(seurat, verbose = FALSE)
-
-    counts_mat <- GetAssayData(seurat)
-    counts_mat[is.na(counts_mat)] <- 0
-    seurat <- SetAssayData(seurat, new.data = counts_mat)
-    counts_mat <- GetAssayData(seurat, slot = "counts")
-    counts_mat[is.na(counts_mat)] <- 0
-    seurat <- SetAssayData(seurat, slot = "counts", new.data = counts_mat)
-
-    seurat$nCount_SCT <- colSums(seurat, layer = "counts")
-    seurat$nFeature_SCT <- colSums(counts_mat > 0)
 
     seurat$genotype <- factor(
       seurat$genotype,
