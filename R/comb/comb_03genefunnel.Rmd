@@ -104,19 +104,16 @@ if (!dir.exists(cache_dir)) {
 anno_color <- hue_pal()(4)
 
 priority <- c(
-  "chemo", "T cell", "inflamm", "amyloid", "interleukin", "B cell", "apopt",
-  "myeloid", "calcium", "killer", "leukocyte", "synap", "macrophage", "glial",
-  "lipo", "memory", "learning", "astrocyte", "microgli", "oligodendro",
-  "cognition", "behavior", "cytoskele", "MHC", "exocyt", "cytotoxic", "fear",
-  "NF-kappaB", "axon", "dendri", "protec", "phag", "lipid", "CD8", "phago",
-  "endocyto", "fatty", "CD4", "neuro", "neutrophil", "reticulum", "proteasome",
-  "death", "necro", "toll-like", "ubiquitin", "lysosom", "cytokin",
-  "autophagosom", "immun", "microtubule", "tau", "cholesterol",
-  "glycosaminoglycan", "heparan", "chondroitin", "proteoglycan", "myelin",
-  "insulin", "inclusion", "phosphatidylserine", "complement", "Schwann",
-  "interferon", "Hsp", "heat-shock", "heat shock", "cortisol", "lamin",
-  "apolipo", "senescence", "translat", "transcrip", "cytosis", "aggre", "ER",
-  "dynein", "golgi", "ESCRT", "neurofi", "foldi", "folde", "filam", "stress"
+  "tau-protein", "tau protein", "neurofi", "microtubule", "dynein", "cytoskele",
+  "laminin", "inclusion", "aggrep", "death", "necro", "folding", "folded",
+  "synap", "axon", "dendrit", "senescen", "apopto", "exocyt", "endocyt",
+  "phagocyt", "proteasom", "lysosom", "endoplasmic", "Golgi", "Hsp",
+  "heat shock", "ESCRT", "ubiqui", "heparan", "chondroitin", "sulfotransferase",
+  "glycosaminoglycan", "transcript", "translation", "amyloid", "apolipoprotein",
+  "lipoprotein", "fatty", "cholesterol", "insulin", "pruning",
+  "phosphatidylserine", "complement", "T cell", "B cell", "immun", "inflammat",
+  "stress", "cortisol", "interleukin", "leukocyte", "myeloid", "NF-kappaB",
+  "toll-like", "macrophage", "astrocyte", "oligodendrocyte", "Schwann", "myelin"
 )
 # -----------------
 ```
