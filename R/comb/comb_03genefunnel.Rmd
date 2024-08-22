@@ -662,7 +662,9 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-## GSE
+## Whole Data
+
+### DE Gene Sets
 
 ```{r}
 design <- model.matrix(~ 0 + gse$genotype + gse$batch)
@@ -1377,7 +1379,7 @@ Heatmap(
 )
 ```
 
-## DGE
+### DE Genes
 
 ```{r}
 design <- model.matrix(~ 0 + deg$genotype + deg$batch)
@@ -2098,7 +2100,9 @@ Heatmap(
 )
 ```
 
-## GSE Prioritised
+## Pathways of Interest
+
+### DE Gene Sets
 
 ```{r}
 design <- model.matrix(~ 0 + gse$genotype + gse$batch)
@@ -3074,7 +3078,7 @@ Heatmap(
 )
 ```
 
-## DGE Prioritised
+### DE Genes
 
 ```{r}
 design <- model.matrix(~ 0 + deg$genotype + deg$batch)
@@ -5722,7 +5726,9 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-## GSE
+## Whole Data
+
+### DE Gene Sets
 
 ```{r}
 design <- model.matrix(~ 0 + gse$genotype + gse$batch)
@@ -6437,7 +6443,7 @@ Heatmap(
 )
 ```
 
-## DGE
+### DE Genes
 
 ```{r}
 design <- model.matrix(~ 0 + deg$genotype + deg$batch)
@@ -7159,7 +7165,9 @@ Heatmap(
 )
 ```
 
-## GSE Prioritised
+## Pathways of Interest
+
+### DE Gene Sets
 
 ```{r}
 design <- model.matrix(~ 0 + gse$genotype + gse$batch)
@@ -8135,7 +8143,7 @@ Heatmap(
 )
 ```
 
-## DGE Prioritised
+### DE Genes
 
 ```{r}
 design <- model.matrix(~ 0 + deg$genotype + deg$batch)
@@ -10785,7 +10793,9 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-## GSE
+## Whole Data
+
+### DE Gene Sets
 
 ```{r}
 design <- model.matrix(~ 0 + gse$genotype + gse$batch)
@@ -11502,7 +11512,7 @@ Heatmap(
 )
 ```
 
-## DGE
+### DE Genes
 
 ```{r}
 design <- model.matrix(~ 0 + deg$genotype + deg$batch)
@@ -12225,7 +12235,9 @@ Heatmap(
 )
 ```
 
-## GSE Prioritised
+## Pathways of Interest
+
+### DE Gene Sets
 
 ```{r}
 design <- model.matrix(~ 0 + gse$genotype + gse$batch)
@@ -13203,7 +13215,7 @@ Heatmap(
 )
 ```
 
-## DGE Prioritised
+### DE Genes
 
 ```{r}
 design <- model.matrix(~ 0 + deg$genotype + deg$batch)
@@ -15857,7 +15869,9 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-## GSE
+## Whole Data
+
+### DE Gene Sets
 
 ```{r}
 design <- model.matrix(~ 0 + gse$genotype + gse$batch)
@@ -16575,7 +16589,7 @@ Heatmap(
 )
 ```
 
-## DGE
+### DE Genes
 
 ```{r}
 design <- model.matrix(~ 0 + deg$genotype + deg$batch)
@@ -17300,7 +17314,9 @@ Heatmap(
 )
 ```
 
-## GSE Prioritised
+## Pathways of Interest
+
+### DE Gene Sets
 
 ```{r}
 design <- model.matrix(~ 0 + gse$genotype + gse$batch)
@@ -18279,7 +18295,7 @@ Heatmap(
 )
 ```
 
-## DGE Prioritised
+### DE Genes
 
 ```{r}
 design <- model.matrix(~ 0 + deg$genotype + deg$batch)
@@ -21532,7 +21548,9 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-## GSE
+## Whole Data
+
+### DE Gene Sets
 
 ```{r}
 design <- model.matrix(~ 0 + gse$genotype + gse$batch)
@@ -22251,7 +22269,7 @@ Heatmap(
 )
 ```
 
-## DGE
+### DE Genes
 
 ```{r}
 design <- model.matrix(~ 0 + deg$genotype + deg$batch)
@@ -22977,7 +22995,9 @@ Heatmap(
 )
 ```
 
-## GSE Prioritised
+## Pathways of Interest
+
+### DE Gene Sets
 
 ```{r}
 design <- model.matrix(~ 0 + gse$genotype + gse$batch)
@@ -23957,7 +23977,7 @@ Heatmap(
 )
 ```
 
-## DGE Prioritised
+### DE Genes
 
 ```{r}
 design <- model.matrix(~ 0 + deg$genotype + deg$batch)
@@ -26619,7 +26639,9 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-## GSE
+## Whole Data
+
+### DE Gene Sets
 
 ```{r}
 design <- model.matrix(~ 0 + gse$genotype + gse$batch)
@@ -27340,7 +27362,7 @@ Heatmap(
 )
 ```
 
-## DGE
+### DE Genes
 
 ```{r}
 design <- model.matrix(~ 0 + deg$genotype + deg$batch)
@@ -28067,7 +28089,9 @@ Heatmap(
 )
 ```
 
-## GSE Prioritised
+## Pathways of Interest
+
+### DE Gene Sets
 
 ```{r}
 design <- model.matrix(~ 0 + gse$genotype + gse$batch)
@@ -29049,7 +29073,7 @@ Heatmap(
 )
 ```
 
-## DGE Prioritised
+### DE Genes
 
 ```{r}
 design <- model.matrix(~ 0 + deg$genotype + deg$batch)
@@ -31715,7 +31739,9 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-## GSE
+## Whole Data
+
+### DE Gene Sets
 
 ```{r}
 design <- model.matrix(~ 0 + gse$genotype + gse$batch)
@@ -32437,7 +32463,7 @@ Heatmap(
 )
 ```
 
-## DGE
+### DE Genes
 
 ```{r}
 design <- model.matrix(~ 0 + deg$genotype + deg$batch)
@@ -33166,7 +33192,9 @@ Heatmap(
 )
 ```
 
-## GSE Prioritised
+## Pathways of Interest
+
+### DE Gene Sets
 
 ```{r}
 design <- model.matrix(~ 0 + gse$genotype + gse$batch)
@@ -34149,7 +34177,7 @@ Heatmap(
 )
 ```
 
-## DGE Prioritised
+### DE Genes
 
 ```{r}
 design <- model.matrix(~ 0 + deg$genotype + deg$batch)
