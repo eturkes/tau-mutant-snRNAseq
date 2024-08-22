@@ -74,7 +74,8 @@ library(conflicted)
 conflicts_prefer(edgeR::cpm, .quiet = TRUE)
 packages <- c(
   "GSEABase", "Seurat", "scuttle", "scales", "ComplexHeatmap", "edgeR", "DT",
-  "GSVA", "Rcpp", "biomaRt", "circlize", "IHW", "networkD3", "purrr", "dplyr"
+  "GSVA", "Rcpp", "biomaRt", "circlize", "IHW", "networkD3", "purrr", "dplyr",
+  "htmltools"
 )
 invisible(
   suppressPackageStartupMessages(
@@ -2760,7 +2761,7 @@ top_gse <- c(
 )
 ```
 
-```{r, fig.width = 18, fig.height = 14}
+```{r, fig.width = 18, fig.height = 12}
 row_split <- factor(
   c(
     rep(
@@ -3504,7 +3505,7 @@ if (nrow(results_sub_down) > 0) {
 }
 ```
 
-```{r, fig.width = 11, fig.height = 14}
+```{r, fig.width = 11, fig.height = 12}
 row_split <- factor(
   c(
     rep(
@@ -5014,7 +5015,9 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 5.5}
+```{r, fig.height = 2, fig.width = 10}
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_up)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_up[[i]])
@@ -5041,16 +5044,18 @@ for (i in seq_along(gse_genes_up)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_down)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_down[[i]])
@@ -5077,15 +5082,15 @@ for (i in seq_along(gse_genes_down)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 ```
 
 ### Hub Genes
@@ -5531,7 +5536,9 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 5.5}
+```{r, fig.height = 2, fig.width = 10}
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_up)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_up[[i]])
@@ -5558,16 +5565,18 @@ for (i in seq_along(gse_genes_up)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_down)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_down[[i]])
@@ -5594,15 +5603,15 @@ for (i in seq_along(gse_genes_down)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 ```
 
 # Oligodendrocyte
@@ -7825,7 +7834,7 @@ top_gse <- c(
 )
 ```
 
-```{r, fig.width = 18, fig.height = 14}
+```{r, fig.width = 18, fig.height = 10}
 row_split <- factor(
   c(
     rep(
@@ -8570,7 +8579,7 @@ if (nrow(results_sub_down) > 0) {
 }
 ```
 
-```{r, fig.width = 11, fig.height = 14}
+```{r, fig.width = 11, fig.height = 8}
 row_split <- factor(
   c(
     rep(
@@ -10081,7 +10090,9 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 5.5}
+```{r, fig.height = 2, fig.width = 10}
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_up)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_up[[i]])
@@ -10108,16 +10119,18 @@ for (i in seq_along(gse_genes_up)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_down)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_down[[i]])
@@ -10144,15 +10157,15 @@ for (i in seq_along(gse_genes_down)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 ```
 
 ### Hub Genes
@@ -10598,7 +10611,9 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 5.5}
+```{r, fig.height = 2, fig.width = 10}
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_up)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_up[[i]])
@@ -10625,16 +10640,18 @@ for (i in seq_along(gse_genes_up)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_down)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_down[[i]])
@@ -10661,15 +10678,15 @@ for (i in seq_along(gse_genes_down)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 ```
 
 # Microglia
@@ -13643,7 +13660,7 @@ if (nrow(results_sub_down) > 0) {
 }
 ```
 
-```{r, fig.width = 11, fig.height = 14}
+```{r, fig.width = 11, fig.height = 10}
 row_split <- factor(
   c(
     rep(
@@ -15157,7 +15174,9 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 5.5}
+```{r, fig.height = 2, fig.width = 10}
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_up)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_up[[i]])
@@ -15184,16 +15203,18 @@ for (i in seq_along(gse_genes_up)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_down)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_down[[i]])
@@ -15220,15 +15241,15 @@ for (i in seq_along(gse_genes_down)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 ```
 
 ### Hub Genes
@@ -15674,7 +15695,9 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 5.5}
+```{r, fig.height = 2, fig.width = 10}
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_up)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_up[[i]])
@@ -15701,16 +15724,18 @@ for (i in seq_along(gse_genes_up)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_down)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_down[[i]])
@@ -15737,15 +15762,15 @@ for (i in seq_along(gse_genes_down)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 ```
 
 # CA3
@@ -16271,7 +16296,7 @@ if (nrow(results_sub_down) > 0) {
 datatable_download(results)
 ```
 
-```{r, fig.width = 18, fig.height = 14}
+```{r, fig.width = 18, fig.height = 10}
 row_split <- factor(
   c(
     rep(
@@ -17977,7 +18002,7 @@ top_gse <- c(
 )
 ```
 
-```{r, fig.width = 18, fig.height = 8}
+```{r, fig.width = 18, fig.height = 4}
 row_split <- factor(
   c(
     rep(
@@ -18725,7 +18750,7 @@ if (nrow(results_sub_down) > 0) {
 }
 ```
 
-```{r, fig.width = 11, fig.height = 14}
+```{r, fig.width = 11, fig.height = 4}
 row_split <- factor(
   c(
     rep(
@@ -19841,600 +19866,6 @@ if (nrow(results_sub_down) > 0) {
     results_down[[13]] <- results_sub_down[1:nrow(results_sub_down), ]
   }
 }
-`
-deg_results_up <- results_up
-deg_results_down <- results_down
-
-gse_genes_up <- lapply(
-  gse_results_up,
-  FUN = function(x) {
-    geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-  }
-)
-gse_genes_up_orig <- gse_genes_up
-gse_genes_up <- mapply(
-  FUN = function(sublist, filter_vec) {
-    lapply(
-      sublist,
-      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-    )
-  },
-  gse_genes_up,
-  deg_results_up,
-  SIMPLIFY = FALSE
-)
-gse_genes_up <- mapply(
-  FUN = function(x, orig) {
-    lengths(x) / lengths(orig)
-  },
-  gse_genes_up,
-  gse_genes_up_orig,
-  SIMPLIFY = FALSE
-)
-gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[x >= 0.02])
-gse_genes_up <- mapply(
-  FUN = function(x, ref) {
-    x[rownames(x) %in% names(ref), ]
-  },
-  gse_results_up,
-  gse_genes_up,
-  SIMPLIFY = FALSE
-)
-gse_gene_sets_up <- gse_genes_up
-gse_genes_up <- lapply(
-  gse_genes_up,
-  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-)
-deg_results_up <- mapply(
-  FUN = function(x, ref) {
-    x[rownames(x) %in% unlist(ref), ]
-  },
-  deg_results_up,
-  gse_genes_up,
-  SIMPLIFY = FALSE
-)
-
-gse_genes_down <- lapply(
-  gse_results_down,
-  FUN = function(x) {
-    geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-  }
-)
-gse_genes_down_orig <- gse_genes_down
-gse_genes_down <- mapply(
-  FUN = function(sublist, filter_vec) {
-    lapply(
-      sublist,
-      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-    )
-  },
-  gse_genes_down,
-  deg_results_down,
-  SIMPLIFY = FALSE
-)
-gse_genes_down <- mapply(
-  FUN = function(x, orig) {
-    lengths(x) / lengths(orig)
-  },
-  gse_genes_down,
-  gse_genes_down_orig,
-  SIMPLIFY = FALSE
-)
-gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[x >= 0.02])
-gse_genes_down <- mapply(
-  FUN = function(x, ref) {
-    x[rownames(x) %in% names(ref), ]
-  },
-  gse_results_down,
-  gse_genes_down,
-  SIMPLIFY = FALSE
-)
-gse_gene_sets_down <- gse_genes_down
-gse_genes_down <- lapply(
-  gse_genes_down,
-  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-)
-deg_results_down <- mapply(
-  FUN = function(x, ref) {
-    x[rownames(x) %in% unlist(ref), ]
-  },
-  deg_results_down,
-  gse_genes_down,
-  SIMPLIFY = FALSE
-)
-
-# deg_results_up <- results_up
-# deg_results_down <- results_down
-# 
-# gse_genes_up <- lapply(
-#   gse_results_up,
-#   FUN = function(x) {
-#     unlist(
-#       geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-#     )
-#   }
-# )
-# gse_genes_up <- mapply(
-#   FUN = function(x, ref) {
-#     x[x %in% rownames(ref)]
-#   },
-#   gse_genes_up,
-#   deg_results_up,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_up <- lapply(
-#   gse_genes_up, FUN = function(x) names(table(x)[table(x) > 1])
-# )
-# deg_results_up <- mapply(
-#   FUN = function(x, ref) {
-#     x[rownames(x) %in% ref, ]
-#   },
-#   deg_results_up,
-#   gse_genes_up,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_up <- lapply(
-#   gse_results_up,
-#   FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-# )
-# gse_genes_up <- mapply(
-#   FUN = function(sublist, filter_vec) {
-#     lapply(
-#       sublist,
-#       FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-#     )
-#   },
-#   gse_genes_up,
-#   deg_results_up,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[lengths(x) > 0])
-# 
-# gse_genes_down <- lapply(
-#   gse_results_down,
-#   FUN = function(x) {
-#     unlist(
-#       geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-#     )
-#   }
-# )
-# gse_genes_down <- mapply(
-#   FUN = function(x, ref) {
-#     x[x %in% rownames(ref)]
-#   },
-#   gse_genes_down,
-#   deg_results_down,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_down <- lapply(
-#   gse_genes_down, FUN = function(x) names(table(x)[table(x) > 1])
-# )
-# deg_results_down <- mapply(
-#   FUN = function(x, ref) {
-#     x[rownames(x) %in% ref, ]
-#   },
-#   deg_results_down,
-#   gse_genes_down,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_down <- lapply(
-#   gse_results_down,
-#   FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-# )
-# gse_genes_down <- mapply(
-#   FUN = function(sublist, filter_vec) {
-#     lapply(
-#       sublist,
-#       FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-#     )
-#   },
-#   gse_genes_down,
-#   deg_results_down,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[lengths(x) > 0])
-```
-
-```{r, fig.width = 11, fig.height = 8}
-row_split <- factor(
-  c(
-    rep(
-      "S305N",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[1]])), yes = 0,
-        no = nrow(deg_results_up[[1]])
-      )
-    ),
-    rep(
-      "S305N\nNLGF S305N",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[2]])), yes = 0,
-        no = nrow(deg_results_up[[2]])
-      )
-    ),
-    rep(
-      "P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[3]])), yes = 0,
-        no = nrow(deg_results_up[[3]])
-      )
-    ),
-    rep(
-      "P301S\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[4]])), yes = 0,
-        no = nrow(deg_results_up[[4]])
-      )
-    ),
-    rep(
-      "S305N\nP301S",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[5]])), yes = 0,
-        no = nrow(deg_results_up[[5]])
-      )
-    ),
-    rep(
-      "S305N\nP301S\nNLGF S305N\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[6]])), yes = 0,
-        no = nrow(deg_results_up[[6]])
-      )
-    ),
-    rep(
-      "NLGF MAPTKI",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[7]])), yes = 0,
-        no = nrow(deg_results_up[[7]])
-      )
-    ),
-    rep(
-      "NLGF MAPTKI\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[8]])), yes = 0,
-        no = nrow(deg_results_up[[8]])
-      )
-    ),
-    rep(
-      "NLGF S305N",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[9]])), yes = 0,
-        no = nrow(deg_results_up[[9]])
-      )
-    ),
-    rep(
-      "NLGF MAPTKI\nNLGF S305N",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[10]])), yes = 0,
-        no = nrow(deg_results_up[[10]])
-      )
-    ),
-    rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[11]])), yes = 0,
-        no = nrow(deg_results_up[[11]])
-      )
-    ),
-    rep(
-      "NLGF S305N\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[12]])), yes = 0,
-        no = nrow(deg_results_up[[12]])
-      )
-    ),
-    rep(
-      "NLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_up[[13]])), yes = 0,
-        no = nrow(deg_results_up[[13]])
-      )
-    )
-  ),
-  levels = c(
-    "S305N",
-    "S305N\nNLGF S305N",
-    "P301S",
-    "P301S\nNLGF P301S",
-    "S305N\nP301S",
-    "S305N\nP301S\nNLGF S305N\nNLGF P301S",
-    "NLGF MAPTKI",
-    "NLGF MAPTKI\nNLGF P301S",
-    "NLGF S305N",
-    "NLGF MAPTKI\nNLGF S305N",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
-    "NLGF S305N\nNLGF P301S",
-    "NLGF P301S"
-  )
-)
-
-mat <- deg_corrected[
-  rownames(deg) %in% rownames(do.call(rbind, deg_results_up)), , drop = FALSE
-]
-mat <- mat[
-  match(rownames(do.call(rbind, deg_results_up)), rownames(mat)), , drop = FALSE
-]
-rownames(mat) <- do.call(rbind, deg_results_up)$symbol
-Heatmap(
-  mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
-  column_title = names(ctypes)[ctype_idx],
-  cluster_rows = FALSE,
-  cluster_columns = FALSE,
-  row_split = row_split,
-  column_split = rep(seq(6), each = 4),
-  row_title_gp = gpar(fontsize = 7),
-  row_title_rot = 0,
-  top_annotation = top_anno,
-  show_column_names = FALSE,
-  row_names_max_width = max_text_width(rownames(mat)),
-  heatmap_legend_param = list(
-    title = "logCPM", title_position = "lefttop-rot"
-  )
-)
-mat <- t(
-  apply(
-    mat, MARGIN = 1,
-    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
-  )
-)
-Heatmap(
-  mat,
-  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
-  column_title = names(ctypes)[ctype_idx],
-  cluster_rows = FALSE,
-  cluster_columns = FALSE,
-  row_split = row_split,
-  column_split = rep(seq(6), each = 4),
-  row_title_gp = gpar(fontsize = 7),
-  row_title_rot = 0,
-  top_annotation = top_anno,
-  show_column_names = FALSE,
-  row_names_max_width = max_text_width(rownames(mat)),
-  heatmap_legend_param = list(
-    title = "Scaled logCPM", title_position = "lefttop-rot"
-  )
-)
-
-row_split <- factor(
-  c(
-    rep(
-      "S305N",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[1]])), yes = 0,
-        no = nrow(deg_results_down[[1]])
-      )
-    ),
-    rep(
-      "S305N\nNLGF S305N",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[2]])), yes = 0,
-        no = nrow(deg_results_down[[2]])
-      )
-    ),
-    rep(
-      "P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[3]])), yes = 0,
-        no = nrow(deg_results_down[[3]])
-      )
-    ),
-    rep(
-      "P301S\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[4]])), yes = 0,
-        no = nrow(deg_results_down[[4]])
-      )
-    ),
-    rep(
-      "S305N\nP301S",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[5]])), yes = 0,
-        no = nrow(deg_results_down[[5]])
-      )
-    ),
-    rep(
-      "S305N\nP301S\nNLGF S305N\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[6]])), yes = 0,
-        no = nrow(deg_results_down[[6]])
-      )
-    ),
-    rep(
-      "NLGF MAPTKI",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[7]])), yes = 0,
-        no = nrow(deg_results_down[[7]])
-      )
-    ),
-    rep(
-      "NLGF MAPTKI\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[8]])), yes = 0,
-        no = nrow(deg_results_down[[8]])
-      )
-    ),
-    rep(
-      "NLGF S305N",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[9]])), yes = 0,
-        no = nrow(deg_results_down[[9]])
-      )
-    ),
-    rep(
-      "NLGF MAPTKI\nNLGF S305N",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[10]])), yes = 0,
-        no = nrow(deg_results_down[[10]])
-      )
-    ),
-    rep(
-      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[11]])), yes = 0,
-        no = nrow(deg_results_down[[11]])
-      )
-    ),
-    rep(
-      "NLGF S305N\nNLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[12]])), yes = 0,
-        no = nrow(deg_results_down[[12]])
-      )
-    ),
-    rep(
-      "NLGF P301S",
-      times = ifelse(
-        is.null(nrow(deg_results_down[[13]])), yes = 0,
-        no = nrow(deg_results_down[[13]])
-      )
-    )
-  ),
-  levels = c(
-    "S305N",
-    "S305N\nNLGF S305N",
-    "P301S",
-    "P301S\nNLGF P301S",
-    "S305N\nP301S",
-    "S305N\nP301S\nNLGF S305N\nNLGF P301S",
-    "NLGF MAPTKI",
-    "NLGF MAPTKI\nNLGF P301S",
-    "NLGF S305N",
-    "NLGF MAPTKI\nNLGF S305N",
-    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
-    "NLGF S305N\nNLGF P301S",
-    "NLGF P301S"
-  )
-)
-
-mat <- deg_corrected[
-  rownames(deg) %in% rownames(do.call(rbind, deg_results_down)), , drop = FALSE
-]
-mat <- mat[
-  match(
-    rownames(do.call(rbind, deg_results_down)), rownames(mat)
-  ), , drop = FALSE
-]
-rownames(mat) <- do.call(rbind, deg_results_down)$symbol
-Heatmap(
-  mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
-  column_title = names(ctypes)[ctype_idx],
-  cluster_rows = FALSE,
-  cluster_columns = FALSE,
-  row_split = row_split,
-  column_split = rep(seq(6), each = 4),
-  row_title_gp = gpar(fontsize = 7),
-  row_title_rot = 0,
-  top_annotation = top_anno,
-  show_column_names = FALSE,
-  row_names_max_width = max_text_width(rownames(mat)),
-  heatmap_legend_param = list(
-    title = "logCPM", title_position = "lefttop-rot"
-  )
-)
-mat <- t(
-  apply(
-    mat, MARGIN = 1,
-    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
-  )
-)
-Heatmap(
-  mat,
-  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
-  column_title = names(ctypes)[ctype_idx],
-  cluster_rows = FALSE,
-  cluster_columns = FALSE,
-  row_split = row_split,
-  column_split = rep(seq(6), each = 4),
-  row_title_gp = gpar(fontsize = 7),
-  row_title_rot = 0,
-  top_annotation = top_anno,
-  show_column_names = FALSE,
-  row_names_max_width = max_text_width(rownames(mat)),
-  heatmap_legend_param = list(
-    title = "Scaled logCPM", title_position = "lefttop-rot"
-  )
-)
-```
-
-```{r, fig.height = 2, fig.width = 5.5}
-for (i in seq_along(gse_gene_sets_up)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% rownames(gse_gene_sets_up[[i]])
-  ]
-# for (i in seq_along(gse_genes_up)) {
-#   gene_ids <- geneIds(gene_sets)[
-#     names(gene_sets) %in% names(gse_genes_up[[i]])
-#   ]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
-
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
-    )
-  }
-}
-
-for (i in seq_along(gse_gene_sets_down)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% rownames(gse_gene_sets_down[[i]])
-  ]
-# for (i in seq_along(gse_genes_down)) {
-#   gene_ids <- geneIds(gene_sets)[
-#     names(gene_sets) %in% names(gse_genes_down[[i]])
-#   ]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
-
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
-    )
-  }
-}
 ```
 
 ### Hub Gene Sets
@@ -20836,7 +20267,9 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 5.5}
+```{r, fig.height = 2, fig.width = 10}
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_up)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_up[[i]])
@@ -20863,16 +20296,18 @@ for (i in seq_along(gse_genes_up)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_down)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_down[[i]])
@@ -20899,15 +20334,15 @@ for (i in seq_along(gse_genes_down)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 ```
 
 ### Hub Genes
@@ -21353,7 +20788,9 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 5.5}
+```{r, fig.height = 2, fig.width = 10}
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_up)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_up[[i]])
@@ -21380,16 +20817,18 @@ for (i in seq_along(gse_genes_up)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_down)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_down[[i]])
@@ -21416,15 +20855,15 @@ for (i in seq_along(gse_genes_down)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 ```
 
 # CA1
@@ -23659,7 +23098,7 @@ top_gse <- c(
 )
 ```
 
-```{r, fig.width = 18, fig.height = 14}
+```{r, fig.width = 18, fig.height = 8}
 row_split <- factor(
   c(
     rep(
@@ -24408,7 +23847,7 @@ if (nrow(results_sub_down) > 0) {
 }
 ```
 
-```{r, fig.width = 11, fig.height = 14}
+```{r, fig.width = 11, fig.height = 8}
 row_split <- factor(
   c(
     rep(
@@ -25927,7 +25366,9 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 5.5}
+```{r, fig.height = 2, fig.width = 10}
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_up)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_up[[i]])
@@ -25954,16 +25395,18 @@ for (i in seq_along(gse_genes_up)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_down)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_down[[i]])
@@ -25990,15 +25433,15 @@ for (i in seq_along(gse_genes_down)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 ```
 
 ### Hub Genes
@@ -26444,7 +25887,9 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 5.5}
+```{r, fig.height = 2, fig.width = 10}
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_up)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_up[[i]])
@@ -26471,16 +25916,18 @@ for (i in seq_along(gse_genes_up)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_down)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_down[[i]])
@@ -26507,15 +25954,15 @@ for (i in seq_along(gse_genes_down)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 ```
 
 # ENT
@@ -28755,7 +28202,7 @@ top_gse <- c(
 )
 ```
 
-```{r, fig.width = 18, fig.height = 14}
+```{r, fig.width = 18, fig.height = 6}
 row_split <- factor(
   c(
     rep(
@@ -29505,7 +28952,7 @@ if (nrow(results_sub_down) > 0) {
 }
 ```
 
-```{r, fig.width = 11, fig.height = 14}
+```{r, fig.width = 11, fig.height = 4}
 row_split <- factor(
   c(
     rep(
@@ -31027,7 +30474,9 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 5.5}
+```{r, fig.height = 2, fig.width = 10}
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_up)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_up[[i]])
@@ -31054,16 +30503,18 @@ for (i in seq_along(gse_genes_up)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_down)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_down[[i]])
@@ -31090,15 +30541,15 @@ for (i in seq_along(gse_genes_down)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 ```
 
 ### Hub Genes
@@ -31544,7 +30995,9 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 5.5}
+```{r, fig.height = 2, fig.width = 10}
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_up)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_up[[i]])
@@ -31571,16 +31024,18 @@ for (i in seq_along(gse_genes_up)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_down)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_down[[i]])
@@ -31607,15 +31062,15 @@ for (i in seq_along(gse_genes_down)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 ```
 
 # GABAergic
@@ -33859,7 +33314,7 @@ top_gse <- c(
 )
 ```
 
-```{r, fig.width = 18, fig.height = 14}
+```{r, fig.width = 18, fig.height = 8}
 row_split <- factor(
   c(
     rep(
@@ -34611,7 +34066,7 @@ if (nrow(results_sub_down) > 0) {
 }
 ```
 
-```{r, fig.width = 11, fig.height = 14}
+```{r, fig.width = 11, fig.height = 4}
 row_split <- factor(
   c(
     rep(
@@ -36135,7 +35590,9 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 5.5}
+```{r, fig.height = 2, fig.width = 10}
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_up)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_up[[i]])
@@ -36162,16 +35619,18 @@ for (i in seq_along(gse_genes_up)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_down)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_down[[i]])
@@ -36198,15 +35657,15 @@ for (i in seq_along(gse_genes_down)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 ```
 
 ### Hub Genes
@@ -36652,7 +36111,9 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 5.5}
+```{r, fig.height = 2, fig.width = 10}
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_up)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_up[[i]])
@@ -36679,16 +36140,18 @@ for (i in seq_along(gse_genes_up)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 
+sankey_list <- list()
+sankey_idx <- 1
 for (i in seq_along(gse_genes_down)) {
   gene_ids <- geneIds(gene_sets)[
     names(gene_sets) %in% names(gse_genes_down[[i]])
@@ -36715,15 +36178,15 @@ for (i in seq_along(gse_genes_down)) {
     links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
     links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
 
-    print(
-      sankeyNetwork(
-        Links = links_comb, Nodes = nodes, Source = "IDsource",
-        Target = "IDtarget", Value = "value", NodeID = "name",
-        sinksRight = FALSE, fontSize = 20
-      )
+    sankey_list[[sankey_idx]] <- sankeyNetwork(
+      Links = links_comb, Nodes = nodes, Source = "IDsource",
+      Target = "IDtarget", Value = "value", NodeID = "name",
+      sinksRight = FALSE, fontSize = 20
     )
+    sankey_idx <- sankey_idx + 1
   }
 }
+tagList(sankey_list)
 ```
 
 # References
