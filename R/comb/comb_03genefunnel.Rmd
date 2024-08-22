@@ -11,7 +11,7 @@ output:
     theme: lumen
     highlight: haddock
     toc: true
-    toc_depth: 2
+    toc_depth: 3
     toc_float:
       collapsed: false
       smooth_scroll: false
@@ -28,6 +28,7 @@ body {font-size: 16px;}
 h1.title {font-size: 35px;}
 h1 {font-size: 24px;}
 h2 {font-size: 22px;}
+h3 {font-size: 20px;}
 .toc-content {padding-left: 0px; padding-right: 0px;}
 div.tocify {width: 100%;}
 .tocify-subheader .tocify-item {
@@ -35,6 +36,9 @@ div.tocify {width: 100%;}
 }
 .tocify-subheader .tocify-subheader .tocify-item {
   font-size: 0.95em; padding-left: 35px; text-indent: 0;
+}
+.tocify-subheader .tocify-subheader .tocify-subheader .tocify-item {
+  font-size: 0.95em; padding-left: 45px; text-indent: 0;
 }
 div.main-container {max-width: none; width: 100%;}
 </style>
@@ -230,7 +234,9 @@ rds <- file.path(cache_dir, "gene_sets_keep.rds")
 if (file.exists(rds)) {
   gene_sets_keep <- readRDS(rds)
 } else {
-  gene_sets_keep <- gene_sets
+
+  keep <- filterGeneSets(gene_sets, min.sz = 2, max.sz = 30)
+  gene_sets_keep <- gene_sets[names(gene_sets) %in% names(keep)]
 
   gene_sets_keep <- gene_sets_keep[
     !grepl("regulation", x = names(gene_sets_keep)) |
@@ -257,6 +263,24 @@ if (file.exists(rds)) {
   )
   gene_sets_keep <- gene_sets_keep[-remove]
 
+  gene_sets_ordered <- computeGeneSetsOverlapMax(
+    gene_sets_keep, uniqGenes = unique(unlist(geneIds(gene_sets_keep)))
+  )
+  gene_sets_ordered <- rowSums(gene_sets_ordered)
+  gene_sets_ordered <- gene_sets_ordered[order(gene_sets_ordered)]
+  gene_sets_keep <- gene_sets_keep[
+    match(names(gene_sets_ordered), names(gene_sets_keep))
+  ]
+
+  gene_sets_keep <- computeGeneSetsOverlapMax(
+    gene_sets_keep, uniqGenes = unique(unlist(geneIds(gene_sets_keep)))
+  )
+  gene_sets_keep[upper.tri(gene_sets_keep)] <- 0
+  diag(gene_sets_keep) <- 0
+  gene_sets_keep <- apply(gene_sets_keep, MARGIN = 1, FUN = max)
+  gene_sets_keep <- gene_sets_keep[gene_sets_keep < 0.55]
+
+  rm(gene_sets_ordered)
   saveRDS(gene_sets_keep, file = rds)
 }
 gene_sets[names(gene_sets) %in% names(gene_sets_keep)]
@@ -3796,7 +3820,7 @@ Heatmap(
 )
 ```
 
-## Pruned
+## Hub Analysis
 
 ```{r}
 design <- model.matrix(~ 0 + gse$genotype + gse$batch)
@@ -4585,201 +4609,86 @@ if (nrow(results_sub_down) > 0) {
     results_down[[13]] <- results_sub_down[1:nrow(results_sub_down), ]
   }
 }
+```
 
+### Hub Gene Sets
+
+```{r}
 deg_results_up <- results_up
 deg_results_down <- results_down
 
 gse_genes_up <- lapply(
   gse_results_up,
-  FUN = function(x) {
-    geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-  }
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
 )
-gse_genes_up_orig <- gse_genes_up
+gse_genes_up <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_up,
+  gse_results_up,
+  SIMPLIFY = FALSE
+)
 gse_genes_up <- mapply(
   FUN = function(sublist, filter_vec) {
-    lapply(
-      sublist,
-      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-    )
+    lapply(sublist, FUN = function(vec) vec[vec %in% rownames(filter_vec)])
   },
   gse_genes_up,
   deg_results_up,
   SIMPLIFY = FALSE
 )
-gse_genes_up <- mapply(
-  FUN = function(x, orig) {
-    lengths(x) / lengths(orig)
-  },
-  gse_genes_up,
-  gse_genes_up_orig,
-  SIMPLIFY = FALSE
-)
-gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[x >= 0.02])
-gse_genes_up <- mapply(
-  FUN = function(x, ref) {
-    x[rownames(x) %in% names(ref), ]
-  },
-  gse_results_up,
-  gse_genes_up,
-  SIMPLIFY = FALSE
-)
-gse_gene_sets_up <- gse_genes_up
 gse_genes_up <- lapply(
+  gse_genes_up, FUN = function(x) x[which.max(lengths(x))]
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[lengths(x) > 0])
+match_genes_up <- lapply(
   gse_genes_up,
-  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% names(x)])
 )
 deg_results_up <- mapply(
   FUN = function(x, ref) {
     x[rownames(x) %in% unlist(ref), ]
   },
   deg_results_up,
-  gse_genes_up,
+  match_genes_up,
   SIMPLIFY = FALSE
 )
 
 gse_genes_down <- lapply(
   gse_results_down,
-  FUN = function(x) {
-    geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-  }
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
 )
-gse_genes_down_orig <- gse_genes_down
+gse_genes_down <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_down,
+  gse_results_down,
+  SIMPLIFY = FALSE
+)
 gse_genes_down <- mapply(
   FUN = function(sublist, filter_vec) {
-    lapply(
-      sublist,
-      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-    )
+    lapply(sublist, FUN = function(vec) vec[vec %in% rownames(filter_vec)])
   },
   gse_genes_down,
   deg_results_down,
   SIMPLIFY = FALSE
 )
-gse_genes_down <- mapply(
-  FUN = function(x, orig) {
-    lengths(x) / lengths(orig)
-  },
-  gse_genes_down,
-  gse_genes_down_orig,
-  SIMPLIFY = FALSE
-)
-gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[x >= 0.02])
-gse_genes_down <- mapply(
-  FUN = function(x, ref) {
-    x[rownames(x) %in% names(ref), ]
-  },
-  gse_results_down,
-  gse_genes_down,
-  SIMPLIFY = FALSE
-)
-gse_gene_sets_down <- gse_genes_down
 gse_genes_down <- lapply(
+  gse_genes_down, FUN = function(x) x[which.max(lengths(x))]
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[lengths(x) > 0])
+match_genes_down <- lapply(
   gse_genes_down,
-  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% names(x)])
 )
 deg_results_down <- mapply(
   FUN = function(x, ref) {
     x[rownames(x) %in% unlist(ref), ]
   },
   deg_results_down,
-  gse_genes_down,
+  match_genes_down,
   SIMPLIFY = FALSE
 )
-
-# deg_results_up <- results_up
-# deg_results_down <- results_down
-# 
-# gse_genes_up <- lapply(
-#   gse_results_up,
-#   FUN = function(x) {
-#     unlist(
-#       geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-#     )
-#   }
-# )
-# gse_genes_up <- mapply(
-#   FUN = function(x, ref) {
-#     x[x %in% rownames(ref)]
-#   },
-#   gse_genes_up,
-#   deg_results_up,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_up <- lapply(
-#   gse_genes_up, FUN = function(x) names(table(x)[table(x) > 1])
-# )
-# deg_results_up <- mapply(
-#   FUN = function(x, ref) {
-#     x[rownames(x) %in% ref, ]
-#   },
-#   deg_results_up,
-#   gse_genes_up,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_up <- lapply(
-#   gse_results_up,
-#   FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-# )
-# gse_genes_up <- mapply(
-#   FUN = function(sublist, filter_vec) {
-#     lapply(
-#       sublist,
-#       FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-#     )
-#   },
-#   gse_genes_up,
-#   deg_results_up,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[lengths(x) > 0])
-# 
-# gse_genes_down <- lapply(
-#   gse_results_down,
-#   FUN = function(x) {
-#     unlist(
-#       geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-#     )
-#   }
-# )
-# gse_genes_down <- mapply(
-#   FUN = function(x, ref) {
-#     x[x %in% rownames(ref)]
-#   },
-#   gse_genes_down,
-#   deg_results_down,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_down <- lapply(
-#   gse_genes_down, FUN = function(x) names(table(x)[table(x) > 1])
-# )
-# deg_results_down <- mapply(
-#   FUN = function(x, ref) {
-#     x[rownames(x) %in% ref, ]
-#   },
-#   deg_results_down,
-#   gse_genes_down,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_down <- lapply(
-#   gse_results_down,
-#   FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-# )
-# gse_genes_down <- mapply(
-#   FUN = function(sublist, filter_vec) {
-#     lapply(
-#       sublist,
-#       FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-#     )
-#   },
-#   gse_genes_down,
-#   deg_results_down,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[lengths(x) > 0])
 ```
 
-```{r, fig.width = 11, fig.height = 8}
+```{r, fig.width = 11, fig.height = 5}
 row_split <- factor(
   c(
     rep(
@@ -5102,14 +5011,11 @@ Heatmap(
 ```
 
 ```{r, fig.height = 2, fig.width = 5.5}
-for (i in seq_along(gse_gene_sets_up)) {
+for (i in seq_along(gse_genes_up)) {
   gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% rownames(gse_gene_sets_up[[i]])
+    names(gene_sets) %in% names(gse_genes_up[[i]])
   ]
-# for (i in seq_along(gse_genes_up)) {
-#   gene_ids <- geneIds(gene_sets)[
-#     names(gene_sets) %in% names(gse_genes_up[[i]])
-#   ]
+  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
   if (length(gene_ids) > 0) {
     links_orig <- data.frame(
       source = rep(names(gene_ids), times = lengths(gene_ids)),
@@ -5141,14 +5047,528 @@ for (i in seq_along(gse_gene_sets_up)) {
   }
 }
 
-for (i in seq_along(gse_gene_sets_down)) {
+for (i in seq_along(gse_genes_down)) {
   gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% rownames(gse_gene_sets_down[[i]])
+    names(gene_sets) %in% names(gse_genes_down[[i]])
   ]
-# for (i in seq_along(gse_genes_down)) {
-#   gene_ids <- geneIds(gene_sets)[
-#     names(gene_sets) %in% names(gse_genes_down[[i]])
-#   ]
+  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
+  if (length(gene_ids) > 0) {
+    links_orig <- data.frame(
+      source = rep(names(gene_ids), times = lengths(gene_ids)),
+      target = gene_ids %>% map_dfr(as_tibble)
+    )
+    links <- links_orig
+    links_orig[] <- map[unlist(links_orig)]
+    links$value <- links_orig$value
+    colnames(links) <- c("source", "target")
+    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
+    links$value <- rep(1, times = nrow(links))
+    links_comb <- links
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    print(
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20
+      )
+    )
+  }
+}
+```
+
+### Hub Genes
+
+```{r}
+deg_results_up <- results_up
+deg_results_down <- results_down
+
+gse_genes_up <- lapply(
+  gse_results_up,
+  FUN = function(x) {
+    unlist(
+      geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+    )
+  }
+)
+gse_genes_up <- mapply(
+  FUN = function(x, ref) x[x %in% rownames(ref)],
+  gse_genes_up,
+  deg_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) table(x))
+deg_results_sub_up <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_up,
+  gse_genes_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- mapply(
+  FUN = function(x, ref) x[match(rownames(ref), names(x))],
+  gse_genes_up,
+  deg_results_sub_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[which.max(x)])
+deg_results_up <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_up,
+  gse_genes_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(
+  gse_results_up,
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+)
+gse_genes_up <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_up,
+  gse_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- mapply(
+  FUN = function(sublist, filter_vec) {
+    lapply(
+      sublist,
+      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
+    )
+  },
+  gse_genes_up,
+  deg_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[lengths(x) > 0])
+
+gse_genes_down <- lapply(
+  gse_results_down,
+  FUN = function(x) {
+    unlist(
+      geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+    )
+  }
+)
+gse_genes_down <- mapply(
+  FUN = function(x, ref) x[x %in% rownames(ref)],
+  gse_genes_down,
+  deg_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) table(x))
+deg_results_sub_down <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_down,
+  gse_genes_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- mapply(
+  FUN = function(x, ref) x[match(rownames(ref), names(x))],
+  gse_genes_down,
+  deg_results_sub_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[which.max(x)])
+deg_results_down <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_down,
+  gse_genes_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(
+  gse_results_down,
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+)
+gse_genes_down <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_down,
+  gse_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- mapply(
+  FUN = function(sublist, filter_vec) {
+    lapply(
+      sublist,
+      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
+    )
+  },
+  gse_genes_down,
+  deg_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[lengths(x) > 0])
+```
+
+```{r, fig.width = 11, fig.height = 4}
+row_split <- factor(
+  c(
+    rep(
+      "S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[1]])), yes = 0,
+        no = nrow(deg_results_up[[1]])
+      )
+    ),
+    rep(
+      "S305N\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[2]])), yes = 0,
+        no = nrow(deg_results_up[[2]])
+      )
+    ),
+    rep(
+      "P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[3]])), yes = 0,
+        no = nrow(deg_results_up[[3]])
+      )
+    ),
+    rep(
+      "P301S\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[4]])), yes = 0,
+        no = nrow(deg_results_up[[4]])
+      )
+    ),
+    rep(
+      "S305N\nP301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[5]])), yes = 0,
+        no = nrow(deg_results_up[[5]])
+      )
+    ),
+    rep(
+      "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[6]])), yes = 0,
+        no = nrow(deg_results_up[[6]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[7]])), yes = 0,
+        no = nrow(deg_results_up[[7]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[8]])), yes = 0,
+        no = nrow(deg_results_up[[8]])
+      )
+    ),
+    rep(
+      "NLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[9]])), yes = 0,
+        no = nrow(deg_results_up[[9]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[10]])), yes = 0,
+        no = nrow(deg_results_up[[10]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[11]])), yes = 0,
+        no = nrow(deg_results_up[[11]])
+      )
+    ),
+    rep(
+      "NLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[12]])), yes = 0,
+        no = nrow(deg_results_up[[12]])
+      )
+    ),
+    rep(
+      "NLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[13]])), yes = 0,
+        no = nrow(deg_results_up[[13]])
+      )
+    )
+  ),
+  levels = c(
+    "S305N",
+    "S305N\nNLGF S305N",
+    "P301S",
+    "P301S\nNLGF P301S",
+    "S305N\nP301S",
+    "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_up)), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(do.call(rbind, deg_results_up)), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- do.call(rbind, deg_results_up)$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+
+row_split <- factor(
+  c(
+    rep(
+      "S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[1]])), yes = 0,
+        no = nrow(deg_results_down[[1]])
+      )
+    ),
+    rep(
+      "S305N\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[2]])), yes = 0,
+        no = nrow(deg_results_down[[2]])
+      )
+    ),
+    rep(
+      "P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[3]])), yes = 0,
+        no = nrow(deg_results_down[[3]])
+      )
+    ),
+    rep(
+      "P301S\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[4]])), yes = 0,
+        no = nrow(deg_results_down[[4]])
+      )
+    ),
+    rep(
+      "S305N\nP301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[5]])), yes = 0,
+        no = nrow(deg_results_down[[5]])
+      )
+    ),
+    rep(
+      "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[6]])), yes = 0,
+        no = nrow(deg_results_down[[6]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[7]])), yes = 0,
+        no = nrow(deg_results_down[[7]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[8]])), yes = 0,
+        no = nrow(deg_results_down[[8]])
+      )
+    ),
+    rep(
+      "NLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[9]])), yes = 0,
+        no = nrow(deg_results_down[[9]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[10]])), yes = 0,
+        no = nrow(deg_results_down[[10]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[11]])), yes = 0,
+        no = nrow(deg_results_down[[11]])
+      )
+    ),
+    rep(
+      "NLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[12]])), yes = 0,
+        no = nrow(deg_results_down[[12]])
+      )
+    ),
+    rep(
+      "NLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[13]])), yes = 0,
+        no = nrow(deg_results_down[[13]])
+      )
+    )
+  ),
+  levels = c(
+    "S305N",
+    "S305N\nNLGF S305N",
+    "P301S",
+    "P301S\nNLGF P301S",
+    "S305N\nP301S",
+    "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_down)), , drop = FALSE
+]
+mat <- mat[
+  match(
+    rownames(do.call(rbind, deg_results_down)), rownames(mat)
+  ), , drop = FALSE
+]
+rownames(mat) <- do.call(rbind, deg_results_down)$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+```
+
+```{r, fig.height = 2, fig.width = 5.5}
+for (i in seq_along(gse_genes_up)) {
+  gene_ids <- geneIds(gene_sets)[
+    names(gene_sets) %in% names(gse_genes_up[[i]])
+  ]
+  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
+  if (length(gene_ids) > 0) {
+    links_orig <- data.frame(
+      source = rep(names(gene_ids), times = lengths(gene_ids)),
+      target = gene_ids %>% map_dfr(as_tibble)
+    )
+    links <- links_orig
+    links_orig[] <- map[unlist(links_orig)]
+    links$value <- links_orig$value
+    colnames(links) <- c("source", "target")
+    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
+    links$value <- rep(1, times = nrow(links))
+    links_comb <- links
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    print(
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20
+      )
+    )
+  }
+}
+
+for (i in seq_along(gse_genes_down)) {
+  gene_ids <- geneIds(gene_sets)[
+    names(gene_sets) %in% names(gse_genes_down[[i]])
+  ]
+  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
   if (length(gene_ids) > 0) {
     links_orig <- data.frame(
       source = rep(names(gene_ids), times = lengths(gene_ids)),
@@ -8462,7 +8882,7 @@ Heatmap(
 )
 ```
 
-## Pruned
+## Hub Analysis
 
 ```{r}
 design <- model.matrix(~ 0 + gse$genotype + gse$batch)
@@ -9252,201 +9672,86 @@ if (nrow(results_sub_down) > 0) {
     results_down[[13]] <- results_sub_down[1:nrow(results_sub_down), ]
   }
 }
+```
 
+### Hub Gene Sets
+
+```{r}
 deg_results_up <- results_up
 deg_results_down <- results_down
 
 gse_genes_up <- lapply(
   gse_results_up,
-  FUN = function(x) {
-    geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-  }
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
 )
-gse_genes_up_orig <- gse_genes_up
+gse_genes_up <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_up,
+  gse_results_up,
+  SIMPLIFY = FALSE
+)
 gse_genes_up <- mapply(
   FUN = function(sublist, filter_vec) {
-    lapply(
-      sublist,
-      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-    )
+    lapply(sublist, FUN = function(vec) vec[vec %in% rownames(filter_vec)])
   },
   gse_genes_up,
   deg_results_up,
   SIMPLIFY = FALSE
 )
-gse_genes_up <- mapply(
-  FUN = function(x, orig) {
-    lengths(x) / lengths(orig)
-  },
-  gse_genes_up,
-  gse_genes_up_orig,
-  SIMPLIFY = FALSE
-)
-gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[x >= 0.02])
-gse_genes_up <- mapply(
-  FUN = function(x, ref) {
-    x[rownames(x) %in% names(ref), ]
-  },
-  gse_results_up,
-  gse_genes_up,
-  SIMPLIFY = FALSE
-)
-gse_gene_sets_up <- gse_genes_up
 gse_genes_up <- lapply(
+  gse_genes_up, FUN = function(x) x[which.max(lengths(x))]
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[lengths(x) > 0])
+match_genes_up <- lapply(
   gse_genes_up,
-  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% names(x)])
 )
 deg_results_up <- mapply(
   FUN = function(x, ref) {
     x[rownames(x) %in% unlist(ref), ]
   },
   deg_results_up,
-  gse_genes_up,
+  match_genes_up,
   SIMPLIFY = FALSE
 )
 
 gse_genes_down <- lapply(
   gse_results_down,
-  FUN = function(x) {
-    geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-  }
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
 )
-gse_genes_down_orig <- gse_genes_down
+gse_genes_down <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_down,
+  gse_results_down,
+  SIMPLIFY = FALSE
+)
 gse_genes_down <- mapply(
   FUN = function(sublist, filter_vec) {
-    lapply(
-      sublist,
-      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-    )
+    lapply(sublist, FUN = function(vec) vec[vec %in% rownames(filter_vec)])
   },
   gse_genes_down,
   deg_results_down,
   SIMPLIFY = FALSE
 )
-gse_genes_down <- mapply(
-  FUN = function(x, orig) {
-    lengths(x) / lengths(orig)
-  },
-  gse_genes_down,
-  gse_genes_down_orig,
-  SIMPLIFY = FALSE
-)
-gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[x >= 0.02])
-gse_genes_down <- mapply(
-  FUN = function(x, ref) {
-    x[rownames(x) %in% names(ref), ]
-  },
-  gse_results_down,
-  gse_genes_down,
-  SIMPLIFY = FALSE
-)
-gse_gene_sets_down <- gse_genes_down
 gse_genes_down <- lapply(
+  gse_genes_down, FUN = function(x) x[which.max(lengths(x))]
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[lengths(x) > 0])
+match_genes_down <- lapply(
   gse_genes_down,
-  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% names(x)])
 )
 deg_results_down <- mapply(
   FUN = function(x, ref) {
     x[rownames(x) %in% unlist(ref), ]
   },
   deg_results_down,
-  gse_genes_down,
+  match_genes_down,
   SIMPLIFY = FALSE
 )
-
-# deg_results_up <- results_up
-# deg_results_down <- results_down
-# 
-# gse_genes_up <- lapply(
-#   gse_results_up,
-#   FUN = function(x) {
-#     unlist(
-#       geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-#     )
-#   }
-# )
-# gse_genes_up <- mapply(
-#   FUN = function(x, ref) {
-#     x[x %in% rownames(ref)]
-#   },
-#   gse_genes_up,
-#   deg_results_up,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_up <- lapply(
-#   gse_genes_up, FUN = function(x) names(table(x)[table(x) > 1])
-# )
-# deg_results_up <- mapply(
-#   FUN = function(x, ref) {
-#     x[rownames(x) %in% ref, ]
-#   },
-#   deg_results_up,
-#   gse_genes_up,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_up <- lapply(
-#   gse_results_up,
-#   FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-# )
-# gse_genes_up <- mapply(
-#   FUN = function(sublist, filter_vec) {
-#     lapply(
-#       sublist,
-#       FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-#     )
-#   },
-#   gse_genes_up,
-#   deg_results_up,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[lengths(x) > 0])
-# 
-# gse_genes_down <- lapply(
-#   gse_results_down,
-#   FUN = function(x) {
-#     unlist(
-#       geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-#     )
-#   }
-# )
-# gse_genes_down <- mapply(
-#   FUN = function(x, ref) {
-#     x[x %in% rownames(ref)]
-#   },
-#   gse_genes_down,
-#   deg_results_down,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_down <- lapply(
-#   gse_genes_down, FUN = function(x) names(table(x)[table(x) > 1])
-# )
-# deg_results_down <- mapply(
-#   FUN = function(x, ref) {
-#     x[rownames(x) %in% ref, ]
-#   },
-#   deg_results_down,
-#   gse_genes_down,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_down <- lapply(
-#   gse_results_down,
-#   FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-# )
-# gse_genes_down <- mapply(
-#   FUN = function(sublist, filter_vec) {
-#     lapply(
-#       sublist,
-#       FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-#     )
-#   },
-#   gse_genes_down,
-#   deg_results_down,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[lengths(x) > 0])
 ```
 
-```{r, fig.width = 11, fig.height = 8}
+```{r, fig.width = 11, fig.height = 5}
 row_split <- factor(
   c(
     rep(
@@ -9769,14 +10074,11 @@ Heatmap(
 ```
 
 ```{r, fig.height = 2, fig.width = 5.5}
-for (i in seq_along(gse_gene_sets_up)) {
+for (i in seq_along(gse_genes_up)) {
   gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% rownames(gse_gene_sets_up[[i]])
+    names(gene_sets) %in% names(gse_genes_up[[i]])
   ]
-# for (i in seq_along(gse_genes_up)) {
-#   gene_ids <- geneIds(gene_sets)[
-#     names(gene_sets) %in% names(gse_genes_up[[i]])
-#   ]
+  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
   if (length(gene_ids) > 0) {
     links_orig <- data.frame(
       source = rep(names(gene_ids), times = lengths(gene_ids)),
@@ -9808,14 +10110,528 @@ for (i in seq_along(gse_gene_sets_up)) {
   }
 }
 
-for (i in seq_along(gse_gene_sets_down)) {
+for (i in seq_along(gse_genes_down)) {
   gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% rownames(gse_gene_sets_down[[i]])
+    names(gene_sets) %in% names(gse_genes_down[[i]])
   ]
-# for (i in seq_along(gse_genes_down)) {
-#   gene_ids <- geneIds(gene_sets)[
-#     names(gene_sets) %in% names(gse_genes_down[[i]])
-#   ]
+  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
+  if (length(gene_ids) > 0) {
+    links_orig <- data.frame(
+      source = rep(names(gene_ids), times = lengths(gene_ids)),
+      target = gene_ids %>% map_dfr(as_tibble)
+    )
+    links <- links_orig
+    links_orig[] <- map[unlist(links_orig)]
+    links$value <- links_orig$value
+    colnames(links) <- c("source", "target")
+    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
+    links$value <- rep(1, times = nrow(links))
+    links_comb <- links
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    print(
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20
+      )
+    )
+  }
+}
+```
+
+### Hub Genes
+
+```{r}
+deg_results_up <- results_up
+deg_results_down <- results_down
+
+gse_genes_up <- lapply(
+  gse_results_up,
+  FUN = function(x) {
+    unlist(
+      geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+    )
+  }
+)
+gse_genes_up <- mapply(
+  FUN = function(x, ref) x[x %in% rownames(ref)],
+  gse_genes_up,
+  deg_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) table(x))
+deg_results_sub_up <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_up,
+  gse_genes_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- mapply(
+  FUN = function(x, ref) x[match(rownames(ref), names(x))],
+  gse_genes_up,
+  deg_results_sub_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[which.max(x)])
+deg_results_up <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_up,
+  gse_genes_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(
+  gse_results_up,
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+)
+gse_genes_up <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_up,
+  gse_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- mapply(
+  FUN = function(sublist, filter_vec) {
+    lapply(
+      sublist,
+      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
+    )
+  },
+  gse_genes_up,
+  deg_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[lengths(x) > 0])
+
+gse_genes_down <- lapply(
+  gse_results_down,
+  FUN = function(x) {
+    unlist(
+      geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+    )
+  }
+)
+gse_genes_down <- mapply(
+  FUN = function(x, ref) x[x %in% rownames(ref)],
+  gse_genes_down,
+  deg_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) table(x))
+deg_results_sub_down <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_down,
+  gse_genes_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- mapply(
+  FUN = function(x, ref) x[match(rownames(ref), names(x))],
+  gse_genes_down,
+  deg_results_sub_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[which.max(x)])
+deg_results_down <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_down,
+  gse_genes_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(
+  gse_results_down,
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+)
+gse_genes_down <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_down,
+  gse_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- mapply(
+  FUN = function(sublist, filter_vec) {
+    lapply(
+      sublist,
+      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
+    )
+  },
+  gse_genes_down,
+  deg_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[lengths(x) > 0])
+```
+
+```{r, fig.width = 11, fig.height = 4}
+row_split <- factor(
+  c(
+    rep(
+      "S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[1]])), yes = 0,
+        no = nrow(deg_results_up[[1]])
+      )
+    ),
+    rep(
+      "S305N\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[2]])), yes = 0,
+        no = nrow(deg_results_up[[2]])
+      )
+    ),
+    rep(
+      "P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[3]])), yes = 0,
+        no = nrow(deg_results_up[[3]])
+      )
+    ),
+    rep(
+      "P301S\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[4]])), yes = 0,
+        no = nrow(deg_results_up[[4]])
+      )
+    ),
+    rep(
+      "S305N\nP301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[5]])), yes = 0,
+        no = nrow(deg_results_up[[5]])
+      )
+    ),
+    rep(
+      "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[6]])), yes = 0,
+        no = nrow(deg_results_up[[6]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[7]])), yes = 0,
+        no = nrow(deg_results_up[[7]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[8]])), yes = 0,
+        no = nrow(deg_results_up[[8]])
+      )
+    ),
+    rep(
+      "NLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[9]])), yes = 0,
+        no = nrow(deg_results_up[[9]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[10]])), yes = 0,
+        no = nrow(deg_results_up[[10]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[11]])), yes = 0,
+        no = nrow(deg_results_up[[11]])
+      )
+    ),
+    rep(
+      "NLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[12]])), yes = 0,
+        no = nrow(deg_results_up[[12]])
+      )
+    ),
+    rep(
+      "NLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[13]])), yes = 0,
+        no = nrow(deg_results_up[[13]])
+      )
+    )
+  ),
+  levels = c(
+    "S305N",
+    "S305N\nNLGF S305N",
+    "P301S",
+    "P301S\nNLGF P301S",
+    "S305N\nP301S",
+    "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_up)), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(do.call(rbind, deg_results_up)), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- do.call(rbind, deg_results_up)$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+
+row_split <- factor(
+  c(
+    rep(
+      "S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[1]])), yes = 0,
+        no = nrow(deg_results_down[[1]])
+      )
+    ),
+    rep(
+      "S305N\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[2]])), yes = 0,
+        no = nrow(deg_results_down[[2]])
+      )
+    ),
+    rep(
+      "P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[3]])), yes = 0,
+        no = nrow(deg_results_down[[3]])
+      )
+    ),
+    rep(
+      "P301S\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[4]])), yes = 0,
+        no = nrow(deg_results_down[[4]])
+      )
+    ),
+    rep(
+      "S305N\nP301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[5]])), yes = 0,
+        no = nrow(deg_results_down[[5]])
+      )
+    ),
+    rep(
+      "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[6]])), yes = 0,
+        no = nrow(deg_results_down[[6]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[7]])), yes = 0,
+        no = nrow(deg_results_down[[7]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[8]])), yes = 0,
+        no = nrow(deg_results_down[[8]])
+      )
+    ),
+    rep(
+      "NLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[9]])), yes = 0,
+        no = nrow(deg_results_down[[9]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[10]])), yes = 0,
+        no = nrow(deg_results_down[[10]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[11]])), yes = 0,
+        no = nrow(deg_results_down[[11]])
+      )
+    ),
+    rep(
+      "NLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[12]])), yes = 0,
+        no = nrow(deg_results_down[[12]])
+      )
+    ),
+    rep(
+      "NLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[13]])), yes = 0,
+        no = nrow(deg_results_down[[13]])
+      )
+    )
+  ),
+  levels = c(
+    "S305N",
+    "S305N\nNLGF S305N",
+    "P301S",
+    "P301S\nNLGF P301S",
+    "S305N\nP301S",
+    "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_down)), , drop = FALSE
+]
+mat <- mat[
+  match(
+    rownames(do.call(rbind, deg_results_down)), rownames(mat)
+  ), , drop = FALSE
+]
+rownames(mat) <- do.call(rbind, deg_results_down)$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+```
+
+```{r, fig.height = 2, fig.width = 5.5}
+for (i in seq_along(gse_genes_up)) {
+  gene_ids <- geneIds(gene_sets)[
+    names(gene_sets) %in% names(gse_genes_up[[i]])
+  ]
+  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
+  if (length(gene_ids) > 0) {
+    links_orig <- data.frame(
+      source = rep(names(gene_ids), times = lengths(gene_ids)),
+      target = gene_ids %>% map_dfr(as_tibble)
+    )
+    links <- links_orig
+    links_orig[] <- map[unlist(links_orig)]
+    links$value <- links_orig$value
+    colnames(links) <- c("source", "target")
+    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
+    links$value <- rep(1, times = nrow(links))
+    links_comb <- links
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    print(
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20
+      )
+    )
+  }
+}
+
+for (i in seq_along(gse_genes_down)) {
+  gene_ids <- geneIds(gene_sets)[
+    names(gene_sets) %in% names(gse_genes_down[[i]])
+  ]
+  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
   if (length(gene_ids) > 0) {
     links_orig <- data.frame(
       source = rep(names(gene_ids), times = lengths(gene_ids)),
@@ -13135,7 +13951,7 @@ Heatmap(
 )
 ```
 
-## Pruned
+## Hub Analysis
 
 ```{r}
 design <- model.matrix(~ 0 + gse$genotype + gse$batch)
@@ -13928,201 +14744,86 @@ if (nrow(results_sub_down) > 0) {
     results_down[[13]] <- results_sub_down[1:nrow(results_sub_down), ]
   }
 }
+```
 
+### Hub Gene Sets
+
+```{r}
 deg_results_up <- results_up
 deg_results_down <- results_down
 
 gse_genes_up <- lapply(
   gse_results_up,
-  FUN = function(x) {
-    geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-  }
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
 )
-gse_genes_up_orig <- gse_genes_up
+gse_genes_up <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_up,
+  gse_results_up,
+  SIMPLIFY = FALSE
+)
 gse_genes_up <- mapply(
   FUN = function(sublist, filter_vec) {
-    lapply(
-      sublist,
-      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-    )
+    lapply(sublist, FUN = function(vec) vec[vec %in% rownames(filter_vec)])
   },
   gse_genes_up,
   deg_results_up,
   SIMPLIFY = FALSE
 )
-gse_genes_up <- mapply(
-  FUN = function(x, orig) {
-    lengths(x) / lengths(orig)
-  },
-  gse_genes_up,
-  gse_genes_up_orig,
-  SIMPLIFY = FALSE
-)
-gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[x >= 0.02])
-gse_genes_up <- mapply(
-  FUN = function(x, ref) {
-    x[rownames(x) %in% names(ref), ]
-  },
-  gse_results_up,
-  gse_genes_up,
-  SIMPLIFY = FALSE
-)
-gse_gene_sets_up <- gse_genes_up
 gse_genes_up <- lapply(
+  gse_genes_up, FUN = function(x) x[which.max(lengths(x))]
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[lengths(x) > 0])
+match_genes_up <- lapply(
   gse_genes_up,
-  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% names(x)])
 )
 deg_results_up <- mapply(
   FUN = function(x, ref) {
     x[rownames(x) %in% unlist(ref), ]
   },
   deg_results_up,
-  gse_genes_up,
+  match_genes_up,
   SIMPLIFY = FALSE
 )
 
 gse_genes_down <- lapply(
   gse_results_down,
-  FUN = function(x) {
-    geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-  }
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
 )
-gse_genes_down_orig <- gse_genes_down
+gse_genes_down <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_down,
+  gse_results_down,
+  SIMPLIFY = FALSE
+)
 gse_genes_down <- mapply(
   FUN = function(sublist, filter_vec) {
-    lapply(
-      sublist,
-      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-    )
+    lapply(sublist, FUN = function(vec) vec[vec %in% rownames(filter_vec)])
   },
   gse_genes_down,
   deg_results_down,
   SIMPLIFY = FALSE
 )
-gse_genes_down <- mapply(
-  FUN = function(x, orig) {
-    lengths(x) / lengths(orig)
-  },
-  gse_genes_down,
-  gse_genes_down_orig,
-  SIMPLIFY = FALSE
-)
-gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[x >= 0.02])
-gse_genes_down <- mapply(
-  FUN = function(x, ref) {
-    x[rownames(x) %in% names(ref), ]
-  },
-  gse_results_down,
-  gse_genes_down,
-  SIMPLIFY = FALSE
-)
-gse_gene_sets_down <- gse_genes_down
 gse_genes_down <- lapply(
+  gse_genes_down, FUN = function(x) x[which.max(lengths(x))]
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[lengths(x) > 0])
+match_genes_down <- lapply(
   gse_genes_down,
-  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% names(x)])
 )
 deg_results_down <- mapply(
   FUN = function(x, ref) {
     x[rownames(x) %in% unlist(ref), ]
   },
   deg_results_down,
-  gse_genes_down,
+  match_genes_down,
   SIMPLIFY = FALSE
 )
-
-# deg_results_up <- results_up
-# deg_results_down <- results_down
-# 
-# gse_genes_up <- lapply(
-#   gse_results_up,
-#   FUN = function(x) {
-#     unlist(
-#       geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-#     )
-#   }
-# )
-# gse_genes_up <- mapply(
-#   FUN = function(x, ref) {
-#     x[x %in% rownames(ref)]
-#   },
-#   gse_genes_up,
-#   deg_results_up,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_up <- lapply(
-#   gse_genes_up, FUN = function(x) names(table(x)[table(x) > 1])
-# )
-# deg_results_up <- mapply(
-#   FUN = function(x, ref) {
-#     x[rownames(x) %in% ref, ]
-#   },
-#   deg_results_up,
-#   gse_genes_up,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_up <- lapply(
-#   gse_results_up,
-#   FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-# )
-# gse_genes_up <- mapply(
-#   FUN = function(sublist, filter_vec) {
-#     lapply(
-#       sublist,
-#       FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-#     )
-#   },
-#   gse_genes_up,
-#   deg_results_up,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[lengths(x) > 0])
-# 
-# gse_genes_down <- lapply(
-#   gse_results_down,
-#   FUN = function(x) {
-#     unlist(
-#       geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-#     )
-#   }
-# )
-# gse_genes_down <- mapply(
-#   FUN = function(x, ref) {
-#     x[x %in% rownames(ref)]
-#   },
-#   gse_genes_down,
-#   deg_results_down,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_down <- lapply(
-#   gse_genes_down, FUN = function(x) names(table(x)[table(x) > 1])
-# )
-# deg_results_down <- mapply(
-#   FUN = function(x, ref) {
-#     x[rownames(x) %in% ref, ]
-#   },
-#   deg_results_down,
-#   gse_genes_down,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_down <- lapply(
-#   gse_results_down,
-#   FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-# )
-# gse_genes_down <- mapply(
-#   FUN = function(sublist, filter_vec) {
-#     lapply(
-#       sublist,
-#       FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-#     )
-#   },
-#   gse_genes_down,
-#   deg_results_down,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[lengths(x) > 0])
 ```
 
-```{r, fig.width = 11, fig.height = 8}
+```{r, fig.width = 11, fig.height = 5}
 row_split <- factor(
   c(
     rep(
@@ -14445,14 +15146,11 @@ Heatmap(
 ```
 
 ```{r, fig.height = 2, fig.width = 5.5}
-for (i in seq_along(gse_gene_sets_up)) {
+for (i in seq_along(gse_genes_up)) {
   gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% rownames(gse_gene_sets_up[[i]])
+    names(gene_sets) %in% names(gse_genes_up[[i]])
   ]
-# for (i in seq_along(gse_genes_up)) {
-#   gene_ids <- geneIds(gene_sets)[
-#     names(gene_sets) %in% names(gse_genes_up[[i]])
-#   ]
+  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
   if (length(gene_ids) > 0) {
     links_orig <- data.frame(
       source = rep(names(gene_ids), times = lengths(gene_ids)),
@@ -14484,14 +15182,528 @@ for (i in seq_along(gse_gene_sets_up)) {
   }
 }
 
-for (i in seq_along(gse_gene_sets_down)) {
+for (i in seq_along(gse_genes_down)) {
   gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% rownames(gse_gene_sets_down[[i]])
+    names(gene_sets) %in% names(gse_genes_down[[i]])
   ]
-# for (i in seq_along(gse_genes_down)) {
-#   gene_ids <- geneIds(gene_sets)[
-#     names(gene_sets) %in% names(gse_genes_down[[i]])
-#   ]
+  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
+  if (length(gene_ids) > 0) {
+    links_orig <- data.frame(
+      source = rep(names(gene_ids), times = lengths(gene_ids)),
+      target = gene_ids %>% map_dfr(as_tibble)
+    )
+    links <- links_orig
+    links_orig[] <- map[unlist(links_orig)]
+    links$value <- links_orig$value
+    colnames(links) <- c("source", "target")
+    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
+    links$value <- rep(1, times = nrow(links))
+    links_comb <- links
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    print(
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20
+      )
+    )
+  }
+}
+```
+
+### Hub Genes
+
+```{r}
+deg_results_up <- results_up
+deg_results_down <- results_down
+
+gse_genes_up <- lapply(
+  gse_results_up,
+  FUN = function(x) {
+    unlist(
+      geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+    )
+  }
+)
+gse_genes_up <- mapply(
+  FUN = function(x, ref) x[x %in% rownames(ref)],
+  gse_genes_up,
+  deg_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) table(x))
+deg_results_sub_up <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_up,
+  gse_genes_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- mapply(
+  FUN = function(x, ref) x[match(rownames(ref), names(x))],
+  gse_genes_up,
+  deg_results_sub_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[which.max(x)])
+deg_results_up <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_up,
+  gse_genes_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(
+  gse_results_up,
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+)
+gse_genes_up <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_up,
+  gse_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- mapply(
+  FUN = function(sublist, filter_vec) {
+    lapply(
+      sublist,
+      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
+    )
+  },
+  gse_genes_up,
+  deg_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[lengths(x) > 0])
+
+gse_genes_down <- lapply(
+  gse_results_down,
+  FUN = function(x) {
+    unlist(
+      geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+    )
+  }
+)
+gse_genes_down <- mapply(
+  FUN = function(x, ref) x[x %in% rownames(ref)],
+  gse_genes_down,
+  deg_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) table(x))
+deg_results_sub_down <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_down,
+  gse_genes_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- mapply(
+  FUN = function(x, ref) x[match(rownames(ref), names(x))],
+  gse_genes_down,
+  deg_results_sub_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[which.max(x)])
+deg_results_down <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_down,
+  gse_genes_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(
+  gse_results_down,
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+)
+gse_genes_down <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_down,
+  gse_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- mapply(
+  FUN = function(sublist, filter_vec) {
+    lapply(
+      sublist,
+      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
+    )
+  },
+  gse_genes_down,
+  deg_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[lengths(x) > 0])
+```
+
+```{r, fig.width = 11, fig.height = 4}
+row_split <- factor(
+  c(
+    rep(
+      "S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[1]])), yes = 0,
+        no = nrow(deg_results_up[[1]])
+      )
+    ),
+    rep(
+      "S305N\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[2]])), yes = 0,
+        no = nrow(deg_results_up[[2]])
+      )
+    ),
+    rep(
+      "P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[3]])), yes = 0,
+        no = nrow(deg_results_up[[3]])
+      )
+    ),
+    rep(
+      "P301S\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[4]])), yes = 0,
+        no = nrow(deg_results_up[[4]])
+      )
+    ),
+    rep(
+      "S305N\nP301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[5]])), yes = 0,
+        no = nrow(deg_results_up[[5]])
+      )
+    ),
+    rep(
+      "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[6]])), yes = 0,
+        no = nrow(deg_results_up[[6]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[7]])), yes = 0,
+        no = nrow(deg_results_up[[7]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[8]])), yes = 0,
+        no = nrow(deg_results_up[[8]])
+      )
+    ),
+    rep(
+      "NLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[9]])), yes = 0,
+        no = nrow(deg_results_up[[9]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[10]])), yes = 0,
+        no = nrow(deg_results_up[[10]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[11]])), yes = 0,
+        no = nrow(deg_results_up[[11]])
+      )
+    ),
+    rep(
+      "NLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[12]])), yes = 0,
+        no = nrow(deg_results_up[[12]])
+      )
+    ),
+    rep(
+      "NLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[13]])), yes = 0,
+        no = nrow(deg_results_up[[13]])
+      )
+    )
+  ),
+  levels = c(
+    "S305N",
+    "S305N\nNLGF S305N",
+    "P301S",
+    "P301S\nNLGF P301S",
+    "S305N\nP301S",
+    "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_up)), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(do.call(rbind, deg_results_up)), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- do.call(rbind, deg_results_up)$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+
+row_split <- factor(
+  c(
+    rep(
+      "S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[1]])), yes = 0,
+        no = nrow(deg_results_down[[1]])
+      )
+    ),
+    rep(
+      "S305N\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[2]])), yes = 0,
+        no = nrow(deg_results_down[[2]])
+      )
+    ),
+    rep(
+      "P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[3]])), yes = 0,
+        no = nrow(deg_results_down[[3]])
+      )
+    ),
+    rep(
+      "P301S\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[4]])), yes = 0,
+        no = nrow(deg_results_down[[4]])
+      )
+    ),
+    rep(
+      "S305N\nP301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[5]])), yes = 0,
+        no = nrow(deg_results_down[[5]])
+      )
+    ),
+    rep(
+      "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[6]])), yes = 0,
+        no = nrow(deg_results_down[[6]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[7]])), yes = 0,
+        no = nrow(deg_results_down[[7]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[8]])), yes = 0,
+        no = nrow(deg_results_down[[8]])
+      )
+    ),
+    rep(
+      "NLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[9]])), yes = 0,
+        no = nrow(deg_results_down[[9]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[10]])), yes = 0,
+        no = nrow(deg_results_down[[10]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[11]])), yes = 0,
+        no = nrow(deg_results_down[[11]])
+      )
+    ),
+    rep(
+      "NLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[12]])), yes = 0,
+        no = nrow(deg_results_down[[12]])
+      )
+    ),
+    rep(
+      "NLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[13]])), yes = 0,
+        no = nrow(deg_results_down[[13]])
+      )
+    )
+  ),
+  levels = c(
+    "S305N",
+    "S305N\nNLGF S305N",
+    "P301S",
+    "P301S\nNLGF P301S",
+    "S305N\nP301S",
+    "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_down)), , drop = FALSE
+]
+mat <- mat[
+  match(
+    rownames(do.call(rbind, deg_results_down)), rownames(mat)
+  ), , drop = FALSE
+]
+rownames(mat) <- do.call(rbind, deg_results_down)$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+```
+
+```{r, fig.height = 2, fig.width = 5.5}
+for (i in seq_along(gse_genes_up)) {
+  gene_ids <- geneIds(gene_sets)[
+    names(gene_sets) %in% names(gse_genes_up[[i]])
+  ]
+  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
+  if (length(gene_ids) > 0) {
+    links_orig <- data.frame(
+      source = rep(names(gene_ids), times = lengths(gene_ids)),
+      target = gene_ids %>% map_dfr(as_tibble)
+    )
+    links <- links_orig
+    links_orig[] <- map[unlist(links_orig)]
+    links$value <- links_orig$value
+    colnames(links) <- c("source", "target")
+    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
+    links$value <- rep(1, times = nrow(links))
+    links_comb <- links
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    print(
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20
+      )
+    )
+  }
+}
+
+for (i in seq_along(gse_genes_down)) {
+  gene_ids <- geneIds(gene_sets)[
+    names(gene_sets) %in% names(gse_genes_down[[i]])
+  ]
+  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
   if (length(gene_ids) > 0) {
     links_orig <- data.frame(
       source = rep(names(gene_ids), times = lengths(gene_ids)),
@@ -17817,7 +19029,7 @@ Heatmap(
 )
 ```
 
-## Pruned
+## Hub Analysis
 
 ```{r}
 design <- model.matrix(~ 0 + gse$genotype + gse$batch)
@@ -18613,7 +19825,7 @@ if (nrow(results_sub_down) > 0) {
     results_down[[13]] <- results_sub_down[1:nrow(results_sub_down), ]
   }
 }
-
+`
 deg_results_up <- results_up
 deg_results_down <- results_down
 
@@ -19177,6 +20389,996 @@ for (i in seq_along(gse_gene_sets_down)) {
 #   gene_ids <- geneIds(gene_sets)[
 #     names(gene_sets) %in% names(gse_genes_down[[i]])
 #   ]
+  if (length(gene_ids) > 0) {
+    links_orig <- data.frame(
+      source = rep(names(gene_ids), times = lengths(gene_ids)),
+      target = gene_ids %>% map_dfr(as_tibble)
+    )
+    links <- links_orig
+    links_orig[] <- map[unlist(links_orig)]
+    links$value <- links_orig$value
+    colnames(links) <- c("source", "target")
+    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
+    links$value <- rep(1, times = nrow(links))
+    links_comb <- links
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    print(
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20
+      )
+    )
+  }
+}
+```
+
+### Hub Gene Sets
+
+```{r}
+deg_results_up <- results_up
+deg_results_down <- results_down
+
+gse_genes_up <- lapply(
+  gse_results_up,
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+)
+gse_genes_up <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_up,
+  gse_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- mapply(
+  FUN = function(sublist, filter_vec) {
+    lapply(sublist, FUN = function(vec) vec[vec %in% rownames(filter_vec)])
+  },
+  gse_genes_up,
+  deg_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(
+  gse_genes_up, FUN = function(x) x[which.max(lengths(x))]
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[lengths(x) > 0])
+match_genes_up <- lapply(
+  gse_genes_up,
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% names(x)])
+)
+deg_results_up <- mapply(
+  FUN = function(x, ref) {
+    x[rownames(x) %in% unlist(ref), ]
+  },
+  deg_results_up,
+  match_genes_up,
+  SIMPLIFY = FALSE
+)
+
+gse_genes_down <- lapply(
+  gse_results_down,
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+)
+gse_genes_down <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_down,
+  gse_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- mapply(
+  FUN = function(sublist, filter_vec) {
+    lapply(sublist, FUN = function(vec) vec[vec %in% rownames(filter_vec)])
+  },
+  gse_genes_down,
+  deg_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(
+  gse_genes_down, FUN = function(x) x[which.max(lengths(x))]
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[lengths(x) > 0])
+match_genes_down <- lapply(
+  gse_genes_down,
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% names(x)])
+)
+deg_results_down <- mapply(
+  FUN = function(x, ref) {
+    x[rownames(x) %in% unlist(ref), ]
+  },
+  deg_results_down,
+  match_genes_down,
+  SIMPLIFY = FALSE
+)
+```
+
+```{r, fig.width = 11, fig.height = 5}
+row_split <- factor(
+  c(
+    rep(
+      "S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[1]])), yes = 0,
+        no = nrow(deg_results_up[[1]])
+      )
+    ),
+    rep(
+      "S305N\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[2]])), yes = 0,
+        no = nrow(deg_results_up[[2]])
+      )
+    ),
+    rep(
+      "P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[3]])), yes = 0,
+        no = nrow(deg_results_up[[3]])
+      )
+    ),
+    rep(
+      "P301S\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[4]])), yes = 0,
+        no = nrow(deg_results_up[[4]])
+      )
+    ),
+    rep(
+      "S305N\nP301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[5]])), yes = 0,
+        no = nrow(deg_results_up[[5]])
+      )
+    ),
+    rep(
+      "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[6]])), yes = 0,
+        no = nrow(deg_results_up[[6]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[7]])), yes = 0,
+        no = nrow(deg_results_up[[7]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[8]])), yes = 0,
+        no = nrow(deg_results_up[[8]])
+      )
+    ),
+    rep(
+      "NLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[9]])), yes = 0,
+        no = nrow(deg_results_up[[9]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[10]])), yes = 0,
+        no = nrow(deg_results_up[[10]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[11]])), yes = 0,
+        no = nrow(deg_results_up[[11]])
+      )
+    ),
+    rep(
+      "NLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[12]])), yes = 0,
+        no = nrow(deg_results_up[[12]])
+      )
+    ),
+    rep(
+      "NLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[13]])), yes = 0,
+        no = nrow(deg_results_up[[13]])
+      )
+    )
+  ),
+  levels = c(
+    "S305N",
+    "S305N\nNLGF S305N",
+    "P301S",
+    "P301S\nNLGF P301S",
+    "S305N\nP301S",
+    "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_up)), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(do.call(rbind, deg_results_up)), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- do.call(rbind, deg_results_up)$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+
+row_split <- factor(
+  c(
+    rep(
+      "S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[1]])), yes = 0,
+        no = nrow(deg_results_down[[1]])
+      )
+    ),
+    rep(
+      "S305N\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[2]])), yes = 0,
+        no = nrow(deg_results_down[[2]])
+      )
+    ),
+    rep(
+      "P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[3]])), yes = 0,
+        no = nrow(deg_results_down[[3]])
+      )
+    ),
+    rep(
+      "P301S\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[4]])), yes = 0,
+        no = nrow(deg_results_down[[4]])
+      )
+    ),
+    rep(
+      "S305N\nP301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[5]])), yes = 0,
+        no = nrow(deg_results_down[[5]])
+      )
+    ),
+    rep(
+      "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[6]])), yes = 0,
+        no = nrow(deg_results_down[[6]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[7]])), yes = 0,
+        no = nrow(deg_results_down[[7]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[8]])), yes = 0,
+        no = nrow(deg_results_down[[8]])
+      )
+    ),
+    rep(
+      "NLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[9]])), yes = 0,
+        no = nrow(deg_results_down[[9]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[10]])), yes = 0,
+        no = nrow(deg_results_down[[10]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[11]])), yes = 0,
+        no = nrow(deg_results_down[[11]])
+      )
+    ),
+    rep(
+      "NLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[12]])), yes = 0,
+        no = nrow(deg_results_down[[12]])
+      )
+    ),
+    rep(
+      "NLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[13]])), yes = 0,
+        no = nrow(deg_results_down[[13]])
+      )
+    )
+  ),
+  levels = c(
+    "S305N",
+    "S305N\nNLGF S305N",
+    "P301S",
+    "P301S\nNLGF P301S",
+    "S305N\nP301S",
+    "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_down)), , drop = FALSE
+]
+mat <- mat[
+  match(
+    rownames(do.call(rbind, deg_results_down)), rownames(mat)
+  ), , drop = FALSE
+]
+rownames(mat) <- do.call(rbind, deg_results_down)$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+```
+
+```{r, fig.height = 2, fig.width = 5.5}
+for (i in seq_along(gse_genes_up)) {
+  gene_ids <- geneIds(gene_sets)[
+    names(gene_sets) %in% names(gse_genes_up[[i]])
+  ]
+  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
+  if (length(gene_ids) > 0) {
+    links_orig <- data.frame(
+      source = rep(names(gene_ids), times = lengths(gene_ids)),
+      target = gene_ids %>% map_dfr(as_tibble)
+    )
+    links <- links_orig
+    links_orig[] <- map[unlist(links_orig)]
+    links$value <- links_orig$value
+    colnames(links) <- c("source", "target")
+    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
+    links$value <- rep(1, times = nrow(links))
+    links_comb <- links
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    print(
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20
+      )
+    )
+  }
+}
+
+for (i in seq_along(gse_genes_down)) {
+  gene_ids <- geneIds(gene_sets)[
+    names(gene_sets) %in% names(gse_genes_down[[i]])
+  ]
+  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
+  if (length(gene_ids) > 0) {
+    links_orig <- data.frame(
+      source = rep(names(gene_ids), times = lengths(gene_ids)),
+      target = gene_ids %>% map_dfr(as_tibble)
+    )
+    links <- links_orig
+    links_orig[] <- map[unlist(links_orig)]
+    links$value <- links_orig$value
+    colnames(links) <- c("source", "target")
+    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
+    links$value <- rep(1, times = nrow(links))
+    links_comb <- links
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    print(
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20
+      )
+    )
+  }
+}
+```
+
+### Hub Genes
+
+```{r}
+deg_results_up <- results_up
+deg_results_down <- results_down
+
+gse_genes_up <- lapply(
+  gse_results_up,
+  FUN = function(x) {
+    unlist(
+      geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+    )
+  }
+)
+gse_genes_up <- mapply(
+  FUN = function(x, ref) x[x %in% rownames(ref)],
+  gse_genes_up,
+  deg_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) table(x))
+deg_results_sub_up <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_up,
+  gse_genes_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- mapply(
+  FUN = function(x, ref) x[match(rownames(ref), names(x))],
+  gse_genes_up,
+  deg_results_sub_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[which.max(x)])
+deg_results_up <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_up,
+  gse_genes_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(
+  gse_results_up,
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+)
+gse_genes_up <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_up,
+  gse_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- mapply(
+  FUN = function(sublist, filter_vec) {
+    lapply(
+      sublist,
+      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
+    )
+  },
+  gse_genes_up,
+  deg_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[lengths(x) > 0])
+
+gse_genes_down <- lapply(
+  gse_results_down,
+  FUN = function(x) {
+    unlist(
+      geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+    )
+  }
+)
+gse_genes_down <- mapply(
+  FUN = function(x, ref) x[x %in% rownames(ref)],
+  gse_genes_down,
+  deg_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) table(x))
+deg_results_sub_down <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_down,
+  gse_genes_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- mapply(
+  FUN = function(x, ref) x[match(rownames(ref), names(x))],
+  gse_genes_down,
+  deg_results_sub_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[which.max(x)])
+deg_results_down <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_down,
+  gse_genes_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(
+  gse_results_down,
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+)
+gse_genes_down <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_down,
+  gse_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- mapply(
+  FUN = function(sublist, filter_vec) {
+    lapply(
+      sublist,
+      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
+    )
+  },
+  gse_genes_down,
+  deg_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[lengths(x) > 0])
+```
+
+```{r, fig.width = 11, fig.height = 4}
+row_split <- factor(
+  c(
+    rep(
+      "S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[1]])), yes = 0,
+        no = nrow(deg_results_up[[1]])
+      )
+    ),
+    rep(
+      "S305N\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[2]])), yes = 0,
+        no = nrow(deg_results_up[[2]])
+      )
+    ),
+    rep(
+      "P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[3]])), yes = 0,
+        no = nrow(deg_results_up[[3]])
+      )
+    ),
+    rep(
+      "P301S\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[4]])), yes = 0,
+        no = nrow(deg_results_up[[4]])
+      )
+    ),
+    rep(
+      "S305N\nP301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[5]])), yes = 0,
+        no = nrow(deg_results_up[[5]])
+      )
+    ),
+    rep(
+      "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[6]])), yes = 0,
+        no = nrow(deg_results_up[[6]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[7]])), yes = 0,
+        no = nrow(deg_results_up[[7]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[8]])), yes = 0,
+        no = nrow(deg_results_up[[8]])
+      )
+    ),
+    rep(
+      "NLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[9]])), yes = 0,
+        no = nrow(deg_results_up[[9]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[10]])), yes = 0,
+        no = nrow(deg_results_up[[10]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[11]])), yes = 0,
+        no = nrow(deg_results_up[[11]])
+      )
+    ),
+    rep(
+      "NLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[12]])), yes = 0,
+        no = nrow(deg_results_up[[12]])
+      )
+    ),
+    rep(
+      "NLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[13]])), yes = 0,
+        no = nrow(deg_results_up[[13]])
+      )
+    )
+  ),
+  levels = c(
+    "S305N",
+    "S305N\nNLGF S305N",
+    "P301S",
+    "P301S\nNLGF P301S",
+    "S305N\nP301S",
+    "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_up)), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(do.call(rbind, deg_results_up)), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- do.call(rbind, deg_results_up)$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+
+row_split <- factor(
+  c(
+    rep(
+      "S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[1]])), yes = 0,
+        no = nrow(deg_results_down[[1]])
+      )
+    ),
+    rep(
+      "S305N\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[2]])), yes = 0,
+        no = nrow(deg_results_down[[2]])
+      )
+    ),
+    rep(
+      "P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[3]])), yes = 0,
+        no = nrow(deg_results_down[[3]])
+      )
+    ),
+    rep(
+      "P301S\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[4]])), yes = 0,
+        no = nrow(deg_results_down[[4]])
+      )
+    ),
+    rep(
+      "S305N\nP301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[5]])), yes = 0,
+        no = nrow(deg_results_down[[5]])
+      )
+    ),
+    rep(
+      "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[6]])), yes = 0,
+        no = nrow(deg_results_down[[6]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[7]])), yes = 0,
+        no = nrow(deg_results_down[[7]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[8]])), yes = 0,
+        no = nrow(deg_results_down[[8]])
+      )
+    ),
+    rep(
+      "NLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[9]])), yes = 0,
+        no = nrow(deg_results_down[[9]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[10]])), yes = 0,
+        no = nrow(deg_results_down[[10]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[11]])), yes = 0,
+        no = nrow(deg_results_down[[11]])
+      )
+    ),
+    rep(
+      "NLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[12]])), yes = 0,
+        no = nrow(deg_results_down[[12]])
+      )
+    ),
+    rep(
+      "NLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[13]])), yes = 0,
+        no = nrow(deg_results_down[[13]])
+      )
+    )
+  ),
+  levels = c(
+    "S305N",
+    "S305N\nNLGF S305N",
+    "P301S",
+    "P301S\nNLGF P301S",
+    "S305N\nP301S",
+    "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_down)), , drop = FALSE
+]
+mat <- mat[
+  match(
+    rownames(do.call(rbind, deg_results_down)), rownames(mat)
+  ), , drop = FALSE
+]
+rownames(mat) <- do.call(rbind, deg_results_down)$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+```
+
+```{r, fig.height = 2, fig.width = 5.5}
+for (i in seq_along(gse_genes_up)) {
+  gene_ids <- geneIds(gene_sets)[
+    names(gene_sets) %in% names(gse_genes_up[[i]])
+  ]
+  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
+  if (length(gene_ids) > 0) {
+    links_orig <- data.frame(
+      source = rep(names(gene_ids), times = lengths(gene_ids)),
+      target = gene_ids %>% map_dfr(as_tibble)
+    )
+    links <- links_orig
+    links_orig[] <- map[unlist(links_orig)]
+    links$value <- links_orig$value
+    colnames(links) <- c("source", "target")
+    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
+    links$value <- rep(1, times = nrow(links))
+    links_comb <- links
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    print(
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20
+      )
+    )
+  }
+}
+
+for (i in seq_along(gse_genes_down)) {
+  gene_ids <- geneIds(gene_sets)[
+    names(gene_sets) %in% names(gse_genes_down[[i]])
+  ]
+  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
   if (length(gene_ids) > 0) {
     links_orig <- data.frame(
       source = rep(names(gene_ids), times = lengths(gene_ids)),
@@ -22506,7 +24708,7 @@ Heatmap(
 )
 ```
 
-## Pruned
+## Hub Analysis
 
 ```{r}
 design <- model.matrix(~ 0 + gse$genotype + gse$batch)
@@ -23304,201 +25506,86 @@ if (nrow(results_sub_down) > 0) {
     results_down[[13]] <- results_sub_down[1:nrow(results_sub_down), ]
   }
 }
+```
 
+### Hub Gene Sets
+
+```{r}
 deg_results_up <- results_up
 deg_results_down <- results_down
 
 gse_genes_up <- lapply(
   gse_results_up,
-  FUN = function(x) {
-    geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-  }
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
 )
-gse_genes_up_orig <- gse_genes_up
+gse_genes_up <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_up,
+  gse_results_up,
+  SIMPLIFY = FALSE
+)
 gse_genes_up <- mapply(
   FUN = function(sublist, filter_vec) {
-    lapply(
-      sublist,
-      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-    )
+    lapply(sublist, FUN = function(vec) vec[vec %in% rownames(filter_vec)])
   },
   gse_genes_up,
   deg_results_up,
   SIMPLIFY = FALSE
 )
-gse_genes_up <- mapply(
-  FUN = function(x, orig) {
-    lengths(x) / lengths(orig)
-  },
-  gse_genes_up,
-  gse_genes_up_orig,
-  SIMPLIFY = FALSE
-)
-gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[x >= 0.02])
-gse_genes_up <- mapply(
-  FUN = function(x, ref) {
-    x[rownames(x) %in% names(ref), ]
-  },
-  gse_results_up,
-  gse_genes_up,
-  SIMPLIFY = FALSE
-)
-gse_gene_sets_up <- gse_genes_up
 gse_genes_up <- lapply(
+  gse_genes_up, FUN = function(x) x[which.max(lengths(x))]
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[lengths(x) > 0])
+match_genes_up <- lapply(
   gse_genes_up,
-  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% names(x)])
 )
 deg_results_up <- mapply(
   FUN = function(x, ref) {
     x[rownames(x) %in% unlist(ref), ]
   },
   deg_results_up,
-  gse_genes_up,
+  match_genes_up,
   SIMPLIFY = FALSE
 )
 
 gse_genes_down <- lapply(
   gse_results_down,
-  FUN = function(x) {
-    geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-  }
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
 )
-gse_genes_down_orig <- gse_genes_down
+gse_genes_down <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_down,
+  gse_results_down,
+  SIMPLIFY = FALSE
+)
 gse_genes_down <- mapply(
   FUN = function(sublist, filter_vec) {
-    lapply(
-      sublist,
-      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-    )
+    lapply(sublist, FUN = function(vec) vec[vec %in% rownames(filter_vec)])
   },
   gse_genes_down,
   deg_results_down,
   SIMPLIFY = FALSE
 )
-gse_genes_down <- mapply(
-  FUN = function(x, orig) {
-    lengths(x) / lengths(orig)
-  },
-  gse_genes_down,
-  gse_genes_down_orig,
-  SIMPLIFY = FALSE
-)
-gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[x >= 0.02])
-gse_genes_down <- mapply(
-  FUN = function(x, ref) {
-    x[rownames(x) %in% names(ref), ]
-  },
-  gse_results_down,
-  gse_genes_down,
-  SIMPLIFY = FALSE
-)
-gse_gene_sets_down <- gse_genes_down
 gse_genes_down <- lapply(
+  gse_genes_down, FUN = function(x) x[which.max(lengths(x))]
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[lengths(x) > 0])
+match_genes_down <- lapply(
   gse_genes_down,
-  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% names(x)])
 )
 deg_results_down <- mapply(
   FUN = function(x, ref) {
     x[rownames(x) %in% unlist(ref), ]
   },
   deg_results_down,
-  gse_genes_down,
+  match_genes_down,
   SIMPLIFY = FALSE
 )
-
-# deg_results_up <- results_up
-# deg_results_down <- results_down
-# 
-# gse_genes_up <- lapply(
-#   gse_results_up,
-#   FUN = function(x) {
-#     unlist(
-#       geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-#     )
-#   }
-# )
-# gse_genes_up <- mapply(
-#   FUN = function(x, ref) {
-#     x[x %in% rownames(ref)]
-#   },
-#   gse_genes_up,
-#   deg_results_up,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_up <- lapply(
-#   gse_genes_up, FUN = function(x) names(table(x)[table(x) > 1])
-# )
-# deg_results_up <- mapply(
-#   FUN = function(x, ref) {
-#     x[rownames(x) %in% ref, ]
-#   },
-#   deg_results_up,
-#   gse_genes_up,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_up <- lapply(
-#   gse_results_up,
-#   FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-# )
-# gse_genes_up <- mapply(
-#   FUN = function(sublist, filter_vec) {
-#     lapply(
-#       sublist,
-#       FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-#     )
-#   },
-#   gse_genes_up,
-#   deg_results_up,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[lengths(x) > 0])
-# 
-# gse_genes_down <- lapply(
-#   gse_results_down,
-#   FUN = function(x) {
-#     unlist(
-#       geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-#     )
-#   }
-# )
-# gse_genes_down <- mapply(
-#   FUN = function(x, ref) {
-#     x[x %in% rownames(ref)]
-#   },
-#   gse_genes_down,
-#   deg_results_down,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_down <- lapply(
-#   gse_genes_down, FUN = function(x) names(table(x)[table(x) > 1])
-# )
-# deg_results_down <- mapply(
-#   FUN = function(x, ref) {
-#     x[rownames(x) %in% ref, ]
-#   },
-#   deg_results_down,
-#   gse_genes_down,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_down <- lapply(
-#   gse_results_down,
-#   FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-# )
-# gse_genes_down <- mapply(
-#   FUN = function(sublist, filter_vec) {
-#     lapply(
-#       sublist,
-#       FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-#     )
-#   },
-#   gse_genes_down,
-#   deg_results_down,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[lengths(x) > 0])
 ```
 
-```{r, fig.width = 11, fig.height = 8}
+```{r, fig.width = 11, fig.height = 5}
 row_split <- factor(
   c(
     rep(
@@ -23821,14 +25908,11 @@ Heatmap(
 ```
 
 ```{r, fig.height = 2, fig.width = 5.5}
-for (i in seq_along(gse_gene_sets_up)) {
+for (i in seq_along(gse_genes_up)) {
   gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% rownames(gse_gene_sets_up[[i]])
+    names(gene_sets) %in% names(gse_genes_up[[i]])
   ]
-# for (i in seq_along(gse_genes_up)) {
-#   gene_ids <- geneIds(gene_sets)[
-#     names(gene_sets) %in% names(gse_genes_up[[i]])
-#   ]
+  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
   if (length(gene_ids) > 0) {
     links_orig <- data.frame(
       source = rep(names(gene_ids), times = lengths(gene_ids)),
@@ -23860,14 +25944,528 @@ for (i in seq_along(gse_gene_sets_up)) {
   }
 }
 
-for (i in seq_along(gse_gene_sets_down)) {
+for (i in seq_along(gse_genes_down)) {
   gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% rownames(gse_gene_sets_down[[i]])
+    names(gene_sets) %in% names(gse_genes_down[[i]])
   ]
-# for (i in seq_along(gse_genes_down)) {
-#   gene_ids <- geneIds(gene_sets)[
-#     names(gene_sets) %in% names(gse_genes_down[[i]])
-#   ]
+  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
+  if (length(gene_ids) > 0) {
+    links_orig <- data.frame(
+      source = rep(names(gene_ids), times = lengths(gene_ids)),
+      target = gene_ids %>% map_dfr(as_tibble)
+    )
+    links <- links_orig
+    links_orig[] <- map[unlist(links_orig)]
+    links$value <- links_orig$value
+    colnames(links) <- c("source", "target")
+    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
+    links$value <- rep(1, times = nrow(links))
+    links_comb <- links
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    print(
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20
+      )
+    )
+  }
+}
+```
+
+### Hub Genes
+
+```{r}
+deg_results_up <- results_up
+deg_results_down <- results_down
+
+gse_genes_up <- lapply(
+  gse_results_up,
+  FUN = function(x) {
+    unlist(
+      geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+    )
+  }
+)
+gse_genes_up <- mapply(
+  FUN = function(x, ref) x[x %in% rownames(ref)],
+  gse_genes_up,
+  deg_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) table(x))
+deg_results_sub_up <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_up,
+  gse_genes_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- mapply(
+  FUN = function(x, ref) x[match(rownames(ref), names(x))],
+  gse_genes_up,
+  deg_results_sub_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[which.max(x)])
+deg_results_up <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_up,
+  gse_genes_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(
+  gse_results_up,
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+)
+gse_genes_up <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_up,
+  gse_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- mapply(
+  FUN = function(sublist, filter_vec) {
+    lapply(
+      sublist,
+      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
+    )
+  },
+  gse_genes_up,
+  deg_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[lengths(x) > 0])
+
+gse_genes_down <- lapply(
+  gse_results_down,
+  FUN = function(x) {
+    unlist(
+      geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+    )
+  }
+)
+gse_genes_down <- mapply(
+  FUN = function(x, ref) x[x %in% rownames(ref)],
+  gse_genes_down,
+  deg_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) table(x))
+deg_results_sub_down <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_down,
+  gse_genes_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- mapply(
+  FUN = function(x, ref) x[match(rownames(ref), names(x))],
+  gse_genes_down,
+  deg_results_sub_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[which.max(x)])
+deg_results_down <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_down,
+  gse_genes_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(
+  gse_results_down,
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+)
+gse_genes_down <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_down,
+  gse_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- mapply(
+  FUN = function(sublist, filter_vec) {
+    lapply(
+      sublist,
+      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
+    )
+  },
+  gse_genes_down,
+  deg_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[lengths(x) > 0])
+```
+
+```{r, fig.width = 11, fig.height = 4}
+row_split <- factor(
+  c(
+    rep(
+      "S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[1]])), yes = 0,
+        no = nrow(deg_results_up[[1]])
+      )
+    ),
+    rep(
+      "S305N\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[2]])), yes = 0,
+        no = nrow(deg_results_up[[2]])
+      )
+    ),
+    rep(
+      "P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[3]])), yes = 0,
+        no = nrow(deg_results_up[[3]])
+      )
+    ),
+    rep(
+      "P301S\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[4]])), yes = 0,
+        no = nrow(deg_results_up[[4]])
+      )
+    ),
+    rep(
+      "S305N\nP301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[5]])), yes = 0,
+        no = nrow(deg_results_up[[5]])
+      )
+    ),
+    rep(
+      "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[6]])), yes = 0,
+        no = nrow(deg_results_up[[6]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[7]])), yes = 0,
+        no = nrow(deg_results_up[[7]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[8]])), yes = 0,
+        no = nrow(deg_results_up[[8]])
+      )
+    ),
+    rep(
+      "NLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[9]])), yes = 0,
+        no = nrow(deg_results_up[[9]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[10]])), yes = 0,
+        no = nrow(deg_results_up[[10]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[11]])), yes = 0,
+        no = nrow(deg_results_up[[11]])
+      )
+    ),
+    rep(
+      "NLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[12]])), yes = 0,
+        no = nrow(deg_results_up[[12]])
+      )
+    ),
+    rep(
+      "NLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[13]])), yes = 0,
+        no = nrow(deg_results_up[[13]])
+      )
+    )
+  ),
+  levels = c(
+    "S305N",
+    "S305N\nNLGF S305N",
+    "P301S",
+    "P301S\nNLGF P301S",
+    "S305N\nP301S",
+    "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_up)), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(do.call(rbind, deg_results_up)), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- do.call(rbind, deg_results_up)$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+
+row_split <- factor(
+  c(
+    rep(
+      "S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[1]])), yes = 0,
+        no = nrow(deg_results_down[[1]])
+      )
+    ),
+    rep(
+      "S305N\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[2]])), yes = 0,
+        no = nrow(deg_results_down[[2]])
+      )
+    ),
+    rep(
+      "P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[3]])), yes = 0,
+        no = nrow(deg_results_down[[3]])
+      )
+    ),
+    rep(
+      "P301S\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[4]])), yes = 0,
+        no = nrow(deg_results_down[[4]])
+      )
+    ),
+    rep(
+      "S305N\nP301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[5]])), yes = 0,
+        no = nrow(deg_results_down[[5]])
+      )
+    ),
+    rep(
+      "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[6]])), yes = 0,
+        no = nrow(deg_results_down[[6]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[7]])), yes = 0,
+        no = nrow(deg_results_down[[7]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[8]])), yes = 0,
+        no = nrow(deg_results_down[[8]])
+      )
+    ),
+    rep(
+      "NLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[9]])), yes = 0,
+        no = nrow(deg_results_down[[9]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[10]])), yes = 0,
+        no = nrow(deg_results_down[[10]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[11]])), yes = 0,
+        no = nrow(deg_results_down[[11]])
+      )
+    ),
+    rep(
+      "NLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[12]])), yes = 0,
+        no = nrow(deg_results_down[[12]])
+      )
+    ),
+    rep(
+      "NLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[13]])), yes = 0,
+        no = nrow(deg_results_down[[13]])
+      )
+    )
+  ),
+  levels = c(
+    "S305N",
+    "S305N\nNLGF S305N",
+    "P301S",
+    "P301S\nNLGF P301S",
+    "S305N\nP301S",
+    "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_down)), , drop = FALSE
+]
+mat <- mat[
+  match(
+    rownames(do.call(rbind, deg_results_down)), rownames(mat)
+  ), , drop = FALSE
+]
+rownames(mat) <- do.call(rbind, deg_results_down)$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+```
+
+```{r, fig.height = 2, fig.width = 5.5}
+for (i in seq_along(gse_genes_up)) {
+  gene_ids <- geneIds(gene_sets)[
+    names(gene_sets) %in% names(gse_genes_up[[i]])
+  ]
+  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
+  if (length(gene_ids) > 0) {
+    links_orig <- data.frame(
+      source = rep(names(gene_ids), times = lengths(gene_ids)),
+      target = gene_ids %>% map_dfr(as_tibble)
+    )
+    links <- links_orig
+    links_orig[] <- map[unlist(links_orig)]
+    links$value <- links_orig$value
+    colnames(links) <- c("source", "target")
+    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
+    links$value <- rep(1, times = nrow(links))
+    links_comb <- links
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    print(
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20
+      )
+    )
+  }
+}
+
+for (i in seq_along(gse_genes_down)) {
+  gene_ids <- geneIds(gene_sets)[
+    names(gene_sets) %in% names(gse_genes_down[[i]])
+  ]
+  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
   if (length(gene_ids) > 0) {
     links_orig <- data.frame(
       source = rep(names(gene_ids), times = lengths(gene_ids)),
@@ -27203,7 +29801,7 @@ Heatmap(
 )
 ```
 
-## Pruned
+## Hub Analysis
 
 ```{r}
 design <- model.matrix(~ 0 + gse$genotype + gse$batch)
@@ -28004,201 +30602,86 @@ if (nrow(results_sub_down) > 0) {
     results_down[[13]] <- results_sub_down[1:nrow(results_sub_down), ]
   }
 }
+```
 
+### Hub Gene Sets
+
+```{r}
 deg_results_up <- results_up
 deg_results_down <- results_down
 
 gse_genes_up <- lapply(
   gse_results_up,
-  FUN = function(x) {
-    geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-  }
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
 )
-gse_genes_up_orig <- gse_genes_up
+gse_genes_up <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_up,
+  gse_results_up,
+  SIMPLIFY = FALSE
+)
 gse_genes_up <- mapply(
   FUN = function(sublist, filter_vec) {
-    lapply(
-      sublist,
-      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-    )
+    lapply(sublist, FUN = function(vec) vec[vec %in% rownames(filter_vec)])
   },
   gse_genes_up,
   deg_results_up,
   SIMPLIFY = FALSE
 )
-gse_genes_up <- mapply(
-  FUN = function(x, orig) {
-    lengths(x) / lengths(orig)
-  },
-  gse_genes_up,
-  gse_genes_up_orig,
-  SIMPLIFY = FALSE
-)
-gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[x >= 0.02])
-gse_genes_up <- mapply(
-  FUN = function(x, ref) {
-    x[rownames(x) %in% names(ref), ]
-  },
-  gse_results_up,
-  gse_genes_up,
-  SIMPLIFY = FALSE
-)
-gse_gene_sets_up <- gse_genes_up
 gse_genes_up <- lapply(
+  gse_genes_up, FUN = function(x) x[which.max(lengths(x))]
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[lengths(x) > 0])
+match_genes_up <- lapply(
   gse_genes_up,
-  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% names(x)])
 )
 deg_results_up <- mapply(
   FUN = function(x, ref) {
     x[rownames(x) %in% unlist(ref), ]
   },
   deg_results_up,
-  gse_genes_up,
+  match_genes_up,
   SIMPLIFY = FALSE
 )
 
 gse_genes_down <- lapply(
   gse_results_down,
-  FUN = function(x) {
-    geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-  }
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
 )
-gse_genes_down_orig <- gse_genes_down
+gse_genes_down <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_down,
+  gse_results_down,
+  SIMPLIFY = FALSE
+)
 gse_genes_down <- mapply(
   FUN = function(sublist, filter_vec) {
-    lapply(
-      sublist,
-      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-    )
+    lapply(sublist, FUN = function(vec) vec[vec %in% rownames(filter_vec)])
   },
   gse_genes_down,
   deg_results_down,
   SIMPLIFY = FALSE
 )
-gse_genes_down <- mapply(
-  FUN = function(x, orig) {
-    lengths(x) / lengths(orig)
-  },
-  gse_genes_down,
-  gse_genes_down_orig,
-  SIMPLIFY = FALSE
-)
-gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[x >= 0.02])
-gse_genes_down <- mapply(
-  FUN = function(x, ref) {
-    x[rownames(x) %in% names(ref), ]
-  },
-  gse_results_down,
-  gse_genes_down,
-  SIMPLIFY = FALSE
-)
-gse_gene_sets_down <- gse_genes_down
 gse_genes_down <- lapply(
+  gse_genes_down, FUN = function(x) x[which.max(lengths(x))]
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[lengths(x) > 0])
+match_genes_down <- lapply(
   gse_genes_down,
-  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% names(x)])
 )
 deg_results_down <- mapply(
   FUN = function(x, ref) {
     x[rownames(x) %in% unlist(ref), ]
   },
   deg_results_down,
-  gse_genes_down,
+  match_genes_down,
   SIMPLIFY = FALSE
 )
-
-# deg_results_up <- results_up
-# deg_results_down <- results_down
-# 
-# gse_genes_up <- lapply(
-#   gse_results_up,
-#   FUN = function(x) {
-#     unlist(
-#       geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-#     )
-#   }
-# )
-# gse_genes_up <- mapply(
-#   FUN = function(x, ref) {
-#     x[x %in% rownames(ref)]
-#   },
-#   gse_genes_up,
-#   deg_results_up,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_up <- lapply(
-#   gse_genes_up, FUN = function(x) names(table(x)[table(x) > 1])
-# )
-# deg_results_up <- mapply(
-#   FUN = function(x, ref) {
-#     x[rownames(x) %in% ref, ]
-#   },
-#   deg_results_up,
-#   gse_genes_up,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_up <- lapply(
-#   gse_results_up,
-#   FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-# )
-# gse_genes_up <- mapply(
-#   FUN = function(sublist, filter_vec) {
-#     lapply(
-#       sublist,
-#       FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-#     )
-#   },
-#   gse_genes_up,
-#   deg_results_up,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[lengths(x) > 0])
-# 
-# gse_genes_down <- lapply(
-#   gse_results_down,
-#   FUN = function(x) {
-#     unlist(
-#       geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-#     )
-#   }
-# )
-# gse_genes_down <- mapply(
-#   FUN = function(x, ref) {
-#     x[x %in% rownames(ref)]
-#   },
-#   gse_genes_down,
-#   deg_results_down,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_down <- lapply(
-#   gse_genes_down, FUN = function(x) names(table(x)[table(x) > 1])
-# )
-# deg_results_down <- mapply(
-#   FUN = function(x, ref) {
-#     x[rownames(x) %in% ref, ]
-#   },
-#   deg_results_down,
-#   gse_genes_down,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_down <- lapply(
-#   gse_results_down,
-#   FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-# )
-# gse_genes_down <- mapply(
-#   FUN = function(sublist, filter_vec) {
-#     lapply(
-#       sublist,
-#       FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-#     )
-#   },
-#   gse_genes_down,
-#   deg_results_down,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[lengths(x) > 0])
 ```
 
-```{r, fig.width = 11, fig.height = 8}
+```{r, fig.width = 11, fig.height = 5}
 row_split <- factor(
   c(
     rep(
@@ -28521,14 +31004,11 @@ Heatmap(
 ```
 
 ```{r, fig.height = 2, fig.width = 5.5}
-for (i in seq_along(gse_gene_sets_up)) {
+for (i in seq_along(gse_genes_up)) {
   gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% rownames(gse_gene_sets_up[[i]])
+    names(gene_sets) %in% names(gse_genes_up[[i]])
   ]
-# for (i in seq_along(gse_genes_up)) {
-#   gene_ids <- geneIds(gene_sets)[
-#     names(gene_sets) %in% names(gse_genes_up[[i]])
-#   ]
+  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
   if (length(gene_ids) > 0) {
     links_orig <- data.frame(
       source = rep(names(gene_ids), times = lengths(gene_ids)),
@@ -28560,14 +31040,528 @@ for (i in seq_along(gse_gene_sets_up)) {
   }
 }
 
-for (i in seq_along(gse_gene_sets_down)) {
+for (i in seq_along(gse_genes_down)) {
   gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% rownames(gse_gene_sets_down[[i]])
+    names(gene_sets) %in% names(gse_genes_down[[i]])
   ]
-# for (i in seq_along(gse_genes_down)) {
-#   gene_ids <- geneIds(gene_sets)[
-#     names(gene_sets) %in% names(gse_genes_down[[i]])
-#   ]
+  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
+  if (length(gene_ids) > 0) {
+    links_orig <- data.frame(
+      source = rep(names(gene_ids), times = lengths(gene_ids)),
+      target = gene_ids %>% map_dfr(as_tibble)
+    )
+    links <- links_orig
+    links_orig[] <- map[unlist(links_orig)]
+    links$value <- links_orig$value
+    colnames(links) <- c("source", "target")
+    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
+    links$value <- rep(1, times = nrow(links))
+    links_comb <- links
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    print(
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20
+      )
+    )
+  }
+}
+```
+
+### Hub Genes
+
+```{r}
+deg_results_up <- results_up
+deg_results_down <- results_down
+
+gse_genes_up <- lapply(
+  gse_results_up,
+  FUN = function(x) {
+    unlist(
+      geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+    )
+  }
+)
+gse_genes_up <- mapply(
+  FUN = function(x, ref) x[x %in% rownames(ref)],
+  gse_genes_up,
+  deg_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) table(x))
+deg_results_sub_up <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_up,
+  gse_genes_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- mapply(
+  FUN = function(x, ref) x[match(rownames(ref), names(x))],
+  gse_genes_up,
+  deg_results_sub_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[which.max(x)])
+deg_results_up <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_up,
+  gse_genes_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(
+  gse_results_up,
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+)
+gse_genes_up <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_up,
+  gse_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- mapply(
+  FUN = function(sublist, filter_vec) {
+    lapply(
+      sublist,
+      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
+    )
+  },
+  gse_genes_up,
+  deg_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[lengths(x) > 0])
+
+gse_genes_down <- lapply(
+  gse_results_down,
+  FUN = function(x) {
+    unlist(
+      geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+    )
+  }
+)
+gse_genes_down <- mapply(
+  FUN = function(x, ref) x[x %in% rownames(ref)],
+  gse_genes_down,
+  deg_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) table(x))
+deg_results_sub_down <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_down,
+  gse_genes_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- mapply(
+  FUN = function(x, ref) x[match(rownames(ref), names(x))],
+  gse_genes_down,
+  deg_results_sub_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[which.max(x)])
+deg_results_down <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_down,
+  gse_genes_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(
+  gse_results_down,
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+)
+gse_genes_down <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_down,
+  gse_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- mapply(
+  FUN = function(sublist, filter_vec) {
+    lapply(
+      sublist,
+      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
+    )
+  },
+  gse_genes_down,
+  deg_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[lengths(x) > 0])
+```
+
+```{r, fig.width = 11, fig.height = 4}
+row_split <- factor(
+  c(
+    rep(
+      "S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[1]])), yes = 0,
+        no = nrow(deg_results_up[[1]])
+      )
+    ),
+    rep(
+      "S305N\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[2]])), yes = 0,
+        no = nrow(deg_results_up[[2]])
+      )
+    ),
+    rep(
+      "P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[3]])), yes = 0,
+        no = nrow(deg_results_up[[3]])
+      )
+    ),
+    rep(
+      "P301S\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[4]])), yes = 0,
+        no = nrow(deg_results_up[[4]])
+      )
+    ),
+    rep(
+      "S305N\nP301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[5]])), yes = 0,
+        no = nrow(deg_results_up[[5]])
+      )
+    ),
+    rep(
+      "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[6]])), yes = 0,
+        no = nrow(deg_results_up[[6]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[7]])), yes = 0,
+        no = nrow(deg_results_up[[7]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[8]])), yes = 0,
+        no = nrow(deg_results_up[[8]])
+      )
+    ),
+    rep(
+      "NLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[9]])), yes = 0,
+        no = nrow(deg_results_up[[9]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[10]])), yes = 0,
+        no = nrow(deg_results_up[[10]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[11]])), yes = 0,
+        no = nrow(deg_results_up[[11]])
+      )
+    ),
+    rep(
+      "NLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[12]])), yes = 0,
+        no = nrow(deg_results_up[[12]])
+      )
+    ),
+    rep(
+      "NLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[13]])), yes = 0,
+        no = nrow(deg_results_up[[13]])
+      )
+    )
+  ),
+  levels = c(
+    "S305N",
+    "S305N\nNLGF S305N",
+    "P301S",
+    "P301S\nNLGF P301S",
+    "S305N\nP301S",
+    "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_up)), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(do.call(rbind, deg_results_up)), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- do.call(rbind, deg_results_up)$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+
+row_split <- factor(
+  c(
+    rep(
+      "S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[1]])), yes = 0,
+        no = nrow(deg_results_down[[1]])
+      )
+    ),
+    rep(
+      "S305N\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[2]])), yes = 0,
+        no = nrow(deg_results_down[[2]])
+      )
+    ),
+    rep(
+      "P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[3]])), yes = 0,
+        no = nrow(deg_results_down[[3]])
+      )
+    ),
+    rep(
+      "P301S\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[4]])), yes = 0,
+        no = nrow(deg_results_down[[4]])
+      )
+    ),
+    rep(
+      "S305N\nP301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[5]])), yes = 0,
+        no = nrow(deg_results_down[[5]])
+      )
+    ),
+    rep(
+      "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[6]])), yes = 0,
+        no = nrow(deg_results_down[[6]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[7]])), yes = 0,
+        no = nrow(deg_results_down[[7]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[8]])), yes = 0,
+        no = nrow(deg_results_down[[8]])
+      )
+    ),
+    rep(
+      "NLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[9]])), yes = 0,
+        no = nrow(deg_results_down[[9]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[10]])), yes = 0,
+        no = nrow(deg_results_down[[10]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[11]])), yes = 0,
+        no = nrow(deg_results_down[[11]])
+      )
+    ),
+    rep(
+      "NLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[12]])), yes = 0,
+        no = nrow(deg_results_down[[12]])
+      )
+    ),
+    rep(
+      "NLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[13]])), yes = 0,
+        no = nrow(deg_results_down[[13]])
+      )
+    )
+  ),
+  levels = c(
+    "S305N",
+    "S305N\nNLGF S305N",
+    "P301S",
+    "P301S\nNLGF P301S",
+    "S305N\nP301S",
+    "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_down)), , drop = FALSE
+]
+mat <- mat[
+  match(
+    rownames(do.call(rbind, deg_results_down)), rownames(mat)
+  ), , drop = FALSE
+]
+rownames(mat) <- do.call(rbind, deg_results_down)$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+```
+
+```{r, fig.height = 2, fig.width = 5.5}
+for (i in seq_along(gse_genes_up)) {
+  gene_ids <- geneIds(gene_sets)[
+    names(gene_sets) %in% names(gse_genes_up[[i]])
+  ]
+  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
+  if (length(gene_ids) > 0) {
+    links_orig <- data.frame(
+      source = rep(names(gene_ids), times = lengths(gene_ids)),
+      target = gene_ids %>% map_dfr(as_tibble)
+    )
+    links <- links_orig
+    links_orig[] <- map[unlist(links_orig)]
+    links$value <- links_orig$value
+    colnames(links) <- c("source", "target")
+    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
+    links$value <- rep(1, times = nrow(links))
+    links_comb <- links
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    print(
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20
+      )
+    )
+  }
+}
+
+for (i in seq_along(gse_genes_down)) {
+  gene_ids <- geneIds(gene_sets)[
+    names(gene_sets) %in% names(gse_genes_down[[i]])
+  ]
+  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
   if (length(gene_ids) > 0) {
     links_orig <- data.frame(
       source = rep(names(gene_ids), times = lengths(gene_ids)),
@@ -31909,7 +34903,7 @@ Heatmap(
 )
 ```
 
-## Pruned
+## Hub Analysis
 
 ```{r}
 design <- model.matrix(~ 0 + gse$genotype + gse$batch)
@@ -32712,201 +35706,86 @@ if (nrow(results_sub_down) > 0) {
     results_down[[13]] <- results_sub_down[1:nrow(results_sub_down), ]
   }
 }
+```
 
+### Hub Gene Sets
+
+```{r}
 deg_results_up <- results_up
 deg_results_down <- results_down
 
 gse_genes_up <- lapply(
   gse_results_up,
-  FUN = function(x) {
-    geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-  }
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
 )
-gse_genes_up_orig <- gse_genes_up
+gse_genes_up <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_up,
+  gse_results_up,
+  SIMPLIFY = FALSE
+)
 gse_genes_up <- mapply(
   FUN = function(sublist, filter_vec) {
-    lapply(
-      sublist,
-      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-    )
+    lapply(sublist, FUN = function(vec) vec[vec %in% rownames(filter_vec)])
   },
   gse_genes_up,
   deg_results_up,
   SIMPLIFY = FALSE
 )
-gse_genes_up <- mapply(
-  FUN = function(x, orig) {
-    lengths(x) / lengths(orig)
-  },
-  gse_genes_up,
-  gse_genes_up_orig,
-  SIMPLIFY = FALSE
-)
-gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[x >= 0.02])
-gse_genes_up <- mapply(
-  FUN = function(x, ref) {
-    x[rownames(x) %in% names(ref), ]
-  },
-  gse_results_up,
-  gse_genes_up,
-  SIMPLIFY = FALSE
-)
-gse_gene_sets_up <- gse_genes_up
 gse_genes_up <- lapply(
+  gse_genes_up, FUN = function(x) x[which.max(lengths(x))]
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[lengths(x) > 0])
+match_genes_up <- lapply(
   gse_genes_up,
-  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% names(x)])
 )
 deg_results_up <- mapply(
   FUN = function(x, ref) {
     x[rownames(x) %in% unlist(ref), ]
   },
   deg_results_up,
-  gse_genes_up,
+  match_genes_up,
   SIMPLIFY = FALSE
 )
 
 gse_genes_down <- lapply(
   gse_results_down,
-  FUN = function(x) {
-    geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-  }
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
 )
-gse_genes_down_orig <- gse_genes_down
+gse_genes_down <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_down,
+  gse_results_down,
+  SIMPLIFY = FALSE
+)
 gse_genes_down <- mapply(
   FUN = function(sublist, filter_vec) {
-    lapply(
-      sublist,
-      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-    )
+    lapply(sublist, FUN = function(vec) vec[vec %in% rownames(filter_vec)])
   },
   gse_genes_down,
   deg_results_down,
   SIMPLIFY = FALSE
 )
-gse_genes_down <- mapply(
-  FUN = function(x, orig) {
-    lengths(x) / lengths(orig)
-  },
-  gse_genes_down,
-  gse_genes_down_orig,
-  SIMPLIFY = FALSE
-)
-gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[x >= 0.02])
-gse_genes_down <- mapply(
-  FUN = function(x, ref) {
-    x[rownames(x) %in% names(ref), ]
-  },
-  gse_results_down,
-  gse_genes_down,
-  SIMPLIFY = FALSE
-)
-gse_gene_sets_down <- gse_genes_down
 gse_genes_down <- lapply(
+  gse_genes_down, FUN = function(x) x[which.max(lengths(x))]
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[lengths(x) > 0])
+match_genes_down <- lapply(
   gse_genes_down,
-  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% names(x)])
 )
 deg_results_down <- mapply(
   FUN = function(x, ref) {
     x[rownames(x) %in% unlist(ref), ]
   },
   deg_results_down,
-  gse_genes_down,
+  match_genes_down,
   SIMPLIFY = FALSE
 )
-
-# deg_results_up <- results_up
-# deg_results_down <- results_down
-# 
-# gse_genes_up <- lapply(
-#   gse_results_up,
-#   FUN = function(x) {
-#     unlist(
-#       geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-#     )
-#   }
-# )
-# gse_genes_up <- mapply(
-#   FUN = function(x, ref) {
-#     x[x %in% rownames(ref)]
-#   },
-#   gse_genes_up,
-#   deg_results_up,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_up <- lapply(
-#   gse_genes_up, FUN = function(x) names(table(x)[table(x) > 1])
-# )
-# deg_results_up <- mapply(
-#   FUN = function(x, ref) {
-#     x[rownames(x) %in% ref, ]
-#   },
-#   deg_results_up,
-#   gse_genes_up,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_up <- lapply(
-#   gse_results_up,
-#   FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-# )
-# gse_genes_up <- mapply(
-#   FUN = function(sublist, filter_vec) {
-#     lapply(
-#       sublist,
-#       FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-#     )
-#   },
-#   gse_genes_up,
-#   deg_results_up,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[lengths(x) > 0])
-# 
-# gse_genes_down <- lapply(
-#   gse_results_down,
-#   FUN = function(x) {
-#     unlist(
-#       geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-#     )
-#   }
-# )
-# gse_genes_down <- mapply(
-#   FUN = function(x, ref) {
-#     x[x %in% rownames(ref)]
-#   },
-#   gse_genes_down,
-#   deg_results_down,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_down <- lapply(
-#   gse_genes_down, FUN = function(x) names(table(x)[table(x) > 1])
-# )
-# deg_results_down <- mapply(
-#   FUN = function(x, ref) {
-#     x[rownames(x) %in% ref, ]
-#   },
-#   deg_results_down,
-#   gse_genes_down,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_down <- lapply(
-#   gse_results_down,
-#   FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
-# )
-# gse_genes_down <- mapply(
-#   FUN = function(sublist, filter_vec) {
-#     lapply(
-#       sublist,
-#       FUN = function(vec) vec[vec %in% rownames(filter_vec)]
-#     )
-#   },
-#   gse_genes_down,
-#   deg_results_down,
-#   SIMPLIFY = FALSE
-# )
-# gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[lengths(x) > 0])
 ```
 
-```{r, fig.width = 11, fig.height = 8}
+```{r, fig.width = 11, fig.height = 5}
 row_split <- factor(
   c(
     rep(
@@ -33229,14 +36108,11 @@ Heatmap(
 ```
 
 ```{r, fig.height = 2, fig.width = 5.5}
-for (i in seq_along(gse_gene_sets_up)) {
+for (i in seq_along(gse_genes_up)) {
   gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% rownames(gse_gene_sets_up[[i]])
+    names(gene_sets) %in% names(gse_genes_up[[i]])
   ]
-# for (i in seq_along(gse_genes_up)) {
-#   gene_ids <- geneIds(gene_sets)[
-#     names(gene_sets) %in% names(gse_genes_up[[i]])
-#   ]
+  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
   if (length(gene_ids) > 0) {
     links_orig <- data.frame(
       source = rep(names(gene_ids), times = lengths(gene_ids)),
@@ -33268,14 +36144,528 @@ for (i in seq_along(gse_gene_sets_up)) {
   }
 }
 
-for (i in seq_along(gse_gene_sets_down)) {
+for (i in seq_along(gse_genes_down)) {
   gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% rownames(gse_gene_sets_down[[i]])
+    names(gene_sets) %in% names(gse_genes_down[[i]])
   ]
-# for (i in seq_along(gse_genes_down)) {
-#   gene_ids <- geneIds(gene_sets)[
-#     names(gene_sets) %in% names(gse_genes_down[[i]])
-#   ]
+  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
+  if (length(gene_ids) > 0) {
+    links_orig <- data.frame(
+      source = rep(names(gene_ids), times = lengths(gene_ids)),
+      target = gene_ids %>% map_dfr(as_tibble)
+    )
+    links <- links_orig
+    links_orig[] <- map[unlist(links_orig)]
+    links$value <- links_orig$value
+    colnames(links) <- c("source", "target")
+    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
+    links$value <- rep(1, times = nrow(links))
+    links_comb <- links
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    print(
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20
+      )
+    )
+  }
+}
+```
+
+### Hub Genes
+
+```{r}
+deg_results_up <- results_up
+deg_results_down <- results_down
+
+gse_genes_up <- lapply(
+  gse_results_up,
+  FUN = function(x) {
+    unlist(
+      geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+    )
+  }
+)
+gse_genes_up <- mapply(
+  FUN = function(x, ref) x[x %in% rownames(ref)],
+  gse_genes_up,
+  deg_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) table(x))
+deg_results_sub_up <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_up,
+  gse_genes_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- mapply(
+  FUN = function(x, ref) x[match(rownames(ref), names(x))],
+  gse_genes_up,
+  deg_results_sub_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[which.max(x)])
+deg_results_up <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_up,
+  gse_genes_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(
+  gse_results_up,
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+)
+gse_genes_up <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_up,
+  gse_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- mapply(
+  FUN = function(sublist, filter_vec) {
+    lapply(
+      sublist,
+      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
+    )
+  },
+  gse_genes_up,
+  deg_results_up,
+  SIMPLIFY = FALSE
+)
+gse_genes_up <- lapply(gse_genes_up, FUN = function(x) x[lengths(x) > 0])
+
+gse_genes_down <- lapply(
+  gse_results_down,
+  FUN = function(x) {
+    unlist(
+      geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+    )
+  }
+)
+gse_genes_down <- mapply(
+  FUN = function(x, ref) x[x %in% rownames(ref)],
+  gse_genes_down,
+  deg_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) table(x))
+deg_results_sub_down <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_down,
+  gse_genes_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- mapply(
+  FUN = function(x, ref) x[match(rownames(ref), names(x))],
+  gse_genes_down,
+  deg_results_sub_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[which.max(x)])
+deg_results_down <- mapply(
+  FUN = function(x, ref) x[rownames(x) %in% names(ref), ],
+  deg_results_down,
+  gse_genes_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(
+  gse_results_down,
+  FUN = function(x) geneIds(gene_sets[names(gene_sets) %in% rownames(x)])
+)
+gse_genes_down <- mapply(
+  FUN = function(x, results) x[match(rownames(results), names(x))],
+  gse_genes_down,
+  gse_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- mapply(
+  FUN = function(sublist, filter_vec) {
+    lapply(
+      sublist,
+      FUN = function(vec) vec[vec %in% rownames(filter_vec)]
+    )
+  },
+  gse_genes_down,
+  deg_results_down,
+  SIMPLIFY = FALSE
+)
+gse_genes_down <- lapply(gse_genes_down, FUN = function(x) x[lengths(x) > 0])
+```
+
+```{r, fig.width = 11, fig.height = 4}
+row_split <- factor(
+  c(
+    rep(
+      "S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[1]])), yes = 0,
+        no = nrow(deg_results_up[[1]])
+      )
+    ),
+    rep(
+      "S305N\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[2]])), yes = 0,
+        no = nrow(deg_results_up[[2]])
+      )
+    ),
+    rep(
+      "P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[3]])), yes = 0,
+        no = nrow(deg_results_up[[3]])
+      )
+    ),
+    rep(
+      "P301S\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[4]])), yes = 0,
+        no = nrow(deg_results_up[[4]])
+      )
+    ),
+    rep(
+      "S305N\nP301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[5]])), yes = 0,
+        no = nrow(deg_results_up[[5]])
+      )
+    ),
+    rep(
+      "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[6]])), yes = 0,
+        no = nrow(deg_results_up[[6]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[7]])), yes = 0,
+        no = nrow(deg_results_up[[7]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[8]])), yes = 0,
+        no = nrow(deg_results_up[[8]])
+      )
+    ),
+    rep(
+      "NLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[9]])), yes = 0,
+        no = nrow(deg_results_up[[9]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[10]])), yes = 0,
+        no = nrow(deg_results_up[[10]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[11]])), yes = 0,
+        no = nrow(deg_results_up[[11]])
+      )
+    ),
+    rep(
+      "NLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[12]])), yes = 0,
+        no = nrow(deg_results_up[[12]])
+      )
+    ),
+    rep(
+      "NLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_up[[13]])), yes = 0,
+        no = nrow(deg_results_up[[13]])
+      )
+    )
+  ),
+  levels = c(
+    "S305N",
+    "S305N\nNLGF S305N",
+    "P301S",
+    "P301S\nNLGF P301S",
+    "S305N\nP301S",
+    "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_up)), , drop = FALSE
+]
+mat <- mat[
+  match(rownames(do.call(rbind, deg_results_up)), rownames(mat)), , drop = FALSE
+]
+rownames(mat) <- do.call(rbind, deg_results_up)$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+
+row_split <- factor(
+  c(
+    rep(
+      "S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[1]])), yes = 0,
+        no = nrow(deg_results_down[[1]])
+      )
+    ),
+    rep(
+      "S305N\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[2]])), yes = 0,
+        no = nrow(deg_results_down[[2]])
+      )
+    ),
+    rep(
+      "P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[3]])), yes = 0,
+        no = nrow(deg_results_down[[3]])
+      )
+    ),
+    rep(
+      "P301S\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[4]])), yes = 0,
+        no = nrow(deg_results_down[[4]])
+      )
+    ),
+    rep(
+      "S305N\nP301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[5]])), yes = 0,
+        no = nrow(deg_results_down[[5]])
+      )
+    ),
+    rep(
+      "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[6]])), yes = 0,
+        no = nrow(deg_results_down[[6]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[7]])), yes = 0,
+        no = nrow(deg_results_down[[7]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[8]])), yes = 0,
+        no = nrow(deg_results_down[[8]])
+      )
+    ),
+    rep(
+      "NLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[9]])), yes = 0,
+        no = nrow(deg_results_down[[9]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[10]])), yes = 0,
+        no = nrow(deg_results_down[[10]])
+      )
+    ),
+    rep(
+      "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[11]])), yes = 0,
+        no = nrow(deg_results_down[[11]])
+      )
+    ),
+    rep(
+      "NLGF S305N\nNLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[12]])), yes = 0,
+        no = nrow(deg_results_down[[12]])
+      )
+    ),
+    rep(
+      "NLGF P301S",
+      times = ifelse(
+        is.null(nrow(deg_results_down[[13]])), yes = 0,
+        no = nrow(deg_results_down[[13]])
+      )
+    )
+  ),
+  levels = c(
+    "S305N",
+    "S305N\nNLGF S305N",
+    "P301S",
+    "P301S\nNLGF P301S",
+    "S305N\nP301S",
+    "S305N\nP301S\nNLGF S305N\nNLGF P301S",
+    "NLGF MAPTKI",
+    "NLGF MAPTKI\nNLGF P301S",
+    "NLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N",
+    "NLGF MAPTKI\nNLGF S305N\nNLGF P301S",
+    "NLGF S305N\nNLGF P301S",
+    "NLGF P301S"
+  )
+)
+
+mat <- deg_corrected[
+  rownames(deg) %in% rownames(do.call(rbind, deg_results_down)), , drop = FALSE
+]
+mat <- mat[
+  match(
+    rownames(do.call(rbind, deg_results_down)), rownames(mat)
+  ), , drop = FALSE
+]
+rownames(mat) <- do.call(rbind, deg_results_down)$symbol
+Heatmap(
+  mat,
+  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "logCPM", title_position = "lefttop-rot"
+  )
+)
+mat <- t(
+  apply(
+    mat, MARGIN = 1,
+    FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+  )
+)
+Heatmap(
+  mat,
+  col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+  column_title = names(ctypes)[ctype_idx],
+  cluster_rows = FALSE,
+  cluster_columns = FALSE,
+  row_split = row_split,
+  column_split = rep(seq(6), each = 4),
+  row_title_gp = gpar(fontsize = 7),
+  row_title_rot = 0,
+  top_annotation = top_anno,
+  show_column_names = FALSE,
+  row_names_max_width = max_text_width(rownames(mat)),
+  heatmap_legend_param = list(
+    title = "Scaled logCPM", title_position = "lefttop-rot"
+  )
+)
+```
+
+```{r, fig.height = 2, fig.width = 5.5}
+for (i in seq_along(gse_genes_up)) {
+  gene_ids <- geneIds(gene_sets)[
+    names(gene_sets) %in% names(gse_genes_up[[i]])
+  ]
+  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
+  if (length(gene_ids) > 0) {
+    links_orig <- data.frame(
+      source = rep(names(gene_ids), times = lengths(gene_ids)),
+      target = gene_ids %>% map_dfr(as_tibble)
+    )
+    links <- links_orig
+    links_orig[] <- map[unlist(links_orig)]
+    links$value <- links_orig$value
+    colnames(links) <- c("source", "target")
+    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
+    links$value <- rep(1, times = nrow(links))
+    links_comb <- links
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    print(
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20
+      )
+    )
+  }
+}
+
+for (i in seq_along(gse_genes_down)) {
+  gene_ids <- geneIds(gene_sets)[
+    names(gene_sets) %in% names(gse_genes_down[[i]])
+  ]
+  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
   if (length(gene_ids) > 0) {
     links_orig <- data.frame(
       source = rep(names(gene_ids), times = lengths(gene_ids)),
