@@ -5015,82 +5015,64 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 10}
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_up)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_up[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
+```{r, fig.height = 5, fig.width = 10}
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_up, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_up, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_up)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
-
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_down)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_down[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
-
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_down, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_down, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_down)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 ```
 
 ### Hub Genes
@@ -5536,82 +5518,64 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 10}
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_up)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_up[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
+```{r, fig.height = 10, fig.width = 10}
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_up, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_up, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_up)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
-
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_down)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_down[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
-
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_down, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_down, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_down)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 ```
 
 # Oligodendrocyte
@@ -10090,82 +10054,64 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 10}
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_up)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_up[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
+```{r, fig.height = 5, fig.width = 10}
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_up, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_up, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_up)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
-
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_down)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_down[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
-
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_down, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_down, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_down)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 ```
 
 ### Hub Genes
@@ -10611,82 +10557,64 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 10}
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_up)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_up[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
+```{r, fig.height = 10, fig.width = 10}
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_up, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_up, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_up)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
-
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_down)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_down[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
-
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_down, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_down, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_down)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 ```
 
 # Microglia
@@ -15174,82 +15102,64 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 10}
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_up)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_up[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
+```{r, fig.height = 5, fig.width = 10}
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_up, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_up, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_up)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
-
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_down)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_down[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
-
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_down, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_down, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_down)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 ```
 
 ### Hub Genes
@@ -15695,82 +15605,64 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 10}
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_up)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_up[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
+```{r, fig.height = 15, fig.width = 10}
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_up, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_up, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_up)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
-
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_down)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_down[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
-
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_down, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_down, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_down)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 ```
 
 # CA3
@@ -20267,82 +20159,64 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 10}
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_up)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_up[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
+```{r, fig.height = 5, fig.width = 10}
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_up, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_up, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_up)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
-
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_down)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_down[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
-
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_down, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_down, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_down)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 ```
 
 ### Hub Genes
@@ -20788,82 +20662,64 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 10}
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_up)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_up[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
+```{r, fig.height = 5, fig.width = 10}
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_up, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_up, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_up)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
-
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_down)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_down[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
-
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_down, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_down, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_down)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 ```
 
 # CA1
@@ -25366,82 +25222,64 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 10}
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_up)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_up[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
+```{r, fig.height = 5, fig.width = 10}
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_up, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_up, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_up)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
-
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_down)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_down[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
-
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_down, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_down, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_down)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 ```
 
 ### Hub Genes
@@ -25887,82 +25725,64 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 10}
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_up)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_up[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
+```{r, fig.height = 5, fig.width = 10}
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_up, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_up, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_up)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
-
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_down)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_down[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
-
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_down, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_down, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_down)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 ```
 
 # ENT
@@ -30474,82 +30294,64 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 10}
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_up)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_up[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
+```{r, fig.height = 5, fig.width = 10}
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_up, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_up, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_up)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
-
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_down)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_down[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
-
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_down, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_down, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_down)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 ```
 
 ### Hub Genes
@@ -30995,82 +30797,64 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 10}
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_up)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_up[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
+```{r, fig.height = 5, fig.width = 10}
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_up, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_up, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_up)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
-
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_down)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_down[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
-
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_down, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_down, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_down)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 ```
 
 # GABAergic
@@ -35590,82 +35374,64 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 10}
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_up)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_up[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
+```{r, fig.height = 5, fig.width = 10}
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_up, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_up, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_up)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
-
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_down)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_down[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
-
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_down, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_down, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_down)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 ```
 
 ### Hub Genes
@@ -36111,82 +35877,64 @@ Heatmap(
 )
 ```
 
-```{r, fig.height = 2, fig.width = 10}
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_up)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_up[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_up[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_up[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
+```{r, fig.height = 5, fig.width = 10}
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_up, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_up, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_up)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
-
-sankey_list <- list()
-sankey_idx <- 1
-for (i in seq_along(gse_genes_down)) {
-  gene_ids <- geneIds(gene_sets)[
-    names(gene_sets) %in% names(gse_genes_down[[i]])
-  ]
-  gene_ids <- gene_ids[match(names(gse_genes_down[[i]]), names(gene_ids))]
-  if (length(gene_ids) > 0) {
-    links_orig <- data.frame(
-      source = rep(names(gene_ids), times = lengths(gene_ids)),
-      target = gene_ids %>% map_dfr(as_tibble)
-    )
-    links <- links_orig
-    links_orig[] <- map[unlist(links_orig)]
-    links$value <- links_orig$value
-    colnames(links) <- c("source", "target")
-    links <- links[links$target %in% deg_results_down[[i]]$symbol, ]
-    links$value <- rep(1, times = nrow(links))
-    links_comb <- links
-
-    nodes <- data.frame(
-      name = c(
-        as.character(links_comb$source), as.character(links_comb$target)
-      ) %>% unique()
-    )
-    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
-    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
-
-    sankey_list[[sankey_idx]] <- sankeyNetwork(
-      Links = links_comb, Nodes = nodes, Source = "IDsource",
-      Target = "IDtarget", Value = "value", NodeID = "name",
-      sinksRight = FALSE, fontSize = 20
-    )
-    sankey_idx <- sankey_idx + 1
-  }
-}
-tagList(sankey_list)
+gene_ids <- geneIds(gene_sets)[
+  names(gene_sets) %in% unlist(lapply(gse_genes_down, FUN = names))
+]
+gene_ids <- gene_ids[
+  match(unlist(lapply(gse_genes_down, FUN = names)), names(gene_ids))
+]
+links_orig <- data.frame(
+  source = rep(names(gene_ids), times = lengths(gene_ids)),
+  target = gene_ids %>% map_dfr(as_tibble)
+)
+links <- links_orig
+links_orig[] <- map[unlist(links_orig)]
+links$value <- links_orig$value
+colnames(links) <- c("source", "target")
+links <- links[links$target %in% do.call(rbind, deg_results_down)$symbol, ]
+links$value <- rep(1, times = nrow(links))
+links_comb <- links
+nodes <- data.frame(
+  name = c(
+    as.character(links_comb$source), as.character(links_comb$target)
+  ) %>% unique()
+)
+links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+sankeyNetwork(
+  Links = links_comb, Nodes = nodes, Source = "IDsource", Target = "IDtarget",
+  Value = "value", NodeID = "name", fontSize = 20
+)
 ```
 
 # References
