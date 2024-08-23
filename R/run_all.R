@@ -306,3 +306,13 @@ xfun::Rscript_call(
     envir = new.env()
   )
 )
+xfun::Rscript_call(
+  rmarkdown::render,
+  list(
+    file.path("comb", "comb_04diffexpression.Rmd"),
+    output_file = file.path(
+      "..", "..", "results", "comb", "comb_04diffexpression.html"
+    ),
+    envir = new.env()
+  )
+)
