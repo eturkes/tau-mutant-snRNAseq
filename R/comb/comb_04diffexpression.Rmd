@@ -156,7 +156,6 @@ priority <- c(
 )
 
 anno_color <- hue_pal()(4)
-
 top_anno <- HeatmapAnnotation(
   Batch = gse_data[[1]]$batch,
   cell_type = anno_block(
