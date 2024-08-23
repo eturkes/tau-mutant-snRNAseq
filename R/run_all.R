@@ -316,3 +316,13 @@ xfun::Rscript_call(
     envir = new.env()
   )
 )
+xfun::Rscript_call(
+  rmarkdown::render,
+  list(
+    file.path("comb", "comb_04dashboard.Rmd"),
+    output_file = file.path(
+      "..", "..", "results", "comb", "comb_04dashboard.html"
+    ),
+    envir = new.env()
+  )
+)
