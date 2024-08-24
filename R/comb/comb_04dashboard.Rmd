@@ -249,7 +249,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 11),
+        row_names_gp = gpar(fontsize = 12),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -266,7 +266,7 @@ renderPlot(
     )
   },
   width = 850,
-  height = 600,
+  height = 650,
   res = 96
 )
 ```
@@ -307,7 +307,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 11),
+        row_names_gp = gpar(fontsize = 12),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -324,7 +324,7 @@ renderPlot(
     )
   },
   width = 850,
-  height = 600,
+  height = 650,
   res = 96
 )
 ```
@@ -464,7 +464,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 11),
+        row_names_gp = gpar(fontsize = 12),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -481,7 +481,7 @@ renderPlot(
     )
   },
   width = 850,
-  height = 600,
+  height = 650,
   res = 96
 )
 ```
@@ -522,7 +522,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 11),
+        row_names_gp = gpar(fontsize = 12),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -539,7 +539,7 @@ renderPlot(
     )
   },
   width = 850,
-  height = 600,
+  height = 650,
   res = 96
 )
 ```
@@ -680,7 +680,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 11),
+        row_names_gp = gpar(fontsize = 12),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -697,7 +697,7 @@ renderPlot(
     )
   },
   width = 850,
-  height = 600,
+  height = 650,
   res = 96
 )
 ```
@@ -738,7 +738,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 11),
+        row_names_gp = gpar(fontsize = 12),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -755,7 +755,7 @@ renderPlot(
     )
   },
   width = 850,
-  height = 600,
+  height = 650,
   res = 96
 )
 ```
@@ -898,7 +898,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 11),
+        row_names_gp = gpar(fontsize = 12),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -915,7 +915,7 @@ renderPlot(
     )
   },
   width = 850,
-  height = 600,
+  height = 650,
   res = 96
 )
 ```
@@ -956,7 +956,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 11),
+        row_names_gp = gpar(fontsize = 12),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -973,7 +973,7 @@ renderPlot(
     )
   },
   width = 850,
-  height = 600,
+  height = 650,
   res = 96
 )
 ```
@@ -1117,7 +1117,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 11),
+        row_names_gp = gpar(fontsize = 12),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -1134,7 +1134,7 @@ renderPlot(
     )
   },
   width = 850,
-  height = 600,
+  height = 650,
   res = 96
 )
 ```
@@ -1175,7 +1175,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 11),
+        row_names_gp = gpar(fontsize = 12),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -1192,7 +1192,7 @@ renderPlot(
     )
   },
   width = 850,
-  height = 600,
+  height = 650,
   res = 96
 )
 ```
@@ -1337,7 +1337,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 11),
+        row_names_gp = gpar(fontsize = 12),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -1354,7 +1354,7 @@ renderPlot(
     )
   },
   width = 850,
-  height = 600,
+  height = 650,
   res = 96
 )
 ```
@@ -1395,7 +1395,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 11),
+        row_names_gp = gpar(fontsize = 12),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -1412,7 +1412,7 @@ renderPlot(
     )
   },
   width = 850,
-  height = 600,
+  height = 650,
   res = 96
 )
 ```
@@ -1559,7 +1559,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 11),
+        row_names_gp = gpar(fontsize = 12),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -1576,7 +1576,7 @@ renderPlot(
     )
   },
   width = 850,
-  height = 600,
+  height = 650,
   res = 96
 )
 ```
@@ -1617,7 +1617,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 11),
+        row_names_gp = gpar(fontsize = 12),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -1634,7 +1634,7 @@ renderPlot(
     )
   },
   width = 850,
-  height = 600,
+  height = 650,
   res = 96
 )
 ```
