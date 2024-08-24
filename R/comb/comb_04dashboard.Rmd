@@ -647,7 +647,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -662,10 +662,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
@@ -681,8 +681,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -700,7 +700,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -716,8 +716,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -854,7 +854,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -869,10 +869,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
@@ -888,8 +888,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -907,7 +907,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -923,8 +923,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -2529,7 +2529,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -2544,10 +2544,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
@@ -2563,8 +2563,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -2582,7 +2582,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -2598,8 +2598,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -2736,7 +2736,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -2751,10 +2751,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
@@ -2770,8 +2770,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -2789,7 +2789,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -2805,8 +2805,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -4206,7 +4206,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -4221,10 +4221,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
@@ -4240,8 +4240,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -4259,7 +4259,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -4275,8 +4275,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -4413,7 +4413,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -4428,10 +4428,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
@@ -4447,8 +4447,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -4466,7 +4466,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -4482,8 +4482,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -6089,7 +6089,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -6104,10 +6104,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
@@ -6123,8 +6123,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -6142,7 +6142,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -6158,8 +6158,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -6296,7 +6296,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -6311,10 +6311,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
@@ -6330,8 +6330,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -6349,7 +6349,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -6365,8 +6365,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -7769,7 +7769,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -7784,10 +7784,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
@@ -7803,8 +7803,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -7822,7 +7822,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -7838,8 +7838,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -7976,7 +7976,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -7991,10 +7991,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
@@ -8010,8 +8010,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -8029,7 +8029,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -8045,8 +8045,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -9655,7 +9655,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -9670,10 +9670,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
@@ -9689,8 +9689,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -9708,7 +9708,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -9724,8 +9724,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -9862,7 +9862,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -9877,10 +9877,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
@@ -9896,8 +9896,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -9915,7 +9915,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -9931,8 +9931,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -11337,7 +11337,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -11352,10 +11352,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
@@ -11371,8 +11371,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -11390,7 +11390,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -11406,8 +11406,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -11544,7 +11544,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -11559,10 +11559,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
@@ -11578,8 +11578,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -11597,7 +11597,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -11613,8 +11613,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -13226,7 +13226,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -13241,10 +13241,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
@@ -13260,8 +13260,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -13279,7 +13279,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -13295,8 +13295,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -13433,7 +13433,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -13451,7 +13451,7 @@ top_anno <- HeatmapAnnotation(
 <div style='display:flex; flex-direction:row; '>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 10.3, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
@@ -13467,8 +13467,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -13486,7 +13486,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 10.3, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -13502,8 +13502,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -14911,7 +14911,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -14926,10 +14926,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
@@ -14945,8 +14945,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -14964,7 +14964,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -14980,8 +14980,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -15118,7 +15118,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -15133,10 +15133,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
@@ -15152,8 +15152,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -15171,7 +15171,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -15187,8 +15187,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -16802,7 +16802,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -16817,10 +16817,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
@@ -16836,8 +16836,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -16855,7 +16855,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -16871,8 +16871,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -17009,7 +17009,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -17024,10 +17024,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
@@ -17043,8 +17043,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -17062,7 +17062,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -17078,8 +17078,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -18490,7 +18490,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -18505,10 +18505,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
@@ -18524,8 +18524,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -18543,7 +18543,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -18559,8 +18559,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -18697,7 +18697,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -18712,10 +18712,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
@@ -18731,8 +18731,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -18750,7 +18750,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -18766,8 +18766,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -20384,7 +20384,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -20399,10 +20399,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
@@ -20418,8 +20418,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -20437,7 +20437,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -20453,8 +20453,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -20591,7 +20591,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -20606,10 +20606,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
@@ -20625,8 +20625,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -20644,7 +20644,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -20660,8 +20660,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -22074,7 +22074,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -22089,10 +22089,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
@@ -22108,8 +22108,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -22127,7 +22127,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -22143,8 +22143,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -22281,7 +22281,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -22296,10 +22296,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
@@ -22315,8 +22315,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -22334,7 +22334,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -22350,8 +22350,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -23971,7 +23971,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -23986,10 +23986,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_up)), , drop = FALSE
 ]
@@ -24005,8 +24005,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -24024,7 +24024,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -24040,8 +24040,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -24178,7 +24178,7 @@ top_anno <- HeatmapAnnotation(
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
     labels = levels(gse_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 8),
+    labels_gp = gpar(col = "black", fontsize = 7),
     height = unit(5, "mm")
   ),
   col = list(
@@ -24193,10 +24193,10 @@ top_anno <- HeatmapAnnotation(
 )
 ```
 
-<div style='display:flex; flex-direction:row; '>
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- gse_corrected[
   rownames(gse) %in% rownames(do.call(rbind, results_down)), , drop = FALSE
 ]
@@ -24212,8 +24212,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
@@ -24231,7 +24231,7 @@ draw(
 </div>
 <div>
 
-```{r, fig.width = 12, fig.height = 8.4, dpi = 96}
+```{r, fig.width = 9.9, fig.height = 8.4, dpi = 96}
 mat <- t(
   apply(
     mat, MARGIN = 1,
@@ -24247,8 +24247,8 @@ draw(
     cluster_columns = FALSE,
     row_split = row_split,
     column_split = rep(seq(6), each = 4),
-    row_title_gp = gpar(fontsize = 7),
-    row_names_gp = gpar(fontsize = 9),
+    row_title_gp = gpar(fontsize = 6),
+    row_names_gp = gpar(fontsize = 8),
     row_title_rot = 0,
     top_annotation = top_anno,
     show_column_names = FALSE,
