@@ -35,7 +35,8 @@ lapply(packages, FUN = library, character.only = TRUE)
 datatable_download_exp <- function(dt) {
   datatable(
     dt,
-    list(
+    options = list(
+      pageLength = 15,
       scrollX = TRUE,
       dom = "Blfrtip",
       buttons = list(
