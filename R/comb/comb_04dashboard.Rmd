@@ -1,5 +1,5 @@
 ---
-title: "Tau Mutant snRNAseq"
+title: "Tau Mutant snRNAseq Viewer"
 output:
   flexdashboard::flex_dashboard:
     source_code: embed
