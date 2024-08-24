@@ -80,7 +80,7 @@ top_anno <- HeatmapAnnotation(
     labels = sub(
       pattern = "_", replacement = " ", x = levels(deg_data[[1]]$genotype)
     ),
-    labels_gp = gpar(col = "black", fontsize = 12),
+    labels_gp = gpar(col = "black", fontsize = 11),
     height = unit(5, "mm")
   ),
   col = list(
@@ -249,7 +249,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 11),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -265,8 +265,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 950,
-  height = 750,
+  width = 850,
+  height = 600,
   res = 96
 )
 ```
@@ -307,7 +307,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 11),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -323,8 +323,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 950,
-  height = 750,
+  width = 850,
+  height = 600,
   res = 96
 )
 ```
@@ -464,7 +464,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 11),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -480,8 +480,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 950,
-  height = 750,
+  width = 850,
+  height = 600,
   res = 96
 )
 ```
@@ -522,7 +522,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 11),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -538,8 +538,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 950,
-  height = 750,
+  width = 850,
+  height = 600,
   res = 96
 )
 ```
@@ -680,7 +680,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 11),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -696,8 +696,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 950,
-  height = 750,
+  width = 850,
+  height = 600,
   res = 96
 )
 ```
@@ -738,7 +738,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 11),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -754,8 +754,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 950,
-  height = 750,
+  width = 850,
+  height = 600,
   res = 96
 )
 ```
@@ -898,7 +898,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 11),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -914,8 +914,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 950,
-  height = 750,
+  width = 850,
+  height = 600,
   res = 96
 )
 ```
@@ -956,7 +956,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 11),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -972,8 +972,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 950,
-  height = 750,
+  width = 850,
+  height = 600,
   res = 96
 )
 ```
@@ -1117,7 +1117,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 11),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -1133,8 +1133,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 950,
-  height = 750,
+  width = 850,
+  height = 600,
   res = 96
 )
 ```
@@ -1175,7 +1175,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 11),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -1191,8 +1191,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 950,
-  height = 750,
+  width = 850,
+  height = 600,
   res = 96
 )
 ```
@@ -1337,7 +1337,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 11),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -1353,8 +1353,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 950,
-  height = 750,
+  width = 850,
+  height = 600,
   res = 96
 )
 ```
@@ -1395,7 +1395,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 11),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -1411,8 +1411,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 950,
-  height = 750,
+  width = 850,
+  height = 600,
   res = 96
 )
 ```
@@ -1559,7 +1559,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 11),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -1575,8 +1575,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 950,
-  height = 750,
+  width = 850,
+  height = 600,
   res = 96
 )
 ```
@@ -1617,7 +1617,7 @@ renderPlot(
         cluster_columns = FALSE,
         cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 11),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
@@ -1633,8 +1633,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 950,
-  height = 750,
+  width = 850,
+  height = 600,
   res = 96
 )
 ```
