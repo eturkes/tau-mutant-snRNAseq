@@ -1443,7 +1443,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -1602,7 +1602,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -3167,7 +3167,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -3326,7 +3326,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -4355,7 +4355,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -4516,7 +4516,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -4858,7 +4858,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -5019,7 +5019,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -6388,7 +6388,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -6547,7 +6547,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -8113,7 +8113,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -8272,7 +8272,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -9302,7 +9302,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -9463,7 +9463,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -9805,7 +9805,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -9966,7 +9966,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -11338,7 +11338,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -11497,7 +11497,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -13066,7 +13066,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -13225,7 +13225,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -14258,7 +14258,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -14419,7 +14419,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -14761,7 +14761,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -14922,7 +14922,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -16297,7 +16297,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -16456,7 +16456,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -18028,7 +18028,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -18187,7 +18187,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -19223,7 +19223,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -19384,7 +19384,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -19726,7 +19726,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -19887,7 +19887,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -21264,7 +21264,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -21423,7 +21423,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -22997,7 +22997,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -23156,7 +23156,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -24194,7 +24194,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -24355,7 +24355,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -24697,7 +24697,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -24858,7 +24858,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -26238,7 +26238,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -26397,7 +26397,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -27974,7 +27974,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -28133,7 +28133,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -29174,7 +29174,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -29335,7 +29335,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -29677,7 +29677,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -29838,7 +29838,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -31221,7 +31221,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -31380,7 +31380,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -32960,7 +32960,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -33119,7 +33119,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -34162,7 +34162,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -34323,7 +34323,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -34665,7 +34665,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_up)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
@@ -34826,7 +34826,7 @@ mat <- mat[
 rownames(mat) <- do.call(rbind, deg_results_down)$symbol
 Heatmap(
   mat,
-  col = colorRamp2(gse_range, colors = c("blue", "white", "red")),
+  col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
   column_title = names(ctypes)[ctype_idx],
   cluster_rows = FALSE,
   cluster_columns = FALSE,
