@@ -28,9 +28,33 @@ runtime: shiny
 library(conflicted)
 packages <- c(
   "GSEABase", "SingleCellExperiment", "scales", "ComplexHeatmap", "circlize",
-  "limma"
+  "limma", "DT"
 )
 lapply(packages, FUN = library, character.only = TRUE)
+
+datatable_download_exp <- function(dt) {
+  datatable(
+    dt,
+    list(
+      scrollX = TRUE,
+      dom = "Blfrtip",
+      buttons = list(
+        "copy", "print",
+        list(
+          extend = "collection", buttons = c("csv", "excel", "pdf"),
+          text = "Download"
+        )
+      ),
+      rowCallback = JS(
+        "function(row, data) {",
+        "for (i = 1; i < data.length; i++) {",
+        "if (data[i]>=1000 | data[i]<1000) {",
+        "$('td:eq('+i+')', row).html(data[i].toExponential(2));}}}"
+      )
+    ),
+    extensions = "Buttons"
+  )
+}
 
 `%notin%` <- Negate(`%in%`)
 
@@ -53,8 +77,10 @@ top_anno <- HeatmapAnnotation(
   Batch = deg_data[[1]]$batch,
   cell_type = anno_block(
     gp = gpar(fill = "lightgray", col = "lightgray"),
-    labels = levels(deg_data[[1]]$genotype),
-    labels_gp = gpar(col = "black", fontsize = 9),
+    labels = sub(
+      pattern = "_", replacement = " ", x = levels(deg_data[[1]]$genotype)
+    ),
+    labels_gp = gpar(col = "black", fontsize = 12),
     height = unit(5, "mm")
   ),
   col = list(
@@ -67,23 +93,53 @@ top_anno <- HeatmapAnnotation(
   show_legend = c("Batch" = FALSE),
   annotation_name_gp = gpar(fontsize = 9)
 )
+
+deg <- deg_data[[1]]
+design <- model.matrix(~ 0 + deg$genotype + deg$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  S305N_MAPTKI =
+    deg.genotypeS305N -
+    deg.genotypeMAPTKI,
+  P301S_MAPTKI =
+    deg.genotypeP301S -
+    deg.genotypeMAPTKI,
+  NLGF_MAPTKI_MAPTKI =
+    deg.genotypeNLGF_MAPTKI -
+    deg.genotypeMAPTKI,
+  NLGF_S305N_MAPTKI =
+    deg.genotypeNLGF_S305N -
+    deg.genotypeMAPTKI,
+  NLGF_P301S_MAPTKI =
+    deg.genotypeNLGF_P301S -
+    deg.genotypeMAPTKI,
+  levels = design
+)
+
+ctype_name <- vector("list", length = 7)
+deg_corrected <- vector("list", length = 7)
+deg_range <- vector("list", length = 7)
+results_list <- vector("list", length = 7)
+sig <- vector("list", length = 7)
+sig_uniq <- vector("list", length = 7)
 ```
 
 Astrocytes
 ===
 
-```{r}
-ctype_idx1 <- 1
+```{r, include = FALSE}
+idx <- 1
+ctype_name[[idx]] <- ctypes[idx]
 
-deg <- deg_data[[ctype_idx1]]
-deg_corrected1 <- removeBatchEffect(
+deg <- deg_data[[idx]]
+deg_corrected[[idx]] <- removeBatchEffect(
   logcounts(deg), batch = deg$batch, group = deg$genotype
 )
 
-deg_range1 <- c(
-  min(deg_corrected1),
-  (min(deg_corrected1) + max(deg_corrected1)) / 2,
-  max(deg_corrected1)
+deg_range[[idx]] <- c(
+  min(deg_corrected[[idx]]),
+  (min(deg_corrected[[idx]]) + max(deg_corrected[[idx]])) / 2,
+  max(deg_corrected[[idx]])
 )
 ```
 
@@ -92,415 +148,72 @@ Row {.tabset}
 
 ### Search Genes
 
-```{r}
-design <- model.matrix(~ 0 + deg$genotype + deg$batch)
-colnames(design) <- make.names(colnames(design))
-cont_mat <- makeContrasts(
-  S305N_MAPTKI =
-    deg.genotypeS305N -
-    deg.genotypeMAPTKI,
-  P301S_MAPTKI =
-    deg.genotypeP301S -
-    deg.genotypeMAPTKI,
-  NLGF_MAPTKI_MAPTKI =
-    deg.genotypeNLGF_MAPTKI -
-    deg.genotypeMAPTKI,
-  NLGF_S305N_MAPTKI =
-    deg.genotypeNLGF_S305N -
-    deg.genotypeMAPTKI,
-  NLGF_P301S_MAPTKI =
-    deg.genotypeNLGF_P301S -
-    deg.genotypeMAPTKI,
-  levels = design
-)
-
+```{r, include = FALSE}
 fit <- lmFit(logcounts(deg), design)
-rm(deg)
 fit <- contrasts.fit(fit, cont_mat)
 fit <- eBayes(fit, trend = TRUE, robust = TRUE)
 
 tests <- decideTests(fit, method = "global")
+tc <- textConnection("results", open = "w")
 write.fit(
-  fit, tests, file.path(data_dir, "results.tsv"),
+  fit, tests, file = tc,
   adjust = "BH", F.adjust = "BH", method = "global"
 )
-results <- read.delim(file.path(data_dir, "results.tsv"))
+close(tc)
+results_list[[idx]] <- read.delim(text = results)
 
-idx <- 18
+col <- 18
 length1 <- nrow(gse_list[[1]]) + 1
 length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]])
 length <- length1:length2
 for (i in seq_along(corrections)) {
-  results[ , idx] <- corrections[[i]][length]
-  idx <- idx + 1
+  results_list[[idx]][ , col] <- corrections[[i]][length]
+  col <- col + 1
 }
 
-rownames(results) <- results$X
-results <- results[ , -1]
-results <- results[ , 1:22]
-tests <- results[ , 17:21]
-results <- results[order(results$F, decreasing = TRUE), ]
-gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
+rownames(results_list[[idx]]) <- results_list[[idx]]$X
+results_list[[idx]] <- results_list[[idx]][ , -1]
+results_list[[idx]] <- results_list[[idx]][ , 1:22]
+tests <- results_list[[idx]][ , 17:21]
+results_list[[idx]] <- results_list[[idx]][
+  order(results_list[[idx]]$F, decreasing = TRUE),
+]
+gene_anno_sub <- gene_anno[
+  gene_anno$ensembl %in% rownames(results_list[[idx]]),
+]
 gene_anno_sub <- gene_anno_sub[
-  match(rownames(results), gene_anno_sub$ensembl),
+  match(rownames(results_list[[idx]]), gene_anno_sub$ensembl),
 ]
-results$symbol <- gene_anno_sub$symbol
+results_list[[idx]]$Gene <- gene_anno_sub$symbol
+results_list[[idx]] <- results_list[[idx]][
+  , c(ncol(results_list[[idx]]), 1:(ncol(results_list[[idx]]) - 1))
+]
 
-results_up <- vector("list", length = 13)
-results_down <- vector("list", length = 13)
-size <- Inf
+sig_tmp <- ifelse(results_list[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_list[[idx]][ , 3:7] > 0, yes = 1, no = -1)
+sig_tmp <- sig_tmp * direction
+sig_tmp <- sig_tmp[hclust(dist(sig_tmp))$order, ]
+sig_tmp <- ifelse(
+  sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
+)
+sig_tmp <- cbind(rep("", nrow(sig_tmp)), sig_tmp)
+sig[[idx]] <- vector("list", length = 6)
+for (i in seq_len(ncol(sig_tmp))) {
+  sig[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
+}
+sig[[idx]] <- do.call(cbind, sig[[idx]])
+rownames(sig[[idx]]) <- results_list[[idx]]$Gene[
+  match(rownames(sig[[idx]]), rownames(results_list[[idx]]))
+]
+sig_uniq[[idx]] <- unique(sig[[idx]])
+```
 
-results_sub <- results[
-  results[ , 17] < 0.05 & results[ , 18] >= 0.05 & results[ , 20] >= 0.05,
-]
-results_sub <- results_sub[order(results_sub[ , 17]), ]
-results_sub_up <- results_sub[
-  results_sub[ , 2] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[1]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[1]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 2] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[1]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[1]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] < 0.05 & results[ , 18] >= 0.05 & results[ , 20] < 0.05,
-]
-results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 20)])), ]
-results_sub_up <- results_sub[
-  results_sub[ , 2] > 0 & results_sub[ , 5] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[2]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[2]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 2] < 0 & results_sub[ , 5] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[2]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[2]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] >= 0.05 & results[ , 18] < 0.05 & results[ , 21] >= 0.05,
-]
-results_sub <- results_sub[order(results_sub[ , 18]), ]
-results_sub_up <- results_sub[
-  results_sub[ , 3] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[3]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[3]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 3] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[3]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[3]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] >= 0.05 & results[ , 18] < 0.05 & results[ , 21] < 0.05,
-]
-results_sub <- results_sub[order(rowSums(results_sub[ , c(18, 21)])), ]
-results_sub_up <- results_sub[
-  results_sub[ , 3] > 0 & results_sub[ , 6] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[4]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[4]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 3] < 0 & results_sub[ , 6] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[4]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[4]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] < 0.05 & results[ , 18] < 0.05 &
-    results[ , 20] >= 0.05 & results[ , 21] >= 0.05,
-]
-results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 18)])), ]
-results_sub_up <- results_sub[
-  results_sub[ , 2] > 0 & results_sub[ , 3] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[5]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[5]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 2] < 0 & results_sub[ , 3] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[5]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[5]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] < 0.05 & results[ , 18] < 0.05 &
-    results[ , 20] < 0.05 & results[ , 21] < 0.05,
-]
-results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 18, 20, 21)])), ]
-results_sub_up <- results_sub[
-  results_sub[ , 2] > 0 & results_sub[ , 3] > 0 &
-    results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[6]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[6]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 2] < 0 & results_sub[ , 3] < 0 &
-    results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[6]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[6]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
-    results[ , 20] >= 0.05 & results[ , 21] >= 0.05,
-]
-results_sub <- results_sub[order(results_sub[ , 19]), ]
-results_sub_up <- results_sub[
-  results_sub[ , 4] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[7]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[7]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 4] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[7]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[7]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
-    results[ , 20] >= 0.05 & results[ , 21] < 0.05,
-]
-results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 21)])), ]
-results_sub_up <- results_sub[
-  results_sub[ , 4] > 0 & results_sub[ , 6] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[8]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[8]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 4] < 0 & results_sub[ , 6] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[8]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[8]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
-    results[ , 20] < 0.05 & results[ , 21] >= 0.05,
-]
-results_sub <- results_sub[order(results_sub[ , 20]), ]
-results_sub_up <- results_sub[
-  results_sub[ , 5] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[9]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[9]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 5] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[9]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[9]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
-    results[ , 20] < 0.05 & results[ , 21] >= 0.05,
-]
-results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 20)])), ]
-results_sub_up <- results_sub[
-  results_sub[ , 4] > 0 & results_sub[ , 5] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[10]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[10]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 4] < 0 & results_sub[ , 5] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[10]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[10]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
-    results[ , 20] < 0.05 & results[ , 21] < 0.05,
-]
-results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 20, 21)])), ]
-results_sub_up <- results_sub[
-  results_sub[ , 4] > 0 & results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[11]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[11]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 4] < 0 & results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[11]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[11]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
-    results[ , 20] < 0.05 & results[ , 21] < 0.05,
-]
-results_sub <- results_sub[order(rowSums(results_sub[ , c(20, 21)])), ]
-results_sub_up <- results_sub[
-  results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[12]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[12]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[12]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[12]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
-    results[ , 20] >= 0.05 & results[ , 21] < 0.05,
-]
-results_sub <- results_sub[order(results_sub[ , 21]), ]
-results_sub_up <- results_sub[
-  results_sub[ , 6] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[13]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[13]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 6] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[13]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[13]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results <- rbind(do.call(rbind, results_up), do.call(rbind, results_down))
-order_all1 <- append(results_up, results_down)
-order1 <- lapply(order_all1, FUN = function(x) x[1, , drop = FALSE])
-results_sub <- results[rownames(results) %in% rownames(do.call(rbind, order1)), ]
-results_sub <- results_sub[
-  match(rownames(do.call(rbind, order1)), rownames(results_sub)),
-]
-results <- results[rownames(results) %notin% rownames(results_sub), ]
-results1 <- rbind(results_sub, results)
-
+```{r}
 selectizeInput(
-  "select1",
+  paste0("select", idx),
   label = "Select Genes:",
-  choices = results1$symbol,
-  selected = do.call(rbind, order1)$symbol,
+  choices = results_list[[idx]]$Gene,
+  selected = rownames(sig_uniq[[idx]]),
   multiple = TRUE,
   width = "100%"
 )
@@ -512,205 +225,18 @@ selectizeInput(
 ```{r}
 renderPlot(
   {
+    idx <- 1
+    gene_anno_sub <- gene_anno[
+      gene_anno$symbol %in% input[[paste0("select", idx)]],
+    ]
+    gene_anno_sub <- gene_anno_sub[
+      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+    ]
+    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
 
-    gene_anno_sub <- gene_anno[gene_anno$symbol %in% input$select1, ]
-    gene_anno_sub <- gene_anno_sub[match(input$select1, gene_anno_sub$symbol), ]
-
-    order1 <- lapply(
-      order_all1, FUN = function(x) x[rownames(x) %in% gene_anno_sub$ensembl, ]
-    )
-
-    row_split <- factor(
-      c(
-        rep(
-          "S305N\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[1]])), yes = 0, no = nrow(order1[[1]])
-          )
-        ),
-        rep(
-          "S305N & NLGF S305N\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[2]])), yes = 0, no = nrow(order1[[2]])
-          )
-        ),
-        rep(
-          "P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[3]])), yes = 0, no = nrow(order1[[3]])
-          )
-        ),
-        rep(
-          "P301S & NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[4]])), yes = 0, no = nrow(order1[[4]])
-          )
-        ),
-        rep(
-          "S305N & P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[5]])), yes = 0, no = nrow(order1[[5]])
-          )
-        ),
-        rep(
-          "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[6]])), yes = 0, no = nrow(order1[[6]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[7]])), yes = 0, no = nrow(order1[[7]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[8]])), yes = 0, no = nrow(order1[[8]])
-          )
-        ),
-        rep(
-          "NLGF S305N\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[9]])), yes = 0, no = nrow(order1[[9]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF S305N\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[10]])), yes = 0, no = nrow(order1[[10]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[11]])), yes = 0, no = nrow(order1[[11]])
-          )
-        ),
-        rep(
-          "NLGF S305N & NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[12]])), yes = 0, no = nrow(order1[[12]])
-          )
-        ),
-        rep(
-          "NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[13]])), yes = 0, no = nrow(order1[[13]])
-          )
-        ),
-        rep(
-          "S305N\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[14]])), yes = 0, no = nrow(order1[[14]])
-          )
-        ),
-        rep(
-          "S305N & NLGF S305N\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[15]])), yes = 0, no = nrow(order1[[15]])
-          )
-        ),
-        rep(
-          "P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[16]])), yes = 0, no = nrow(order1[[16]])
-          )
-        ),
-        rep(
-          "P301S & NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[17]])), yes = 0, no = nrow(order1[[17]])
-          )
-        ),
-        rep(
-          "S305N & P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[18]])), yes = 0, no = nrow(order1[[18]])
-          )
-        ),
-        rep(
-          "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[19]])), yes = 0, no = nrow(order1[[19]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[20]])), yes = 0, no = nrow(order1[[20]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[21]])), yes = 0, no = nrow(order1[[21]])
-          )
-        ),
-        rep(
-          "NLGF S305N\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[22]])), yes = 0, no = nrow(order1[[22]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF S305N\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[23]])), yes = 0, no = nrow(order1[[23]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[24]])), yes = 0, no = nrow(order1[[24]])
-          )
-        ),
-        rep(
-          "NLGF S305N & NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[25]])), yes = 0, no = nrow(order1[[25]])
-          )
-        ),
-        rep(
-          "NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[26]])), yes = 0, no = nrow(order1[[26]])
-          )
-        )
-      ),
-      levels = c(
-        "S305N\nUP",
-        "S305N & NLGF S305N\nUP",
-        "P301S\nUP",
-        "P301S & NLGF P301S\nUP",
-        "S305N & P301S\nUP",
-        "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
-        "NLGF MAPTKI\nUP",
-        "NLGF MAPTKI & NLGF P301S\nUP",
-        "NLGF S305N\nUP",
-        "NLGF MAPTKI & NLGF S305N\nUP",
-        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
-        "NLGF S305N & NLGF P301S\nUP",
-        "NLGF P301S\nUP",
-        "S305N\nDOWN",
-        "S305N & NLGF S305N\nDOWN",
-        "P301S\nDOWN",
-        "P301S & NLGF P301S\nDOWN",
-        "S305N & P301S\nDOWN",
-        "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
-        "NLGF MAPTKI\nDOWN",
-        "NLGF MAPTKI & NLGF P301S\nDOWN",
-        "NLGF S305N\nDOWN",
-        "NLGF MAPTKI & NLGF S305N\nDOWN",
-        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
-        "NLGF S305N & NLGF P301S\nDOWN",
-        "NLGF P301S\nDOWN"
-      )
-    )
-
-    mat <- deg_corrected1[
-      rownames(deg_corrected1) %in% gene_anno_sub$ensembl, , drop = FALSE
+    mat <- deg_corrected[[idx]][
+      rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
     mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
     rownames(mat) <- gene_anno_sub$symbol
@@ -718,17 +244,18 @@ renderPlot(
     draw(
       Heatmap(
         mat,
-        col = colorRamp2(deg_range1, colors = c("blue", "white", "red")),
-        column_title = ctypes[ctype_idx1],
-        cluster_rows = FALSE,
+        col = colorRamp2(deg_range[[idx]], colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
         cluster_columns = FALSE,
-        row_split = row_split,
+        cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_title_gp = gpar(fontsize = 8),
         row_names_gp = gpar(fontsize = 12),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 12))
+        },
         heatmap_legend_param = list(
           title = "logCPM", direction = "horizontal",
           title_position = "topcenter", labels_gp = gpar(fontsize = 9),
@@ -738,7 +265,6 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-
   width = 950,
   height = 750,
   res = 96
@@ -751,205 +277,18 @@ renderPlot(
 ```{r}
 renderPlot(
   {
+    idx <- 1
+    gene_anno_sub <- gene_anno[
+      gene_anno$symbol %in% input[[paste0("select", idx)]],
+    ]
+    gene_anno_sub <- gene_anno_sub[
+      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+    ]
+    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
 
-    gene_anno_sub <- gene_anno[gene_anno$symbol %in% input$select1, ]
-    gene_anno_sub <- gene_anno_sub[match(input$select1, gene_anno_sub$symbol), ]
-
-    order1 <- lapply(
-      order_all1, FUN = function(x) x[rownames(x) %in% gene_anno_sub$ensembl, ]
-    )
-
-    row_split <- factor(
-      c(
-        rep(
-          "S305N\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[1]])), yes = 0, no = nrow(order1[[1]])
-          )
-        ),
-        rep(
-          "S305N & NLGF S305N\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[2]])), yes = 0, no = nrow(order1[[2]])
-          )
-        ),
-        rep(
-          "P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[3]])), yes = 0, no = nrow(order1[[3]])
-          )
-        ),
-        rep(
-          "P301S & NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[4]])), yes = 0, no = nrow(order1[[4]])
-          )
-        ),
-        rep(
-          "S305N & P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[5]])), yes = 0, no = nrow(order1[[5]])
-          )
-        ),
-        rep(
-          "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[6]])), yes = 0, no = nrow(order1[[6]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[7]])), yes = 0, no = nrow(order1[[7]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[8]])), yes = 0, no = nrow(order1[[8]])
-          )
-        ),
-        rep(
-          "NLGF S305N\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[9]])), yes = 0, no = nrow(order1[[9]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF S305N\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[10]])), yes = 0, no = nrow(order1[[10]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[11]])), yes = 0, no = nrow(order1[[11]])
-          )
-        ),
-        rep(
-          "NLGF S305N & NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[12]])), yes = 0, no = nrow(order1[[12]])
-          )
-        ),
-        rep(
-          "NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order1[[13]])), yes = 0, no = nrow(order1[[13]])
-          )
-        ),
-        rep(
-          "S305N\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[14]])), yes = 0, no = nrow(order1[[14]])
-          )
-        ),
-        rep(
-          "S305N & NLGF S305N\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[15]])), yes = 0, no = nrow(order1[[15]])
-          )
-        ),
-        rep(
-          "P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[16]])), yes = 0, no = nrow(order1[[16]])
-          )
-        ),
-        rep(
-          "P301S & NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[17]])), yes = 0, no = nrow(order1[[17]])
-          )
-        ),
-        rep(
-          "S305N & P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[18]])), yes = 0, no = nrow(order1[[18]])
-          )
-        ),
-        rep(
-          "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[19]])), yes = 0, no = nrow(order1[[19]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[20]])), yes = 0, no = nrow(order1[[20]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[21]])), yes = 0, no = nrow(order1[[21]])
-          )
-        ),
-        rep(
-          "NLGF S305N\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[22]])), yes = 0, no = nrow(order1[[22]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF S305N\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[23]])), yes = 0, no = nrow(order1[[23]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[24]])), yes = 0, no = nrow(order1[[24]])
-          )
-        ),
-        rep(
-          "NLGF S305N & NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[25]])), yes = 0, no = nrow(order1[[25]])
-          )
-        ),
-        rep(
-          "NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order1[[26]])), yes = 0, no = nrow(order1[[26]])
-          )
-        )
-      ),
-      levels = c(
-        "S305N\nUP",
-        "S305N & NLGF S305N\nUP",
-        "P301S\nUP",
-        "P301S & NLGF P301S\nUP",
-        "S305N & P301S\nUP",
-        "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
-        "NLGF MAPTKI\nUP",
-        "NLGF MAPTKI & NLGF P301S\nUP",
-        "NLGF S305N\nUP",
-        "NLGF MAPTKI & NLGF S305N\nUP",
-        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
-        "NLGF S305N & NLGF P301S\nUP",
-        "NLGF P301S\nUP",
-        "S305N\nDOWN",
-        "S305N & NLGF S305N\nDOWN",
-        "P301S\nDOWN",
-        "P301S & NLGF P301S\nDOWN",
-        "S305N & P301S\nDOWN",
-        "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
-        "NLGF MAPTKI\nDOWN",
-        "NLGF MAPTKI & NLGF P301S\nDOWN",
-        "NLGF S305N\nDOWN",
-        "NLGF MAPTKI & NLGF S305N\nDOWN",
-        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
-        "NLGF S305N & NLGF P301S\nDOWN",
-        "NLGF P301S\nDOWN"
-      )
-    )
-
-    mat <- deg_corrected1[
-      rownames(deg_corrected1) %in% gene_anno_sub$ensembl, , drop = FALSE
+    mat <- deg_corrected[[idx]][
+      rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
     mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
     rownames(mat) <- gene_anno_sub$symbol
@@ -964,16 +303,17 @@ renderPlot(
       Heatmap(
         mat,
         col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
-        column_title = ctypes[ctype_idx1],
-        cluster_rows = FALSE,
+        column_title = ctype_name[[idx]],
         cluster_columns = FALSE,
-        row_split = row_split,
+        cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_title_gp = gpar(fontsize = 8),
         row_names_gp = gpar(fontsize = 12),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 12))
+        },
         heatmap_legend_param = list(
           title = "Scaled logCPM", direction = "horizontal",
           title_position = "topcenter", labels_gp = gpar(fontsize = 9),
@@ -983,7 +323,6 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-
   width = 950,
   height = 750,
   res = 96
@@ -993,21 +332,28 @@ renderPlot(
 </div>
 </div>
 
+### Results Table
+
+```{r}
+datatable_download_exp(results_list[[idx]])
+```
+
 Oligodendrocytes
 ===
 
-```{r}
-ctype_idx2 <- 2
+```{r, include = FALSE}
+idx <- 2
+ctype_name[[idx]] <- ctypes[idx]
 
-deg <- deg_data[[ctype_idx2]]
-deg_corrected2 <- removeBatchEffect(
+deg <- deg_data[[idx]]
+deg_corrected[[idx]] <- removeBatchEffect(
   logcounts(deg), batch = deg$batch, group = deg$genotype
 )
 
-deg_range2 <- c(
-  min(deg_corrected2),
-  (min(deg_corrected2) + max(deg_corrected2)) / 2,
-  max(deg_corrected2)
+deg_range[[idx]] <- c(
+  min(deg_corrected[[idx]]),
+  (min(deg_corrected[[idx]]) + max(deg_corrected[[idx]])) / 2,
+  max(deg_corrected[[idx]])
 )
 ```
 
@@ -1016,416 +362,73 @@ Row {.tabset}
 
 ### Search Genes
 
-```{r}
-design <- model.matrix(~ 0 + deg$genotype + deg$batch)
-colnames(design) <- make.names(colnames(design))
-cont_mat <- makeContrasts(
-  S305N_MAPTKI =
-    deg.genotypeS305N -
-    deg.genotypeMAPTKI,
-  P301S_MAPTKI =
-    deg.genotypeP301S -
-    deg.genotypeMAPTKI,
-  NLGF_MAPTKI_MAPTKI =
-    deg.genotypeNLGF_MAPTKI -
-    deg.genotypeMAPTKI,
-  NLGF_S305N_MAPTKI =
-    deg.genotypeNLGF_S305N -
-    deg.genotypeMAPTKI,
-  NLGF_P301S_MAPTKI =
-    deg.genotypeNLGF_P301S -
-    deg.genotypeMAPTKI,
-  levels = design
-)
-
+```{r, include = FALSE}
 fit <- lmFit(logcounts(deg), design)
-rm(deg)
 fit <- contrasts.fit(fit, cont_mat)
 fit <- eBayes(fit, trend = TRUE, robust = TRUE)
 
 tests <- decideTests(fit, method = "global")
+tc <- textConnection("results", open = "w")
 write.fit(
-  fit, tests, file.path(data_dir, "results.tsv"),
+  fit, tests, file = tc,
   adjust = "BH", F.adjust = "BH", method = "global"
 )
-results <- read.delim(file.path(data_dir, "results.tsv"))
+close(tc)
+results_list[[idx]] <- read.delim(text = results)
 
-idx <- 18
+col <- 18
 length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) + 1
 length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
   nrow(deg_list[[2]])
 length <- length1:length2
 for (i in seq_along(corrections)) {
-  results[ , idx] <- corrections[[i]][length]
-  idx <- idx + 1
+  results_list[[idx]][ , col] <- corrections[[i]][length]
+  col <- col + 1
 }
 
-rownames(results) <- results$X
-results <- results[ , -1]
-results <- results[ , 1:22]
-tests <- results[ , 17:21]
-results <- results[order(results$F, decreasing = TRUE), ]
-gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
+rownames(results_list[[idx]]) <- results_list[[idx]]$X
+results_list[[idx]] <- results_list[[idx]][ , -1]
+results_list[[idx]] <- results_list[[idx]][ , 1:22]
+tests <- results_list[[idx]][ , 17:21]
+results_list[[idx]] <- results_list[[idx]][
+  order(results_list[[idx]]$F, decreasing = TRUE),
+]
+gene_anno_sub <- gene_anno[
+  gene_anno$ensembl %in% rownames(results_list[[idx]]),
+]
 gene_anno_sub <- gene_anno_sub[
-  match(rownames(results), gene_anno_sub$ensembl),
+  match(rownames(results_list[[idx]]), gene_anno_sub$ensembl),
 ]
-results$symbol <- gene_anno_sub$symbol
+results_list[[idx]]$Gene <- gene_anno_sub$symbol
+results_list[[idx]] <- results_list[[idx]][
+  , c(ncol(results_list[[idx]]), 1:(ncol(results_list[[idx]]) - 1))
+]
 
-results_up <- vector("list", length = 13)
-results_down <- vector("list", length = 13)
-size <- Inf
+sig_tmp <- ifelse(results_list[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_list[[idx]][ , 3:7] > 0, yes = 1, no = -1)
+sig_tmp <- sig_tmp * direction
+sig_tmp <- sig_tmp[hclust(dist(sig_tmp))$order, ]
+sig_tmp <- ifelse(
+  sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
+)
+sig_tmp <- cbind(rep("", nrow(sig_tmp)), sig_tmp)
+sig[[idx]] <- vector("list", length = 6)
+for (i in seq_len(ncol(sig_tmp))) {
+  sig[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
+}
+sig[[idx]] <- do.call(cbind, sig[[idx]])
+rownames(sig[[idx]]) <- results_list[[idx]]$Gene[
+  match(rownames(sig[[idx]]), rownames(results_list[[idx]]))
+]
+sig_uniq[[idx]] <- unique(sig[[idx]])
+```
 
-results_sub <- results[
-  results[ , 17] < 0.05 & results[ , 18] >= 0.05 & results[ , 20] >= 0.05,
-]
-results_sub <- results_sub[order(results_sub[ , 17]), ]
-results_sub_up <- results_sub[
-  results_sub[ , 2] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[1]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[1]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 2] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[1]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[1]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] < 0.05 & results[ , 18] >= 0.05 & results[ , 20] < 0.05,
-]
-results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 20)])), ]
-results_sub_up <- results_sub[
-  results_sub[ , 2] > 0 & results_sub[ , 5] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[2]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[2]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 2] < 0 & results_sub[ , 5] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[2]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[2]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] >= 0.05 & results[ , 18] < 0.05 & results[ , 21] >= 0.05,
-]
-results_sub <- results_sub[order(results_sub[ , 18]), ]
-results_sub_up <- results_sub[
-  results_sub[ , 3] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[3]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[3]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 3] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[3]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[3]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] >= 0.05 & results[ , 18] < 0.05 & results[ , 21] < 0.05,
-]
-results_sub <- results_sub[order(rowSums(results_sub[ , c(18, 21)])), ]
-results_sub_up <- results_sub[
-  results_sub[ , 3] > 0 & results_sub[ , 6] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[4]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[4]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 3] < 0 & results_sub[ , 6] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[4]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[4]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] < 0.05 & results[ , 18] < 0.05 &
-    results[ , 20] >= 0.05 & results[ , 21] >= 0.05,
-]
-results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 18)])), ]
-results_sub_up <- results_sub[
-  results_sub[ , 2] > 0 & results_sub[ , 3] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[5]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[5]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 2] < 0 & results_sub[ , 3] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[5]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[5]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] < 0.05 & results[ , 18] < 0.05 &
-    results[ , 20] < 0.05 & results[ , 21] < 0.05,
-]
-results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 18, 20, 21)])), ]
-results_sub_up <- results_sub[
-  results_sub[ , 2] > 0 & results_sub[ , 3] > 0 &
-    results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[6]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[6]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 2] < 0 & results_sub[ , 3] < 0 &
-    results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[6]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[6]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
-    results[ , 20] >= 0.05 & results[ , 21] >= 0.05,
-]
-results_sub <- results_sub[order(results_sub[ , 19]), ]
-results_sub_up <- results_sub[
-  results_sub[ , 4] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[7]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[7]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 4] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[7]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[7]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
-    results[ , 20] >= 0.05 & results[ , 21] < 0.05,
-]
-results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 21)])), ]
-results_sub_up <- results_sub[
-  results_sub[ , 4] > 0 & results_sub[ , 6] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[8]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[8]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 4] < 0 & results_sub[ , 6] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[8]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[8]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
-    results[ , 20] < 0.05 & results[ , 21] >= 0.05,
-]
-results_sub <- results_sub[order(results_sub[ , 20]), ]
-results_sub_up <- results_sub[
-  results_sub[ , 5] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[9]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[9]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 5] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[9]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[9]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
-    results[ , 20] < 0.05 & results[ , 21] >= 0.05,
-]
-results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 20)])), ]
-results_sub_up <- results_sub[
-  results_sub[ , 4] > 0 & results_sub[ , 5] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[10]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[10]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 4] < 0 & results_sub[ , 5] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[10]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[10]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
-    results[ , 20] < 0.05 & results[ , 21] < 0.05,
-]
-results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 20, 21)])), ]
-results_sub_up <- results_sub[
-  results_sub[ , 4] > 0 & results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[11]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[11]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 4] < 0 & results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[11]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[11]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
-    results[ , 20] < 0.05 & results[ , 21] < 0.05,
-]
-results_sub <- results_sub[order(rowSums(results_sub[ , c(20, 21)])), ]
-results_sub_up <- results_sub[
-  results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[12]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[12]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[12]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[12]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results_sub <- results[
-  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
-    results[ , 20] >= 0.05 & results[ , 21] < 0.05,
-]
-results_sub <- results_sub[order(results_sub[ , 21]), ]
-results_sub_up <- results_sub[
-  results_sub[ , 6] > 0,
-]
-if (nrow(results_sub_up) > 0) {
-  if (nrow(results_sub_up) > size)
-    results_up[[13]] <- results_sub_up[1:size, ]
-  else {
-    results_up[[13]] <- results_sub_up[1:nrow(results_sub_up), ]
-  }
-}
-results_sub_down <- results_sub[
-  results_sub[ , 6] < 0,
-]
-if (nrow(results_sub_down) > 0) {
-  if (nrow(results_sub_down) > size)
-    results_down[[13]] <- results_sub_down[1:size, ]
-  else {
-    results_down[[13]] <- results_sub_down[1:nrow(results_sub_down), ]
-  }
-}
-
-results <- rbind(do.call(rbind, results_up), do.call(rbind, results_down))
-order_all2 <- append(results_up, results_down)
-order2 <- lapply(order_all2, FUN = function(x) x[1, , drop = FALSE])
-results_sub <- results[rownames(results) %in% rownames(do.call(rbind, order2)), ]
-results_sub <- results_sub[
-  match(rownames(do.call(rbind, order2)), rownames(results_sub)),
-]
-results <- results[rownames(results) %notin% rownames(results_sub), ]
-results2 <- rbind(results_sub, results)
-
+```{r}
 selectizeInput(
-  "select2",
+  paste0("select", idx),
   label = "Select Genes:",
-  choices = results2$symbol,
-  selected = do.call(rbind, order2)$symbol,
+  choices = results_list[[idx]]$Gene,
+  selected = rownames(sig_uniq[[idx]]),
   multiple = TRUE,
   width = "100%"
 )
@@ -1437,205 +440,18 @@ selectizeInput(
 ```{r}
 renderPlot(
   {
+    idx <- 2
+    gene_anno_sub <- gene_anno[
+      gene_anno$symbol %in% input[[paste0("select", idx)]],
+    ]
+    gene_anno_sub <- gene_anno_sub[
+      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+    ]
+    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
 
-    gene_anno_sub <- gene_anno[gene_anno$symbol %in% input$select2, ]
-    gene_anno_sub <- gene_anno_sub[match(input$select2, gene_anno_sub$symbol), ]
-
-    order2 <- lapply(
-      order_all2, FUN = function(x) x[rownames(x) %in% gene_anno_sub$ensembl, ]
-    )
-
-    row_split <- factor(
-      c(
-        rep(
-          "S305N\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[1]])), yes = 0, no = nrow(order2[[1]])
-          )
-        ),
-        rep(
-          "S305N & NLGF S305N\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[2]])), yes = 0, no = nrow(order2[[2]])
-          )
-        ),
-        rep(
-          "P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[3]])), yes = 0, no = nrow(order2[[3]])
-          )
-        ),
-        rep(
-          "P301S & NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[4]])), yes = 0, no = nrow(order2[[4]])
-          )
-        ),
-        rep(
-          "S305N & P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[5]])), yes = 0, no = nrow(order2[[5]])
-          )
-        ),
-        rep(
-          "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[6]])), yes = 0, no = nrow(order2[[6]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[7]])), yes = 0, no = nrow(order2[[7]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[8]])), yes = 0, no = nrow(order2[[8]])
-          )
-        ),
-        rep(
-          "NLGF S305N\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[9]])), yes = 0, no = nrow(order2[[9]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF S305N\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[10]])), yes = 0, no = nrow(order2[[10]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[11]])), yes = 0, no = nrow(order2[[11]])
-          )
-        ),
-        rep(
-          "NLGF S305N & NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[12]])), yes = 0, no = nrow(order2[[12]])
-          )
-        ),
-        rep(
-          "NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[13]])), yes = 0, no = nrow(order2[[13]])
-          )
-        ),
-        rep(
-          "S305N\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[14]])), yes = 0, no = nrow(order2[[14]])
-          )
-        ),
-        rep(
-          "S305N & NLGF S305N\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[15]])), yes = 0, no = nrow(order2[[15]])
-          )
-        ),
-        rep(
-          "P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[16]])), yes = 0, no = nrow(order2[[16]])
-          )
-        ),
-        rep(
-          "P301S & NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[17]])), yes = 0, no = nrow(order2[[17]])
-          )
-        ),
-        rep(
-          "S305N & P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[18]])), yes = 0, no = nrow(order2[[18]])
-          )
-        ),
-        rep(
-          "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[19]])), yes = 0, no = nrow(order2[[19]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[20]])), yes = 0, no = nrow(order2[[20]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[21]])), yes = 0, no = nrow(order2[[21]])
-          )
-        ),
-        rep(
-          "NLGF S305N\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[22]])), yes = 0, no = nrow(order2[[22]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF S305N\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[23]])), yes = 0, no = nrow(order2[[23]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[24]])), yes = 0, no = nrow(order2[[24]])
-          )
-        ),
-        rep(
-          "NLGF S305N & NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[25]])), yes = 0, no = nrow(order2[[25]])
-          )
-        ),
-        rep(
-          "NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[26]])), yes = 0, no = nrow(order2[[26]])
-          )
-        )
-      ),
-      levels = c(
-        "S305N\nUP",
-        "S305N & NLGF S305N\nUP",
-        "P301S\nUP",
-        "P301S & NLGF P301S\nUP",
-        "S305N & P301S\nUP",
-        "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
-        "NLGF MAPTKI\nUP",
-        "NLGF MAPTKI & NLGF P301S\nUP",
-        "NLGF S305N\nUP",
-        "NLGF MAPTKI & NLGF S305N\nUP",
-        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
-        "NLGF S305N & NLGF P301S\nUP",
-        "NLGF P301S\nUP",
-        "S305N\nDOWN",
-        "S305N & NLGF S305N\nDOWN",
-        "P301S\nDOWN",
-        "P301S & NLGF P301S\nDOWN",
-        "S305N & P301S\nDOWN",
-        "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
-        "NLGF MAPTKI\nDOWN",
-        "NLGF MAPTKI & NLGF P301S\nDOWN",
-        "NLGF S305N\nDOWN",
-        "NLGF MAPTKI & NLGF S305N\nDOWN",
-        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
-        "NLGF S305N & NLGF P301S\nDOWN",
-        "NLGF P301S\nDOWN"
-      )
-    )
-
-    mat <- deg_corrected2[
-      rownames(deg_corrected2) %in% gene_anno_sub$ensembl, , drop = FALSE
+    mat <- deg_corrected[[idx]][
+      rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
     mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
     rownames(mat) <- gene_anno_sub$symbol
@@ -1643,17 +459,18 @@ renderPlot(
     draw(
       Heatmap(
         mat,
-        col = colorRamp2(deg_range2, colors = c("blue", "white", "red")),
-        column_title = ctypes[ctype_idx2],
-        cluster_rows = FALSE,
+        col = colorRamp2(deg_range[[idx]], colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
         cluster_columns = FALSE,
-        row_split = row_split,
+        cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_title_gp = gpar(fontsize = 8),
         row_names_gp = gpar(fontsize = 12),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 12))
+        },
         heatmap_legend_param = list(
           title = "logCPM", direction = "horizontal",
           title_position = "topcenter", labels_gp = gpar(fontsize = 9),
@@ -1663,7 +480,6 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-
   width = 950,
   height = 750,
   res = 96
@@ -1676,205 +492,18 @@ renderPlot(
 ```{r}
 renderPlot(
   {
+    idx <- 2
+    gene_anno_sub <- gene_anno[
+      gene_anno$symbol %in% input[[paste0("select", idx)]],
+    ]
+    gene_anno_sub <- gene_anno_sub[
+      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+    ]
+    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
 
-    gene_anno_sub <- gene_anno[gene_anno$symbol %in% input$select2, ]
-    gene_anno_sub <- gene_anno_sub[match(input$select2, gene_anno_sub$symbol), ]
-
-    order2 <- lapply(
-      order_all2, FUN = function(x) x[rownames(x) %in% gene_anno_sub$ensembl, ]
-    )
-
-    row_split <- factor(
-      c(
-        rep(
-          "S305N\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[1]])), yes = 0, no = nrow(order2[[1]])
-          )
-        ),
-        rep(
-          "S305N & NLGF S305N\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[2]])), yes = 0, no = nrow(order2[[2]])
-          )
-        ),
-        rep(
-          "P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[3]])), yes = 0, no = nrow(order2[[3]])
-          )
-        ),
-        rep(
-          "P301S & NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[4]])), yes = 0, no = nrow(order2[[4]])
-          )
-        ),
-        rep(
-          "S305N & P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[5]])), yes = 0, no = nrow(order2[[5]])
-          )
-        ),
-        rep(
-          "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[6]])), yes = 0, no = nrow(order2[[6]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[7]])), yes = 0, no = nrow(order2[[7]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[8]])), yes = 0, no = nrow(order2[[8]])
-          )
-        ),
-        rep(
-          "NLGF S305N\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[9]])), yes = 0, no = nrow(order2[[9]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF S305N\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[10]])), yes = 0, no = nrow(order2[[10]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[11]])), yes = 0, no = nrow(order2[[11]])
-          )
-        ),
-        rep(
-          "NLGF S305N & NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[12]])), yes = 0, no = nrow(order2[[12]])
-          )
-        ),
-        rep(
-          "NLGF P301S\nUP",
-          times = ifelse(
-            is.null(nrow(order2[[13]])), yes = 0, no = nrow(order2[[13]])
-          )
-        ),
-        rep(
-          "S305N\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[14]])), yes = 0, no = nrow(order2[[14]])
-          )
-        ),
-        rep(
-          "S305N & NLGF S305N\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[15]])), yes = 0, no = nrow(order2[[15]])
-          )
-        ),
-        rep(
-          "P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[16]])), yes = 0, no = nrow(order2[[16]])
-          )
-        ),
-        rep(
-          "P301S & NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[17]])), yes = 0, no = nrow(order2[[17]])
-          )
-        ),
-        rep(
-          "S305N & P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[18]])), yes = 0, no = nrow(order2[[18]])
-          )
-        ),
-        rep(
-          "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[19]])), yes = 0, no = nrow(order2[[19]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[20]])), yes = 0, no = nrow(order2[[20]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[21]])), yes = 0, no = nrow(order2[[21]])
-          )
-        ),
-        rep(
-          "NLGF S305N\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[22]])), yes = 0, no = nrow(order2[[22]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF S305N\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[23]])), yes = 0, no = nrow(order2[[23]])
-          )
-        ),
-        rep(
-          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[24]])), yes = 0, no = nrow(order2[[24]])
-          )
-        ),
-        rep(
-          "NLGF S305N & NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[25]])), yes = 0, no = nrow(order2[[25]])
-          )
-        ),
-        rep(
-          "NLGF P301S\nDOWN",
-          times = ifelse(
-            is.null(nrow(order2[[26]])), yes = 0, no = nrow(order2[[26]])
-          )
-        )
-      ),
-      levels = c(
-        "S305N\nUP",
-        "S305N & NLGF S305N\nUP",
-        "P301S\nUP",
-        "P301S & NLGF P301S\nUP",
-        "S305N & P301S\nUP",
-        "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
-        "NLGF MAPTKI\nUP",
-        "NLGF MAPTKI & NLGF P301S\nUP",
-        "NLGF S305N\nUP",
-        "NLGF MAPTKI & NLGF S305N\nUP",
-        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
-        "NLGF S305N & NLGF P301S\nUP",
-        "NLGF P301S\nUP",
-        "S305N\nDOWN",
-        "S305N & NLGF S305N\nDOWN",
-        "P301S\nDOWN",
-        "P301S & NLGF P301S\nDOWN",
-        "S305N & P301S\nDOWN",
-        "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
-        "NLGF MAPTKI\nDOWN",
-        "NLGF MAPTKI & NLGF P301S\nDOWN",
-        "NLGF S305N\nDOWN",
-        "NLGF MAPTKI & NLGF S305N\nDOWN",
-        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
-        "NLGF S305N & NLGF P301S\nDOWN",
-        "NLGF P301S\nDOWN"
-      )
-    )
-
-    mat <- deg_corrected2[
-      rownames(deg_corrected2) %in% gene_anno_sub$ensembl, , drop = FALSE
+    mat <- deg_corrected[[idx]][
+      rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
     mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
     rownames(mat) <- gene_anno_sub$symbol
@@ -1889,16 +518,17 @@ renderPlot(
       Heatmap(
         mat,
         col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
-        column_title = ctypes[ctype_idx2],
-        cluster_rows = FALSE,
+        column_title = ctype_name[[idx]],
         cluster_columns = FALSE,
-        row_split = row_split,
+        cluster_rows = FALSE,
         column_split = rep(seq(6), each = 4),
-        row_title_gp = gpar(fontsize = 8),
         row_names_gp = gpar(fontsize = 12),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 12))
+        },
         heatmap_legend_param = list(
           title = "Scaled logCPM", direction = "horizontal",
           title_position = "topcenter", labels_gp = gpar(fontsize = 9),
@@ -1908,7 +538,6 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-
   width = 950,
   height = 750,
   res = 96
@@ -1918,6 +547,1108 @@ renderPlot(
 </div>
 </div>
 
+### Results Table
+
 ```{r}
-rm(deg_data, deg_list, gse_list, corrections)
+datatable_download_exp(results_list[[idx]])
+```
+
+Microglia
+===
+
+```{r, include = FALSE}
+idx <- 3
+ctype_name[[idx]] <- ctypes[idx]
+
+deg <- deg_data[[idx]]
+deg_corrected[[idx]] <- removeBatchEffect(
+  logcounts(deg), batch = deg$batch, group = deg$genotype
+)
+
+deg_range[[idx]] <- c(
+  min(deg_corrected[[idx]]),
+  (min(deg_corrected[[idx]]) + max(deg_corrected[[idx]])) / 2,
+  max(deg_corrected[[idx]])
+)
+```
+
+Row {.tabset}
+---
+
+### Search Genes
+
+```{r, include = FALSE}
+fit <- lmFit(logcounts(deg), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+tc <- textConnection("results", open = "w")
+write.fit(
+  fit, tests, file = tc,
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+close(tc)
+results_list[[idx]] <- read.delim(text = results)
+
+col <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results_list[[idx]][ , col] <- corrections[[i]][length]
+  col <- col + 1
+}
+
+rownames(results_list[[idx]]) <- results_list[[idx]]$X
+results_list[[idx]] <- results_list[[idx]][ , -1]
+results_list[[idx]] <- results_list[[idx]][ , 1:22]
+tests <- results_list[[idx]][ , 17:21]
+results_list[[idx]] <- results_list[[idx]][
+  order(results_list[[idx]]$F, decreasing = TRUE),
+]
+gene_anno_sub <- gene_anno[
+  gene_anno$ensembl %in% rownames(results_list[[idx]]),
+]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results_list[[idx]]), gene_anno_sub$ensembl),
+]
+results_list[[idx]]$Gene <- gene_anno_sub$symbol
+results_list[[idx]] <- results_list[[idx]][
+  , c(ncol(results_list[[idx]]), 1:(ncol(results_list[[idx]]) - 1))
+]
+
+sig_tmp <- ifelse(results_list[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_list[[idx]][ , 3:7] > 0, yes = 1, no = -1)
+sig_tmp <- sig_tmp * direction
+sig_tmp <- sig_tmp[hclust(dist(sig_tmp))$order, ]
+sig_tmp <- ifelse(
+  sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
+)
+sig_tmp <- cbind(rep("", nrow(sig_tmp)), sig_tmp)
+sig[[idx]] <- vector("list", length = 6)
+for (i in seq_len(ncol(sig_tmp))) {
+  sig[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
+}
+sig[[idx]] <- do.call(cbind, sig[[idx]])
+rownames(sig[[idx]]) <- results_list[[idx]]$Gene[
+  match(rownames(sig[[idx]]), rownames(results_list[[idx]]))
+]
+sig_uniq[[idx]] <- unique(sig[[idx]])
+```
+
+```{r}
+selectizeInput(
+  paste0("select", idx),
+  label = "Select Genes:",
+  choices = results_list[[idx]]$Gene,
+  selected = rownames(sig_uniq[[idx]]),
+  multiple = TRUE,
+  width = "100%"
+)
+```
+
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 3
+    gene_anno_sub <- gene_anno[
+      gene_anno$symbol %in% input[[paste0("select", idx)]],
+    ]
+    gene_anno_sub <- gene_anno_sub[
+      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+    ]
+    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+
+    mat <- deg_corrected[[idx]][
+      rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
+    ]
+    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    rownames(mat) <- gene_anno_sub$symbol
+
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(deg_range[[idx]], colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 12))
+        },
+        heatmap_legend_param = list(
+          title = "logCPM", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 950,
+  height = 750,
+  res = 96
+)
+```
+
+</div>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 3
+    gene_anno_sub <- gene_anno[
+      gene_anno$symbol %in% input[[paste0("select", idx)]],
+    ]
+    gene_anno_sub <- gene_anno_sub[
+      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+    ]
+    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+
+    mat <- deg_corrected[[idx]][
+      rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
+    ]
+    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    rownames(mat) <- gene_anno_sub$symbol
+
+    mat <- t(
+      apply(
+        mat, MARGIN = 1,
+        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+      )
+    )
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 12))
+        },
+        heatmap_legend_param = list(
+          title = "Scaled logCPM", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 950,
+  height = 750,
+  res = 96
+)
+```
+
+</div>
+</div>
+
+### Results Table
+
+```{r}
+datatable_download_exp(results_list[[idx]])
+```
+
+Glutamatergic CA3
+===
+
+```{r, include = FALSE}
+idx <- 4
+ctype_name[[idx]] <- ctypes[idx]
+
+deg <- deg_data[[idx]]
+deg_corrected[[idx]] <- removeBatchEffect(
+  logcounts(deg), batch = deg$batch, group = deg$genotype
+)
+
+deg_range[[idx]] <- c(
+  min(deg_corrected[[idx]]),
+  (min(deg_corrected[[idx]]) + max(deg_corrected[[idx]])) / 2,
+  max(deg_corrected[[idx]])
+)
+```
+
+Row {.tabset}
+---
+
+### Search Genes
+
+```{r, include = FALSE}
+fit <- lmFit(logcounts(deg), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+tc <- textConnection("results", open = "w")
+write.fit(
+  fit, tests, file = tc,
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+close(tc)
+results_list[[idx]] <- read.delim(text = results)
+
+col <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results_list[[idx]][ , col] <- corrections[[i]][length]
+  col <- col + 1
+}
+
+rownames(results_list[[idx]]) <- results_list[[idx]]$X
+results_list[[idx]] <- results_list[[idx]][ , -1]
+results_list[[idx]] <- results_list[[idx]][ , 1:22]
+tests <- results_list[[idx]][ , 17:21]
+results_list[[idx]] <- results_list[[idx]][
+  order(results_list[[idx]]$F, decreasing = TRUE),
+]
+gene_anno_sub <- gene_anno[
+  gene_anno$ensembl %in% rownames(results_list[[idx]]),
+]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results_list[[idx]]), gene_anno_sub$ensembl),
+]
+results_list[[idx]]$Gene <- gene_anno_sub$symbol
+results_list[[idx]] <- results_list[[idx]][
+  , c(ncol(results_list[[idx]]), 1:(ncol(results_list[[idx]]) - 1))
+]
+
+sig_tmp <- ifelse(results_list[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_list[[idx]][ , 3:7] > 0, yes = 1, no = -1)
+sig_tmp <- sig_tmp * direction
+sig_tmp <- sig_tmp[hclust(dist(sig_tmp))$order, ]
+sig_tmp <- ifelse(
+  sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
+)
+sig_tmp <- cbind(rep("", nrow(sig_tmp)), sig_tmp)
+sig[[idx]] <- vector("list", length = 6)
+for (i in seq_len(ncol(sig_tmp))) {
+  sig[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
+}
+sig[[idx]] <- do.call(cbind, sig[[idx]])
+rownames(sig[[idx]]) <- results_list[[idx]]$Gene[
+  match(rownames(sig[[idx]]), rownames(results_list[[idx]]))
+]
+sig_uniq[[idx]] <- unique(sig[[idx]])
+```
+
+```{r}
+selectizeInput(
+  paste0("select", idx),
+  label = "Select Genes:",
+  choices = results_list[[idx]]$Gene,
+  selected = rownames(sig_uniq[[idx]]),
+  multiple = TRUE,
+  width = "100%"
+)
+```
+
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 4
+    gene_anno_sub <- gene_anno[
+      gene_anno$symbol %in% input[[paste0("select", idx)]],
+    ]
+    gene_anno_sub <- gene_anno_sub[
+      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+    ]
+    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+
+    mat <- deg_corrected[[idx]][
+      rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
+    ]
+    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    rownames(mat) <- gene_anno_sub$symbol
+
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(deg_range[[idx]], colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 12))
+        },
+        heatmap_legend_param = list(
+          title = "logCPM", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 950,
+  height = 750,
+  res = 96
+)
+```
+
+</div>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 4
+    gene_anno_sub <- gene_anno[
+      gene_anno$symbol %in% input[[paste0("select", idx)]],
+    ]
+    gene_anno_sub <- gene_anno_sub[
+      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+    ]
+    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+
+    mat <- deg_corrected[[idx]][
+      rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
+    ]
+    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    rownames(mat) <- gene_anno_sub$symbol
+
+    mat <- t(
+      apply(
+        mat, MARGIN = 1,
+        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+      )
+    )
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 12))
+        },
+        heatmap_legend_param = list(
+          title = "Scaled logCPM", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 950,
+  height = 750,
+  res = 96
+)
+```
+
+</div>
+</div>
+
+### Results Table
+
+```{r}
+datatable_download_exp(results_list[[idx]])
+```
+
+Glutamatergic CA1
+===
+
+```{r, include = FALSE}
+idx <- 5
+ctype_name[[idx]] <- ctypes[idx]
+
+deg <- deg_data[[idx]]
+deg_corrected[[idx]] <- removeBatchEffect(
+  logcounts(deg), batch = deg$batch, group = deg$genotype
+)
+
+deg_range[[idx]] <- c(
+  min(deg_corrected[[idx]]),
+  (min(deg_corrected[[idx]]) + max(deg_corrected[[idx]])) / 2,
+  max(deg_corrected[[idx]])
+)
+```
+
+Row {.tabset}
+---
+
+### Search Genes
+
+```{r, include = FALSE}
+fit <- lmFit(logcounts(deg), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+tc <- textConnection("results", open = "w")
+write.fit(
+  fit, tests, file = tc,
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+close(tc)
+results_list[[idx]] <- read.delim(text = results)
+
+col <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results_list[[idx]][ , col] <- corrections[[i]][length]
+  col <- col + 1
+}
+
+rownames(results_list[[idx]]) <- results_list[[idx]]$X
+results_list[[idx]] <- results_list[[idx]][ , -1]
+results_list[[idx]] <- results_list[[idx]][ , 1:22]
+tests <- results_list[[idx]][ , 17:21]
+results_list[[idx]] <- results_list[[idx]][
+  order(results_list[[idx]]$F, decreasing = TRUE),
+]
+gene_anno_sub <- gene_anno[
+  gene_anno$ensembl %in% rownames(results_list[[idx]]),
+]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results_list[[idx]]), gene_anno_sub$ensembl),
+]
+results_list[[idx]]$Gene <- gene_anno_sub$symbol
+results_list[[idx]] <- results_list[[idx]][
+  , c(ncol(results_list[[idx]]), 1:(ncol(results_list[[idx]]) - 1))
+]
+
+sig_tmp <- ifelse(results_list[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_list[[idx]][ , 3:7] > 0, yes = 1, no = -1)
+sig_tmp <- sig_tmp * direction
+sig_tmp <- sig_tmp[hclust(dist(sig_tmp))$order, ]
+sig_tmp <- ifelse(
+  sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
+)
+sig_tmp <- cbind(rep("", nrow(sig_tmp)), sig_tmp)
+sig[[idx]] <- vector("list", length = 6)
+for (i in seq_len(ncol(sig_tmp))) {
+  sig[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
+}
+sig[[idx]] <- do.call(cbind, sig[[idx]])
+rownames(sig[[idx]]) <- results_list[[idx]]$Gene[
+  match(rownames(sig[[idx]]), rownames(results_list[[idx]]))
+]
+sig_uniq[[idx]] <- unique(sig[[idx]])
+```
+
+```{r}
+selectizeInput(
+  paste0("select", idx),
+  label = "Select Genes:",
+  choices = results_list[[idx]]$Gene,
+  selected = rownames(sig_uniq[[idx]]),
+  multiple = TRUE,
+  width = "100%"
+)
+```
+
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 5
+    gene_anno_sub <- gene_anno[
+      gene_anno$symbol %in% input[[paste0("select", idx)]],
+    ]
+    gene_anno_sub <- gene_anno_sub[
+      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+    ]
+    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+
+    mat <- deg_corrected[[idx]][
+      rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
+    ]
+    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    rownames(mat) <- gene_anno_sub$symbol
+
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(deg_range[[idx]], colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 12))
+        },
+        heatmap_legend_param = list(
+          title = "logCPM", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 950,
+  height = 750,
+  res = 96
+)
+```
+
+</div>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 5
+    gene_anno_sub <- gene_anno[
+      gene_anno$symbol %in% input[[paste0("select", idx)]],
+    ]
+    gene_anno_sub <- gene_anno_sub[
+      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+    ]
+    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+
+    mat <- deg_corrected[[idx]][
+      rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
+    ]
+    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    rownames(mat) <- gene_anno_sub$symbol
+
+    mat <- t(
+      apply(
+        mat, MARGIN = 1,
+        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+      )
+    )
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 12))
+        },
+        heatmap_legend_param = list(
+          title = "Scaled logCPM", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 950,
+  height = 750,
+  res = 96
+)
+```
+
+</div>
+</div>
+
+### Results Table
+
+```{r}
+datatable_download_exp(results_list[[idx]])
+```
+
+Glutamatergic L2/3 ENT
+===
+
+```{r, include = FALSE}
+idx <- 6
+ctype_name[[idx]] <- ctypes[idx]
+
+deg <- deg_data[[idx]]
+deg_corrected[[idx]] <- removeBatchEffect(
+  logcounts(deg), batch = deg$batch, group = deg$genotype
+)
+
+deg_range[[idx]] <- c(
+  min(deg_corrected[[idx]]),
+  (min(deg_corrected[[idx]]) + max(deg_corrected[[idx]])) / 2,
+  max(deg_corrected[[idx]])
+)
+```
+
+Row {.tabset}
+---
+
+### Search Genes
+
+```{r, include = FALSE}
+fit <- lmFit(logcounts(deg), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+tc <- textConnection("results", open = "w")
+write.fit(
+  fit, tests, file = tc,
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+close(tc)
+results_list[[idx]] <- read.delim(text = results)
+
+col <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results_list[[idx]][ , col] <- corrections[[i]][length]
+  col <- col + 1
+}
+
+rownames(results_list[[idx]]) <- results_list[[idx]]$X
+results_list[[idx]] <- results_list[[idx]][ , -1]
+results_list[[idx]] <- results_list[[idx]][ , 1:22]
+tests <- results_list[[idx]][ , 17:21]
+results_list[[idx]] <- results_list[[idx]][
+  order(results_list[[idx]]$F, decreasing = TRUE),
+]
+gene_anno_sub <- gene_anno[
+  gene_anno$ensembl %in% rownames(results_list[[idx]]),
+]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results_list[[idx]]), gene_anno_sub$ensembl),
+]
+results_list[[idx]]$Gene <- gene_anno_sub$symbol
+results_list[[idx]] <- results_list[[idx]][
+  , c(ncol(results_list[[idx]]), 1:(ncol(results_list[[idx]]) - 1))
+]
+
+sig_tmp <- ifelse(results_list[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_list[[idx]][ , 3:7] > 0, yes = 1, no = -1)
+sig_tmp <- sig_tmp * direction
+sig_tmp <- sig_tmp[hclust(dist(sig_tmp))$order, ]
+sig_tmp <- ifelse(
+  sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
+)
+sig_tmp <- cbind(rep("", nrow(sig_tmp)), sig_tmp)
+sig[[idx]] <- vector("list", length = 6)
+for (i in seq_len(ncol(sig_tmp))) {
+  sig[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
+}
+sig[[idx]] <- do.call(cbind, sig[[idx]])
+rownames(sig[[idx]]) <- results_list[[idx]]$Gene[
+  match(rownames(sig[[idx]]), rownames(results_list[[idx]]))
+]
+sig_uniq[[idx]] <- unique(sig[[idx]])
+```
+
+```{r}
+selectizeInput(
+  paste0("select", idx),
+  label = "Select Genes:",
+  choices = results_list[[idx]]$Gene,
+  selected = rownames(sig_uniq[[idx]]),
+  multiple = TRUE,
+  width = "100%"
+)
+```
+
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 6
+    gene_anno_sub <- gene_anno[
+      gene_anno$symbol %in% input[[paste0("select", idx)]],
+    ]
+    gene_anno_sub <- gene_anno_sub[
+      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+    ]
+    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+
+    mat <- deg_corrected[[idx]][
+      rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
+    ]
+    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    rownames(mat) <- gene_anno_sub$symbol
+
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(deg_range[[idx]], colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 12))
+        },
+        heatmap_legend_param = list(
+          title = "logCPM", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 950,
+  height = 750,
+  res = 96
+)
+```
+
+</div>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 6
+    gene_anno_sub <- gene_anno[
+      gene_anno$symbol %in% input[[paste0("select", idx)]],
+    ]
+    gene_anno_sub <- gene_anno_sub[
+      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+    ]
+    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+
+    mat <- deg_corrected[[idx]][
+      rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
+    ]
+    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    rownames(mat) <- gene_anno_sub$symbol
+
+    mat <- t(
+      apply(
+        mat, MARGIN = 1,
+        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+      )
+    )
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 12))
+        },
+        heatmap_legend_param = list(
+          title = "Scaled logCPM", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 950,
+  height = 750,
+  res = 96
+)
+```
+
+</div>
+</div>
+
+### Results Table
+
+```{r}
+datatable_download_exp(results_list[[idx]])
+```
+
+GABAergic Sst
+===
+
+```{r, include = FALSE}
+idx <- 7
+ctype_name[[idx]] <- ctypes[idx]
+
+deg <- deg_data[[idx]]
+deg_corrected[[idx]] <- removeBatchEffect(
+  logcounts(deg), batch = deg$batch, group = deg$genotype
+)
+
+deg_range[[idx]] <- c(
+  min(deg_corrected[[idx]]),
+  (min(deg_corrected[[idx]]) + max(deg_corrected[[idx]])) / 2,
+  max(deg_corrected[[idx]])
+)
+```
+
+Row {.tabset}
+---
+
+### Search Genes
+
+```{r, include = FALSE}
+fit <- lmFit(logcounts(deg), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+tc <- textConnection("results", open = "w")
+write.fit(
+  fit, tests, file = tc,
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+close(tc)
+results_list[[idx]] <- read.delim(text = results)
+
+col <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]]) +
+  nrow(gse_list[[7]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]]) +
+  nrow(gse_list[[7]]) + nrow(deg_list[[7]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results_list[[idx]][ , col] <- corrections[[i]][length]
+  col <- col + 1
+}
+
+rownames(results_list[[idx]]) <- results_list[[idx]]$X
+results_list[[idx]] <- results_list[[idx]][ , -1]
+results_list[[idx]] <- results_list[[idx]][ , 1:22]
+tests <- results_list[[idx]][ , 17:21]
+results_list[[idx]] <- results_list[[idx]][
+  order(results_list[[idx]]$F, decreasing = TRUE),
+]
+gene_anno_sub <- gene_anno[
+  gene_anno$ensembl %in% rownames(results_list[[idx]]),
+]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results_list[[idx]]), gene_anno_sub$ensembl),
+]
+results_list[[idx]]$Gene <- gene_anno_sub$symbol
+results_list[[idx]] <- results_list[[idx]][
+  , c(ncol(results_list[[idx]]), 1:(ncol(results_list[[idx]]) - 1))
+]
+
+sig_tmp <- ifelse(results_list[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_list[[idx]][ , 3:7] > 0, yes = 1, no = -1)
+sig_tmp <- sig_tmp * direction
+sig_tmp <- sig_tmp[hclust(dist(sig_tmp))$order, ]
+sig_tmp <- ifelse(
+  sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
+)
+sig_tmp <- cbind(rep("", nrow(sig_tmp)), sig_tmp)
+sig[[idx]] <- vector("list", length = 6)
+for (i in seq_len(ncol(sig_tmp))) {
+  sig[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
+}
+sig[[idx]] <- do.call(cbind, sig[[idx]])
+rownames(sig[[idx]]) <- results_list[[idx]]$Gene[
+  match(rownames(sig[[idx]]), rownames(results_list[[idx]]))
+]
+sig_uniq[[idx]] <- unique(sig[[idx]])
+```
+
+```{r}
+selectizeInput(
+  paste0("select", idx),
+  label = "Select Genes:",
+  choices = results_list[[idx]]$Gene,
+  selected = rownames(sig_uniq[[idx]]),
+  multiple = TRUE,
+  width = "100%"
+)
+```
+
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 7
+    gene_anno_sub <- gene_anno[
+      gene_anno$symbol %in% input[[paste0("select", idx)]],
+    ]
+    gene_anno_sub <- gene_anno_sub[
+      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+    ]
+    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+
+    mat <- deg_corrected[[idx]][
+      rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
+    ]
+    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    rownames(mat) <- gene_anno_sub$symbol
+
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(deg_range[[idx]], colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 12))
+        },
+        heatmap_legend_param = list(
+          title = "logCPM", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 950,
+  height = 750,
+  res = 96
+)
+```
+
+</div>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 7
+    gene_anno_sub <- gene_anno[
+      gene_anno$symbol %in% input[[paste0("select", idx)]],
+    ]
+    gene_anno_sub <- gene_anno_sub[
+      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+    ]
+    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+
+    mat <- deg_corrected[[idx]][
+      rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
+    ]
+    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    rownames(mat) <- gene_anno_sub$symbol
+
+    mat <- t(
+      apply(
+        mat, MARGIN = 1,
+        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+      )
+    )
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 12))
+        },
+        heatmap_legend_param = list(
+          title = "Scaled logCPM", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 950,
+  height = 750,
+  res = 96
+)
+```
+
+</div>
+</div>
+
+### Results Table
+
+```{r}
+datatable_download_exp(results_list[[idx]])
+```
+
+```{r, include = FALSE}
+rm(deg, deg_data, deg_list, gse_list, corrections)
+gc()
 ```
