@@ -526,10 +526,9 @@ if (nrow(results_sub_down) > 0) {
   }
 }
 
-order <- append(
-  lapply(results_up, FUN = function(x) x[1, , drop = FALSE]),
-  lapply(results_down, FUN = function(x) x[1, , drop = FALSE])
-)
+results <- rbind(do.call(rbind, results_up), do.call(rbind, results_down))
+order_all <- append(results_up, results_down)
+order <- lapply(order_all, FUN = function(x) x[1, , drop = FALSE])
 results_sub <- results[rownames(results) %in% rownames(do.call(rbind, order)), ]
 results_sub <- results_sub[
   match(rownames(do.call(rbind, order)), rownames(results_sub)),
@@ -559,9 +558,9 @@ top_anno <- HeatmapAnnotation(
 )
 
 selectizeInput(
-  "select_genes",
+  "select",
   label = "Select Genes:",
-  choices = results$symbol, 
+  choices = results$symbol,
   selected = do.call(rbind, order)$symbol,
   multiple = TRUE,
   width = "100%"
@@ -574,15 +573,209 @@ selectizeInput(
 ```{r}
 renderPlot(
   {
-    gene_anno_sub <- gene_anno[gene_anno$symbol %in% input$select_genes, ]
-    gene_anno_sub <- gene_anno_sub[
-      match(input$select_genes, gene_anno_sub$symbol),
-    ]
+
+    gene_anno_sub <- gene_anno[gene_anno$symbol %in% input$select, ]
+    gene_anno_sub <- gene_anno_sub[match(input$select, gene_anno_sub$symbol), ]
+
+    order <- lapply(
+      order_all, FUN = function(x) x[rownames(x) %in% gene_anno_sub$ensembl, ]
+    )
+
+    row_split <- factor(
+      c(
+        rep(
+          "S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[1]])), yes = 0, no = nrow(order[[1]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[2]])), yes = 0, no = nrow(order[[2]])
+          )
+        ),
+        rep(
+          "P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[3]])), yes = 0, no = nrow(order[[3]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[4]])), yes = 0, no = nrow(order[[4]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[5]])), yes = 0, no = nrow(order[[5]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[6]])), yes = 0, no = nrow(order[[6]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nUP",
+          times = ifelse(
+            is.null(nrow(order[[7]])), yes = 0, no = nrow(order[[7]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[8]])), yes = 0, no = nrow(order[[8]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[9]])), yes = 0, no = nrow(order[[9]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[10]])), yes = 0, no = nrow(order[[10]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[11]])), yes = 0, no = nrow(order[[11]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[12]])), yes = 0, no = nrow(order[[12]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[13]])), yes = 0, no = nrow(order[[13]])
+          )
+        ),
+        rep(
+          "S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[14]])), yes = 0, no = nrow(order[[14]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[15]])), yes = 0, no = nrow(order[[15]])
+          )
+        ),
+        rep(
+          "P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[16]])), yes = 0, no = nrow(order[[16]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[17]])), yes = 0, no = nrow(order[[17]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[18]])), yes = 0, no = nrow(order[[18]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[19]])), yes = 0, no = nrow(order[[19]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[20]])), yes = 0, no = nrow(order[[20]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[21]])), yes = 0, no = nrow(order[[21]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[22]])), yes = 0, no = nrow(order[[22]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[23]])), yes = 0, no = nrow(order[[23]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[24]])), yes = 0, no = nrow(order[[24]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[25]])), yes = 0, no = nrow(order[[25]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[26]])), yes = 0, no = nrow(order[[26]])
+          )
+        )
+      ),
+      levels = c(
+        "S305N\nUP",
+        "S305N & NLGF S305N\nUP",
+        "P301S\nUP",
+        "P301S & NLGF P301S\nUP",
+        "S305N & P301S\nUP",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+        "NLGF MAPTKI\nUP",
+        "NLGF MAPTKI & NLGF P301S\nUP",
+        "NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+        "NLGF S305N & NLGF P301S\nUP",
+        "NLGF P301S\nUP",
+        "S305N\nDOWN",
+        "S305N & NLGF S305N\nDOWN",
+        "P301S\nDOWN",
+        "P301S & NLGF P301S\nDOWN",
+        "S305N & P301S\nDOWN",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF MAPTKI\nDOWN",
+        "NLGF MAPTKI & NLGF P301S\nDOWN",
+        "NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF P301S\nDOWN"
+      )
+    )
+
     mat <- deg_corrected[
       rownames(deg_corrected) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
     mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
     rownames(mat) <- gene_anno_sub$symbol
+
     draw(
       Heatmap(
         mat,
@@ -590,7 +783,9 @@ renderPlot(
         column_title = names(ctypes)[ctype_idx],
         cluster_rows = FALSE,
         cluster_columns = FALSE,
+        row_split = row_split,
         column_split = rep(seq(6), each = 4),
+        row_title_gp = gpar(fontsize = 8),
         row_names_gp = gpar(fontsize = 12),
         row_title_rot = 0,
         top_annotation = top_anno,
@@ -604,8 +799,9 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 750,
-  height = 600,
+
+  width = 950,
+  height = 750,
   res = 96
 )
 ```
@@ -616,15 +812,209 @@ renderPlot(
 ```{r}
 renderPlot(
   {
-    gene_anno_sub <- gene_anno[gene_anno$symbol %in% input$select_genes, ]
-    gene_anno_sub <- gene_anno_sub[
-      match(input$select_genes, gene_anno_sub$symbol),
-    ]
+
+    gene_anno_sub <- gene_anno[gene_anno$symbol %in% input$select, ]
+    gene_anno_sub <- gene_anno_sub[match(input$select, gene_anno_sub$symbol), ]
+
+    order <- lapply(
+      order_all, FUN = function(x) x[rownames(x) %in% gene_anno_sub$ensembl, ]
+    )
+
+    row_split <- factor(
+      c(
+        rep(
+          "S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[1]])), yes = 0, no = nrow(order[[1]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[2]])), yes = 0, no = nrow(order[[2]])
+          )
+        ),
+        rep(
+          "P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[3]])), yes = 0, no = nrow(order[[3]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[4]])), yes = 0, no = nrow(order[[4]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[5]])), yes = 0, no = nrow(order[[5]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[6]])), yes = 0, no = nrow(order[[6]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nUP",
+          times = ifelse(
+            is.null(nrow(order[[7]])), yes = 0, no = nrow(order[[7]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[8]])), yes = 0, no = nrow(order[[8]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[9]])), yes = 0, no = nrow(order[[9]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[10]])), yes = 0, no = nrow(order[[10]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[11]])), yes = 0, no = nrow(order[[11]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[12]])), yes = 0, no = nrow(order[[12]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[13]])), yes = 0, no = nrow(order[[13]])
+          )
+        ),
+        rep(
+          "S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[14]])), yes = 0, no = nrow(order[[14]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[15]])), yes = 0, no = nrow(order[[15]])
+          )
+        ),
+        rep(
+          "P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[16]])), yes = 0, no = nrow(order[[16]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[17]])), yes = 0, no = nrow(order[[17]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[18]])), yes = 0, no = nrow(order[[18]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[19]])), yes = 0, no = nrow(order[[19]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[20]])), yes = 0, no = nrow(order[[20]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[21]])), yes = 0, no = nrow(order[[21]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[22]])), yes = 0, no = nrow(order[[22]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[23]])), yes = 0, no = nrow(order[[23]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[24]])), yes = 0, no = nrow(order[[24]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[25]])), yes = 0, no = nrow(order[[25]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[26]])), yes = 0, no = nrow(order[[26]])
+          )
+        )
+      ),
+      levels = c(
+        "S305N\nUP",
+        "S305N & NLGF S305N\nUP",
+        "P301S\nUP",
+        "P301S & NLGF P301S\nUP",
+        "S305N & P301S\nUP",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+        "NLGF MAPTKI\nUP",
+        "NLGF MAPTKI & NLGF P301S\nUP",
+        "NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+        "NLGF S305N & NLGF P301S\nUP",
+        "NLGF P301S\nUP",
+        "S305N\nDOWN",
+        "S305N & NLGF S305N\nDOWN",
+        "P301S\nDOWN",
+        "P301S & NLGF P301S\nDOWN",
+        "S305N & P301S\nDOWN",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF MAPTKI\nDOWN",
+        "NLGF MAPTKI & NLGF P301S\nDOWN",
+        "NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF P301S\nDOWN"
+      )
+    )
+
     mat <- deg_corrected[
       rownames(deg_corrected) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
     mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
     rownames(mat) <- gene_anno_sub$symbol
+
     mat <- t(
       apply(
         mat, MARGIN = 1,
@@ -638,7 +1028,9 @@ renderPlot(
         column_title = names(ctypes)[ctype_idx],
         cluster_rows = FALSE,
         cluster_columns = FALSE,
+        row_split = row_split,
         column_split = rep(seq(6), each = 4),
+        row_title_gp = gpar(fontsize = 8),
         row_names_gp = gpar(fontsize = 12),
         row_title_rot = 0,
         top_annotation = top_anno,
@@ -652,8 +1044,5759 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 750,
-  height = 600,
+
+  width = 950,
+  height = 750,
+  res = 96
+)
+```
+
+</div>
+</div>
+
+Oligodendrocytes
+===
+
+```{r}
+ctype_idx <- 2
+
+gse <- gse_data[[ctype_idx]]
+deg <- deg_data[[ctype_idx]]
+
+gse_corrected <- removeBatchEffect(
+  logcounts(gse), batch = gse$batch, group = gse$genotype
+)
+deg_corrected <- removeBatchEffect(
+  logcounts(deg), batch = deg$batch, group = deg$genotype
+)
+
+gse_range <- c(
+  min(gse_corrected),
+  (min(gse_corrected) + max(gse_corrected)) / 2,
+  max(gse_corrected)
+)
+deg_range <- c(
+  min(deg_corrected),
+  (min(deg_corrected) + max(deg_corrected)) / 2,
+  max(deg_corrected)
+)
+```
+
+Row {.tabset}
+---
+
+### Search Genes
+
+```{r}
+design <- model.matrix(~ 0 + deg$genotype + deg$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  S305N_MAPTKI =
+    deg.genotypeS305N -
+    deg.genotypeMAPTKI,
+  P301S_MAPTKI =
+    deg.genotypeP301S -
+    deg.genotypeMAPTKI,
+  NLGF_MAPTKI_MAPTKI =
+    deg.genotypeNLGF_MAPTKI -
+    deg.genotypeMAPTKI,
+  NLGF_S305N_MAPTKI =
+    deg.genotypeNLGF_S305N -
+    deg.genotypeMAPTKI,
+  NLGF_P301S_MAPTKI =
+    deg.genotypeNLGF_P301S -
+    deg.genotypeMAPTKI,
+  levels = design
+)
+
+fit <- lmFit(logcounts(deg), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+write.fit(
+  fit, tests, file.path(data_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(data_dir, "results.tsv"))
+
+idx <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
+  idx <- idx + 1
+}
+
+rownames(results) <- results$X
+results <- results[ , -1]
+results <- results[ , 1:22]
+tests <- results[ , 17:21]
+results <- results[order(results$F, decreasing = TRUE), ]
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results), gene_anno_sub$ensembl),
+]
+results$symbol <- gene_anno_sub$symbol
+
+results_up <- vector("list", length = 13)
+results_down <- vector("list", length = 13)
+size <- Inf
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] >= 0.05 & results[ , 20] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 17]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[1]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[1]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[1]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[1]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] >= 0.05 & results[ , 20] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 20)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0 & results_sub[ , 5] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[2]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[2]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0 & results_sub[ , 5] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[2]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[2]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] < 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 18]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[3]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[3]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[3]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[3]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(18, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[4]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[4]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[4]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[4]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] < 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 18)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0 & results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[5]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[5]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0 & results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[5]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[5]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] < 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 18, 20, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0 & results_sub[ , 3] > 0 &
+    results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[6]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[6]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0 & results_sub[ , 3] < 0 &
+    results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[6]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[6]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 19]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[7]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[7]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[7]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[7]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[8]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[8]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[8]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[8]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 20]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 5] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[9]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[9]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 5] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[9]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[9]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 20)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0 & results_sub[ , 5] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[10]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[10]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0 & results_sub[ , 5] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[10]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[10]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 20, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0 & results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[11]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[11]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0 & results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[11]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[11]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(20, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[12]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[12]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[12]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[12]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 21]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[13]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[13]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[13]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[13]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results <- rbind(do.call(rbind, results_up), do.call(rbind, results_down))
+order_all <- append(results_up, results_down)
+order <- lapply(order_all, FUN = function(x) x[1, , drop = FALSE])
+results_sub <- results[rownames(results) %in% rownames(do.call(rbind, order)), ]
+results_sub <- results_sub[
+  match(rownames(do.call(rbind, order)), rownames(results_sub)),
+]
+results <- results[rownames(results) %notin% rownames(results_sub), ]
+results <- rbind(results_sub, results)
+```
+
+```{r}
+top_anno <- HeatmapAnnotation(
+  Batch = gse_data[[1]]$batch,
+  cell_type = anno_block(
+    gp = gpar(fill = "lightgray", col = "lightgray"),
+    labels = levels(gse_data[[1]]$genotype),
+    labels_gp = gpar(col = "black", fontsize = 9),
+    height = unit(5, "mm")
+  ),
+  col = list(
+    Batch = c(
+      "batch01" = anno_color[1], "batch02" = anno_color[2],
+      "batch03" = anno_color[3], "batch04" = anno_color[4]
+    )
+  ),
+  simple_anno_size = unit(3, "mm"),
+  show_legend = c("Batch" = FALSE),
+  annotation_name_gp = gpar(fontsize = 9)
+)
+
+selectizeInput(
+  "select",
+  label = "Select Genes:",
+  choices = results$symbol,
+  selected = do.call(rbind, order)$symbol,
+  multiple = TRUE,
+  width = "100%"
+)
+```
+
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
+<div>
+
+```{r}
+renderPlot(
+  {
+
+    gene_anno_sub <- gene_anno[gene_anno$symbol %in% input$select, ]
+    gene_anno_sub <- gene_anno_sub[match(input$select, gene_anno_sub$symbol), ]
+
+    order <- lapply(
+      order_all, FUN = function(x) x[rownames(x) %in% gene_anno_sub$ensembl, ]
+    )
+
+    row_split <- factor(
+      c(
+        rep(
+          "S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[1]])), yes = 0, no = nrow(order[[1]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[2]])), yes = 0, no = nrow(order[[2]])
+          )
+        ),
+        rep(
+          "P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[3]])), yes = 0, no = nrow(order[[3]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[4]])), yes = 0, no = nrow(order[[4]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[5]])), yes = 0, no = nrow(order[[5]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[6]])), yes = 0, no = nrow(order[[6]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nUP",
+          times = ifelse(
+            is.null(nrow(order[[7]])), yes = 0, no = nrow(order[[7]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[8]])), yes = 0, no = nrow(order[[8]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[9]])), yes = 0, no = nrow(order[[9]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[10]])), yes = 0, no = nrow(order[[10]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[11]])), yes = 0, no = nrow(order[[11]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[12]])), yes = 0, no = nrow(order[[12]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[13]])), yes = 0, no = nrow(order[[13]])
+          )
+        ),
+        rep(
+          "S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[14]])), yes = 0, no = nrow(order[[14]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[15]])), yes = 0, no = nrow(order[[15]])
+          )
+        ),
+        rep(
+          "P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[16]])), yes = 0, no = nrow(order[[16]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[17]])), yes = 0, no = nrow(order[[17]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[18]])), yes = 0, no = nrow(order[[18]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[19]])), yes = 0, no = nrow(order[[19]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[20]])), yes = 0, no = nrow(order[[20]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[21]])), yes = 0, no = nrow(order[[21]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[22]])), yes = 0, no = nrow(order[[22]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[23]])), yes = 0, no = nrow(order[[23]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[24]])), yes = 0, no = nrow(order[[24]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[25]])), yes = 0, no = nrow(order[[25]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[26]])), yes = 0, no = nrow(order[[26]])
+          )
+        )
+      ),
+      levels = c(
+        "S305N\nUP",
+        "S305N & NLGF S305N\nUP",
+        "P301S\nUP",
+        "P301S & NLGF P301S\nUP",
+        "S305N & P301S\nUP",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+        "NLGF MAPTKI\nUP",
+        "NLGF MAPTKI & NLGF P301S\nUP",
+        "NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+        "NLGF S305N & NLGF P301S\nUP",
+        "NLGF P301S\nUP",
+        "S305N\nDOWN",
+        "S305N & NLGF S305N\nDOWN",
+        "P301S\nDOWN",
+        "P301S & NLGF P301S\nDOWN",
+        "S305N & P301S\nDOWN",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF MAPTKI\nDOWN",
+        "NLGF MAPTKI & NLGF P301S\nDOWN",
+        "NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF P301S\nDOWN"
+      )
+    )
+
+    mat <- deg_corrected[
+      rownames(deg_corrected) %in% gene_anno_sub$ensembl, , drop = FALSE
+    ]
+    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    rownames(mat) <- gene_anno_sub$symbol
+
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+        column_title = names(ctypes)[ctype_idx],
+        cluster_rows = FALSE,
+        cluster_columns = FALSE,
+        row_split = row_split,
+        column_split = rep(seq(6), each = 4),
+        row_title_gp = gpar(fontsize = 8),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        heatmap_legend_param = list(
+          title = "logCPM", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+
+  width = 950,
+  height = 750,
+  res = 96
+)
+```
+
+</div>
+<div>
+
+```{r}
+renderPlot(
+  {
+
+    gene_anno_sub <- gene_anno[gene_anno$symbol %in% input$select, ]
+    gene_anno_sub <- gene_anno_sub[match(input$select, gene_anno_sub$symbol), ]
+
+    order <- lapply(
+      order_all, FUN = function(x) x[rownames(x) %in% gene_anno_sub$ensembl, ]
+    )
+
+    row_split <- factor(
+      c(
+        rep(
+          "S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[1]])), yes = 0, no = nrow(order[[1]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[2]])), yes = 0, no = nrow(order[[2]])
+          )
+        ),
+        rep(
+          "P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[3]])), yes = 0, no = nrow(order[[3]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[4]])), yes = 0, no = nrow(order[[4]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[5]])), yes = 0, no = nrow(order[[5]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[6]])), yes = 0, no = nrow(order[[6]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nUP",
+          times = ifelse(
+            is.null(nrow(order[[7]])), yes = 0, no = nrow(order[[7]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[8]])), yes = 0, no = nrow(order[[8]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[9]])), yes = 0, no = nrow(order[[9]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[10]])), yes = 0, no = nrow(order[[10]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[11]])), yes = 0, no = nrow(order[[11]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[12]])), yes = 0, no = nrow(order[[12]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[13]])), yes = 0, no = nrow(order[[13]])
+          )
+        ),
+        rep(
+          "S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[14]])), yes = 0, no = nrow(order[[14]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[15]])), yes = 0, no = nrow(order[[15]])
+          )
+        ),
+        rep(
+          "P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[16]])), yes = 0, no = nrow(order[[16]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[17]])), yes = 0, no = nrow(order[[17]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[18]])), yes = 0, no = nrow(order[[18]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[19]])), yes = 0, no = nrow(order[[19]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[20]])), yes = 0, no = nrow(order[[20]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[21]])), yes = 0, no = nrow(order[[21]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[22]])), yes = 0, no = nrow(order[[22]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[23]])), yes = 0, no = nrow(order[[23]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[24]])), yes = 0, no = nrow(order[[24]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[25]])), yes = 0, no = nrow(order[[25]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[26]])), yes = 0, no = nrow(order[[26]])
+          )
+        )
+      ),
+      levels = c(
+        "S305N\nUP",
+        "S305N & NLGF S305N\nUP",
+        "P301S\nUP",
+        "P301S & NLGF P301S\nUP",
+        "S305N & P301S\nUP",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+        "NLGF MAPTKI\nUP",
+        "NLGF MAPTKI & NLGF P301S\nUP",
+        "NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+        "NLGF S305N & NLGF P301S\nUP",
+        "NLGF P301S\nUP",
+        "S305N\nDOWN",
+        "S305N & NLGF S305N\nDOWN",
+        "P301S\nDOWN",
+        "P301S & NLGF P301S\nDOWN",
+        "S305N & P301S\nDOWN",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF MAPTKI\nDOWN",
+        "NLGF MAPTKI & NLGF P301S\nDOWN",
+        "NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF P301S\nDOWN"
+      )
+    )
+
+    mat <- deg_corrected[
+      rownames(deg_corrected) %in% gene_anno_sub$ensembl, , drop = FALSE
+    ]
+    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    rownames(mat) <- gene_anno_sub$symbol
+
+    mat <- t(
+      apply(
+        mat, MARGIN = 1,
+        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+      )
+    )
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+        column_title = names(ctypes)[ctype_idx],
+        cluster_rows = FALSE,
+        cluster_columns = FALSE,
+        row_split = row_split,
+        column_split = rep(seq(6), each = 4),
+        row_title_gp = gpar(fontsize = 8),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        heatmap_legend_param = list(
+          title = "Scaled logCPM", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+
+  width = 950,
+  height = 750,
+  res = 96
+)
+```
+
+</div>
+</div>
+
+Microglia
+===
+
+```{r}
+ctype_idx <- 3
+
+gse <- gse_data[[ctype_idx]]
+deg <- deg_data[[ctype_idx]]
+
+gse_corrected <- removeBatchEffect(
+  logcounts(gse), batch = gse$batch, group = gse$genotype
+)
+deg_corrected <- removeBatchEffect(
+  logcounts(deg), batch = deg$batch, group = deg$genotype
+)
+
+gse_range <- c(
+  min(gse_corrected),
+  (min(gse_corrected) + max(gse_corrected)) / 2,
+  max(gse_corrected)
+)
+deg_range <- c(
+  min(deg_corrected),
+  (min(deg_corrected) + max(deg_corrected)) / 2,
+  max(deg_corrected)
+)
+```
+
+Row {.tabset}
+---
+
+### Search Genes
+
+```{r}
+design <- model.matrix(~ 0 + deg$genotype + deg$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  S305N_MAPTKI =
+    deg.genotypeS305N -
+    deg.genotypeMAPTKI,
+  P301S_MAPTKI =
+    deg.genotypeP301S -
+    deg.genotypeMAPTKI,
+  NLGF_MAPTKI_MAPTKI =
+    deg.genotypeNLGF_MAPTKI -
+    deg.genotypeMAPTKI,
+  NLGF_S305N_MAPTKI =
+    deg.genotypeNLGF_S305N -
+    deg.genotypeMAPTKI,
+  NLGF_P301S_MAPTKI =
+    deg.genotypeNLGF_P301S -
+    deg.genotypeMAPTKI,
+  levels = design
+)
+
+fit <- lmFit(logcounts(deg), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+write.fit(
+  fit, tests, file.path(data_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(data_dir, "results.tsv"))
+
+idx <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
+  idx <- idx + 1
+}
+
+rownames(results) <- results$X
+results <- results[ , -1]
+results <- results[ , 1:22]
+tests <- results[ , 17:21]
+results <- results[order(results$F, decreasing = TRUE), ]
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results), gene_anno_sub$ensembl),
+]
+results$symbol <- gene_anno_sub$symbol
+
+results_up <- vector("list", length = 13)
+results_down <- vector("list", length = 13)
+size <- Inf
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] >= 0.05 & results[ , 20] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 17]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[1]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[1]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[1]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[1]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] >= 0.05 & results[ , 20] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 20)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0 & results_sub[ , 5] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[2]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[2]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0 & results_sub[ , 5] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[2]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[2]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] < 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 18]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[3]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[3]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[3]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[3]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(18, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[4]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[4]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[4]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[4]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] < 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 18)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0 & results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[5]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[5]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0 & results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[5]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[5]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] < 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 18, 20, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0 & results_sub[ , 3] > 0 &
+    results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[6]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[6]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0 & results_sub[ , 3] < 0 &
+    results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[6]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[6]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 19]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[7]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[7]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[7]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[7]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[8]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[8]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[8]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[8]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 20]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 5] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[9]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[9]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 5] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[9]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[9]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 20)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0 & results_sub[ , 5] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[10]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[10]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0 & results_sub[ , 5] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[10]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[10]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 20, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0 & results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[11]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[11]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0 & results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[11]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[11]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(20, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[12]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[12]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[12]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[12]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 21]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[13]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[13]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[13]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[13]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results <- rbind(do.call(rbind, results_up), do.call(rbind, results_down))
+order_all <- append(results_up, results_down)
+order <- lapply(order_all, FUN = function(x) x[1, , drop = FALSE])
+results_sub <- results[rownames(results) %in% rownames(do.call(rbind, order)), ]
+results_sub <- results_sub[
+  match(rownames(do.call(rbind, order)), rownames(results_sub)),
+]
+results <- results[rownames(results) %notin% rownames(results_sub), ]
+results <- rbind(results_sub, results)
+```
+
+```{r}
+top_anno <- HeatmapAnnotation(
+  Batch = gse_data[[1]]$batch,
+  cell_type = anno_block(
+    gp = gpar(fill = "lightgray", col = "lightgray"),
+    labels = levels(gse_data[[1]]$genotype),
+    labels_gp = gpar(col = "black", fontsize = 9),
+    height = unit(5, "mm")
+  ),
+  col = list(
+    Batch = c(
+      "batch01" = anno_color[1], "batch02" = anno_color[2],
+      "batch03" = anno_color[3], "batch04" = anno_color[4]
+    )
+  ),
+  simple_anno_size = unit(3, "mm"),
+  show_legend = c("Batch" = FALSE),
+  annotation_name_gp = gpar(fontsize = 9)
+)
+
+selectizeInput(
+  "select",
+  label = "Select Genes:",
+  choices = results$symbol,
+  selected = do.call(rbind, order)$symbol,
+  multiple = TRUE,
+  width = "100%"
+)
+```
+
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
+<div>
+
+```{r}
+renderPlot(
+  {
+
+    gene_anno_sub <- gene_anno[gene_anno$symbol %in% input$select, ]
+    gene_anno_sub <- gene_anno_sub[match(input$select, gene_anno_sub$symbol), ]
+
+    order <- lapply(
+      order_all, FUN = function(x) x[rownames(x) %in% gene_anno_sub$ensembl, ]
+    )
+
+    row_split <- factor(
+      c(
+        rep(
+          "S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[1]])), yes = 0, no = nrow(order[[1]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[2]])), yes = 0, no = nrow(order[[2]])
+          )
+        ),
+        rep(
+          "P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[3]])), yes = 0, no = nrow(order[[3]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[4]])), yes = 0, no = nrow(order[[4]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[5]])), yes = 0, no = nrow(order[[5]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[6]])), yes = 0, no = nrow(order[[6]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nUP",
+          times = ifelse(
+            is.null(nrow(order[[7]])), yes = 0, no = nrow(order[[7]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[8]])), yes = 0, no = nrow(order[[8]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[9]])), yes = 0, no = nrow(order[[9]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[10]])), yes = 0, no = nrow(order[[10]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[11]])), yes = 0, no = nrow(order[[11]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[12]])), yes = 0, no = nrow(order[[12]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[13]])), yes = 0, no = nrow(order[[13]])
+          )
+        ),
+        rep(
+          "S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[14]])), yes = 0, no = nrow(order[[14]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[15]])), yes = 0, no = nrow(order[[15]])
+          )
+        ),
+        rep(
+          "P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[16]])), yes = 0, no = nrow(order[[16]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[17]])), yes = 0, no = nrow(order[[17]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[18]])), yes = 0, no = nrow(order[[18]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[19]])), yes = 0, no = nrow(order[[19]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[20]])), yes = 0, no = nrow(order[[20]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[21]])), yes = 0, no = nrow(order[[21]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[22]])), yes = 0, no = nrow(order[[22]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[23]])), yes = 0, no = nrow(order[[23]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[24]])), yes = 0, no = nrow(order[[24]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[25]])), yes = 0, no = nrow(order[[25]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[26]])), yes = 0, no = nrow(order[[26]])
+          )
+        )
+      ),
+      levels = c(
+        "S305N\nUP",
+        "S305N & NLGF S305N\nUP",
+        "P301S\nUP",
+        "P301S & NLGF P301S\nUP",
+        "S305N & P301S\nUP",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+        "NLGF MAPTKI\nUP",
+        "NLGF MAPTKI & NLGF P301S\nUP",
+        "NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+        "NLGF S305N & NLGF P301S\nUP",
+        "NLGF P301S\nUP",
+        "S305N\nDOWN",
+        "S305N & NLGF S305N\nDOWN",
+        "P301S\nDOWN",
+        "P301S & NLGF P301S\nDOWN",
+        "S305N & P301S\nDOWN",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF MAPTKI\nDOWN",
+        "NLGF MAPTKI & NLGF P301S\nDOWN",
+        "NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF P301S\nDOWN"
+      )
+    )
+
+    mat <- deg_corrected[
+      rownames(deg_corrected) %in% gene_anno_sub$ensembl, , drop = FALSE
+    ]
+    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    rownames(mat) <- gene_anno_sub$symbol
+
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+        column_title = names(ctypes)[ctype_idx],
+        cluster_rows = FALSE,
+        cluster_columns = FALSE,
+        row_split = row_split,
+        column_split = rep(seq(6), each = 4),
+        row_title_gp = gpar(fontsize = 8),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        heatmap_legend_param = list(
+          title = "logCPM", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+
+  width = 950,
+  height = 750,
+  res = 96
+)
+```
+
+</div>
+<div>
+
+```{r}
+renderPlot(
+  {
+
+    gene_anno_sub <- gene_anno[gene_anno$symbol %in% input$select, ]
+    gene_anno_sub <- gene_anno_sub[match(input$select, gene_anno_sub$symbol), ]
+
+    order <- lapply(
+      order_all, FUN = function(x) x[rownames(x) %in% gene_anno_sub$ensembl, ]
+    )
+
+    row_split <- factor(
+      c(
+        rep(
+          "S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[1]])), yes = 0, no = nrow(order[[1]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[2]])), yes = 0, no = nrow(order[[2]])
+          )
+        ),
+        rep(
+          "P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[3]])), yes = 0, no = nrow(order[[3]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[4]])), yes = 0, no = nrow(order[[4]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[5]])), yes = 0, no = nrow(order[[5]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[6]])), yes = 0, no = nrow(order[[6]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nUP",
+          times = ifelse(
+            is.null(nrow(order[[7]])), yes = 0, no = nrow(order[[7]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[8]])), yes = 0, no = nrow(order[[8]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[9]])), yes = 0, no = nrow(order[[9]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[10]])), yes = 0, no = nrow(order[[10]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[11]])), yes = 0, no = nrow(order[[11]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[12]])), yes = 0, no = nrow(order[[12]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[13]])), yes = 0, no = nrow(order[[13]])
+          )
+        ),
+        rep(
+          "S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[14]])), yes = 0, no = nrow(order[[14]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[15]])), yes = 0, no = nrow(order[[15]])
+          )
+        ),
+        rep(
+          "P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[16]])), yes = 0, no = nrow(order[[16]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[17]])), yes = 0, no = nrow(order[[17]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[18]])), yes = 0, no = nrow(order[[18]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[19]])), yes = 0, no = nrow(order[[19]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[20]])), yes = 0, no = nrow(order[[20]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[21]])), yes = 0, no = nrow(order[[21]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[22]])), yes = 0, no = nrow(order[[22]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[23]])), yes = 0, no = nrow(order[[23]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[24]])), yes = 0, no = nrow(order[[24]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[25]])), yes = 0, no = nrow(order[[25]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[26]])), yes = 0, no = nrow(order[[26]])
+          )
+        )
+      ),
+      levels = c(
+        "S305N\nUP",
+        "S305N & NLGF S305N\nUP",
+        "P301S\nUP",
+        "P301S & NLGF P301S\nUP",
+        "S305N & P301S\nUP",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+        "NLGF MAPTKI\nUP",
+        "NLGF MAPTKI & NLGF P301S\nUP",
+        "NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+        "NLGF S305N & NLGF P301S\nUP",
+        "NLGF P301S\nUP",
+        "S305N\nDOWN",
+        "S305N & NLGF S305N\nDOWN",
+        "P301S\nDOWN",
+        "P301S & NLGF P301S\nDOWN",
+        "S305N & P301S\nDOWN",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF MAPTKI\nDOWN",
+        "NLGF MAPTKI & NLGF P301S\nDOWN",
+        "NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF P301S\nDOWN"
+      )
+    )
+
+    mat <- deg_corrected[
+      rownames(deg_corrected) %in% gene_anno_sub$ensembl, , drop = FALSE
+    ]
+    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    rownames(mat) <- gene_anno_sub$symbol
+
+    mat <- t(
+      apply(
+        mat, MARGIN = 1,
+        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+      )
+    )
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+        column_title = names(ctypes)[ctype_idx],
+        cluster_rows = FALSE,
+        cluster_columns = FALSE,
+        row_split = row_split,
+        column_split = rep(seq(6), each = 4),
+        row_title_gp = gpar(fontsize = 8),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        heatmap_legend_param = list(
+          title = "Scaled logCPM", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+
+  width = 950,
+  height = 750,
+  res = 96
+)
+```
+
+</div>
+</div>
+
+Glutamatergic CA3
+===
+
+```{r}
+ctype_idx <- 4
+
+gse <- gse_data[[ctype_idx]]
+deg <- deg_data[[ctype_idx]]
+
+gse_corrected <- removeBatchEffect(
+  logcounts(gse), batch = gse$batch, group = gse$genotype
+)
+deg_corrected <- removeBatchEffect(
+  logcounts(deg), batch = deg$batch, group = deg$genotype
+)
+
+gse_range <- c(
+  min(gse_corrected),
+  (min(gse_corrected) + max(gse_corrected)) / 2,
+  max(gse_corrected)
+)
+deg_range <- c(
+  min(deg_corrected),
+  (min(deg_corrected) + max(deg_corrected)) / 2,
+  max(deg_corrected)
+)
+```
+
+Row {.tabset}
+---
+
+### Search Genes
+
+```{r}
+design <- model.matrix(~ 0 + deg$genotype + deg$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  S305N_MAPTKI =
+    deg.genotypeS305N -
+    deg.genotypeMAPTKI,
+  P301S_MAPTKI =
+    deg.genotypeP301S -
+    deg.genotypeMAPTKI,
+  NLGF_MAPTKI_MAPTKI =
+    deg.genotypeNLGF_MAPTKI -
+    deg.genotypeMAPTKI,
+  NLGF_S305N_MAPTKI =
+    deg.genotypeNLGF_S305N -
+    deg.genotypeMAPTKI,
+  NLGF_P301S_MAPTKI =
+    deg.genotypeNLGF_P301S -
+    deg.genotypeMAPTKI,
+  levels = design
+)
+
+fit <- lmFit(logcounts(deg), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+write.fit(
+  fit, tests, file.path(data_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(data_dir, "results.tsv"))
+
+idx <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
+  idx <- idx + 1
+}
+
+rownames(results) <- results$X
+results <- results[ , -1]
+results <- results[ , 1:22]
+tests <- results[ , 17:21]
+results <- results[order(results$F, decreasing = TRUE), ]
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results), gene_anno_sub$ensembl),
+]
+results$symbol <- gene_anno_sub$symbol
+
+results_up <- vector("list", length = 13)
+results_down <- vector("list", length = 13)
+size <- Inf
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] >= 0.05 & results[ , 20] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 17]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[1]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[1]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[1]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[1]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] >= 0.05 & results[ , 20] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 20)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0 & results_sub[ , 5] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[2]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[2]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0 & results_sub[ , 5] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[2]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[2]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] < 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 18]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[3]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[3]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[3]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[3]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(18, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[4]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[4]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[4]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[4]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] < 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 18)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0 & results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[5]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[5]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0 & results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[5]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[5]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] < 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 18, 20, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0 & results_sub[ , 3] > 0 &
+    results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[6]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[6]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0 & results_sub[ , 3] < 0 &
+    results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[6]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[6]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 19]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[7]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[7]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[7]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[7]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[8]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[8]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[8]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[8]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 20]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 5] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[9]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[9]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 5] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[9]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[9]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 20)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0 & results_sub[ , 5] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[10]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[10]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0 & results_sub[ , 5] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[10]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[10]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 20, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0 & results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[11]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[11]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0 & results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[11]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[11]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(20, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[12]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[12]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[12]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[12]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 21]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[13]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[13]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[13]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[13]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results <- rbind(do.call(rbind, results_up), do.call(rbind, results_down))
+order_all <- append(results_up, results_down)
+order <- lapply(order_all, FUN = function(x) x[1, , drop = FALSE])
+results_sub <- results[rownames(results) %in% rownames(do.call(rbind, order)), ]
+results_sub <- results_sub[
+  match(rownames(do.call(rbind, order)), rownames(results_sub)),
+]
+results <- results[rownames(results) %notin% rownames(results_sub), ]
+results <- rbind(results_sub, results)
+```
+
+```{r}
+top_anno <- HeatmapAnnotation(
+  Batch = gse_data[[1]]$batch,
+  cell_type = anno_block(
+    gp = gpar(fill = "lightgray", col = "lightgray"),
+    labels = levels(gse_data[[1]]$genotype),
+    labels_gp = gpar(col = "black", fontsize = 9),
+    height = unit(5, "mm")
+  ),
+  col = list(
+    Batch = c(
+      "batch01" = anno_color[1], "batch02" = anno_color[2],
+      "batch03" = anno_color[3], "batch04" = anno_color[4]
+    )
+  ),
+  simple_anno_size = unit(3, "mm"),
+  show_legend = c("Batch" = FALSE),
+  annotation_name_gp = gpar(fontsize = 9)
+)
+
+selectizeInput(
+  "select",
+  label = "Select Genes:",
+  choices = results$symbol,
+  selected = do.call(rbind, order)$symbol,
+  multiple = TRUE,
+  width = "100%"
+)
+```
+
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
+<div>
+
+```{r}
+renderPlot(
+  {
+
+    gene_anno_sub <- gene_anno[gene_anno$symbol %in% input$select, ]
+    gene_anno_sub <- gene_anno_sub[match(input$select, gene_anno_sub$symbol), ]
+
+    order <- lapply(
+      order_all, FUN = function(x) x[rownames(x) %in% gene_anno_sub$ensembl, ]
+    )
+
+    row_split <- factor(
+      c(
+        rep(
+          "S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[1]])), yes = 0, no = nrow(order[[1]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[2]])), yes = 0, no = nrow(order[[2]])
+          )
+        ),
+        rep(
+          "P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[3]])), yes = 0, no = nrow(order[[3]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[4]])), yes = 0, no = nrow(order[[4]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[5]])), yes = 0, no = nrow(order[[5]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[6]])), yes = 0, no = nrow(order[[6]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nUP",
+          times = ifelse(
+            is.null(nrow(order[[7]])), yes = 0, no = nrow(order[[7]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[8]])), yes = 0, no = nrow(order[[8]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[9]])), yes = 0, no = nrow(order[[9]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[10]])), yes = 0, no = nrow(order[[10]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[11]])), yes = 0, no = nrow(order[[11]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[12]])), yes = 0, no = nrow(order[[12]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[13]])), yes = 0, no = nrow(order[[13]])
+          )
+        ),
+        rep(
+          "S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[14]])), yes = 0, no = nrow(order[[14]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[15]])), yes = 0, no = nrow(order[[15]])
+          )
+        ),
+        rep(
+          "P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[16]])), yes = 0, no = nrow(order[[16]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[17]])), yes = 0, no = nrow(order[[17]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[18]])), yes = 0, no = nrow(order[[18]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[19]])), yes = 0, no = nrow(order[[19]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[20]])), yes = 0, no = nrow(order[[20]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[21]])), yes = 0, no = nrow(order[[21]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[22]])), yes = 0, no = nrow(order[[22]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[23]])), yes = 0, no = nrow(order[[23]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[24]])), yes = 0, no = nrow(order[[24]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[25]])), yes = 0, no = nrow(order[[25]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[26]])), yes = 0, no = nrow(order[[26]])
+          )
+        )
+      ),
+      levels = c(
+        "S305N\nUP",
+        "S305N & NLGF S305N\nUP",
+        "P301S\nUP",
+        "P301S & NLGF P301S\nUP",
+        "S305N & P301S\nUP",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+        "NLGF MAPTKI\nUP",
+        "NLGF MAPTKI & NLGF P301S\nUP",
+        "NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+        "NLGF S305N & NLGF P301S\nUP",
+        "NLGF P301S\nUP",
+        "S305N\nDOWN",
+        "S305N & NLGF S305N\nDOWN",
+        "P301S\nDOWN",
+        "P301S & NLGF P301S\nDOWN",
+        "S305N & P301S\nDOWN",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF MAPTKI\nDOWN",
+        "NLGF MAPTKI & NLGF P301S\nDOWN",
+        "NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF P301S\nDOWN"
+      )
+    )
+
+    mat <- deg_corrected[
+      rownames(deg_corrected) %in% gene_anno_sub$ensembl, , drop = FALSE
+    ]
+    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    rownames(mat) <- gene_anno_sub$symbol
+
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+        column_title = names(ctypes)[ctype_idx],
+        cluster_rows = FALSE,
+        cluster_columns = FALSE,
+        row_split = row_split,
+        column_split = rep(seq(6), each = 4),
+        row_title_gp = gpar(fontsize = 8),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        heatmap_legend_param = list(
+          title = "logCPM", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+
+  width = 950,
+  height = 750,
+  res = 96
+)
+```
+
+</div>
+<div>
+
+```{r}
+renderPlot(
+  {
+
+    gene_anno_sub <- gene_anno[gene_anno$symbol %in% input$select, ]
+    gene_anno_sub <- gene_anno_sub[match(input$select, gene_anno_sub$symbol), ]
+
+    order <- lapply(
+      order_all, FUN = function(x) x[rownames(x) %in% gene_anno_sub$ensembl, ]
+    )
+
+    row_split <- factor(
+      c(
+        rep(
+          "S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[1]])), yes = 0, no = nrow(order[[1]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[2]])), yes = 0, no = nrow(order[[2]])
+          )
+        ),
+        rep(
+          "P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[3]])), yes = 0, no = nrow(order[[3]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[4]])), yes = 0, no = nrow(order[[4]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[5]])), yes = 0, no = nrow(order[[5]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[6]])), yes = 0, no = nrow(order[[6]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nUP",
+          times = ifelse(
+            is.null(nrow(order[[7]])), yes = 0, no = nrow(order[[7]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[8]])), yes = 0, no = nrow(order[[8]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[9]])), yes = 0, no = nrow(order[[9]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[10]])), yes = 0, no = nrow(order[[10]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[11]])), yes = 0, no = nrow(order[[11]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[12]])), yes = 0, no = nrow(order[[12]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[13]])), yes = 0, no = nrow(order[[13]])
+          )
+        ),
+        rep(
+          "S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[14]])), yes = 0, no = nrow(order[[14]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[15]])), yes = 0, no = nrow(order[[15]])
+          )
+        ),
+        rep(
+          "P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[16]])), yes = 0, no = nrow(order[[16]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[17]])), yes = 0, no = nrow(order[[17]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[18]])), yes = 0, no = nrow(order[[18]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[19]])), yes = 0, no = nrow(order[[19]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[20]])), yes = 0, no = nrow(order[[20]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[21]])), yes = 0, no = nrow(order[[21]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[22]])), yes = 0, no = nrow(order[[22]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[23]])), yes = 0, no = nrow(order[[23]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[24]])), yes = 0, no = nrow(order[[24]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[25]])), yes = 0, no = nrow(order[[25]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[26]])), yes = 0, no = nrow(order[[26]])
+          )
+        )
+      ),
+      levels = c(
+        "S305N\nUP",
+        "S305N & NLGF S305N\nUP",
+        "P301S\nUP",
+        "P301S & NLGF P301S\nUP",
+        "S305N & P301S\nUP",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+        "NLGF MAPTKI\nUP",
+        "NLGF MAPTKI & NLGF P301S\nUP",
+        "NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+        "NLGF S305N & NLGF P301S\nUP",
+        "NLGF P301S\nUP",
+        "S305N\nDOWN",
+        "S305N & NLGF S305N\nDOWN",
+        "P301S\nDOWN",
+        "P301S & NLGF P301S\nDOWN",
+        "S305N & P301S\nDOWN",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF MAPTKI\nDOWN",
+        "NLGF MAPTKI & NLGF P301S\nDOWN",
+        "NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF P301S\nDOWN"
+      )
+    )
+
+    mat <- deg_corrected[
+      rownames(deg_corrected) %in% gene_anno_sub$ensembl, , drop = FALSE
+    ]
+    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    rownames(mat) <- gene_anno_sub$symbol
+
+    mat <- t(
+      apply(
+        mat, MARGIN = 1,
+        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+      )
+    )
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+        column_title = names(ctypes)[ctype_idx],
+        cluster_rows = FALSE,
+        cluster_columns = FALSE,
+        row_split = row_split,
+        column_split = rep(seq(6), each = 4),
+        row_title_gp = gpar(fontsize = 8),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        heatmap_legend_param = list(
+          title = "Scaled logCPM", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+
+  width = 950,
+  height = 750,
+  res = 96
+)
+```
+
+</div>
+</div>
+
+Glutamatergic CA1
+===
+
+```{r}
+ctype_idx <- 5
+
+gse <- gse_data[[ctype_idx]]
+deg <- deg_data[[ctype_idx]]
+
+gse_corrected <- removeBatchEffect(
+  logcounts(gse), batch = gse$batch, group = gse$genotype
+)
+deg_corrected <- removeBatchEffect(
+  logcounts(deg), batch = deg$batch, group = deg$genotype
+)
+
+gse_range <- c(
+  min(gse_corrected),
+  (min(gse_corrected) + max(gse_corrected)) / 2,
+  max(gse_corrected)
+)
+deg_range <- c(
+  min(deg_corrected),
+  (min(deg_corrected) + max(deg_corrected)) / 2,
+  max(deg_corrected)
+)
+```
+
+Row {.tabset}
+---
+
+### Search Genes
+
+```{r}
+design <- model.matrix(~ 0 + deg$genotype + deg$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  S305N_MAPTKI =
+    deg.genotypeS305N -
+    deg.genotypeMAPTKI,
+  P301S_MAPTKI =
+    deg.genotypeP301S -
+    deg.genotypeMAPTKI,
+  NLGF_MAPTKI_MAPTKI =
+    deg.genotypeNLGF_MAPTKI -
+    deg.genotypeMAPTKI,
+  NLGF_S305N_MAPTKI =
+    deg.genotypeNLGF_S305N -
+    deg.genotypeMAPTKI,
+  NLGF_P301S_MAPTKI =
+    deg.genotypeNLGF_P301S -
+    deg.genotypeMAPTKI,
+  levels = design
+)
+
+fit <- lmFit(logcounts(deg), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+write.fit(
+  fit, tests, file.path(data_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(data_dir, "results.tsv"))
+
+idx <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
+  idx <- idx + 1
+}
+
+rownames(results) <- results$X
+results <- results[ , -1]
+results <- results[ , 1:22]
+tests <- results[ , 17:21]
+results <- results[order(results$F, decreasing = TRUE), ]
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results), gene_anno_sub$ensembl),
+]
+results$symbol <- gene_anno_sub$symbol
+
+results_up <- vector("list", length = 13)
+results_down <- vector("list", length = 13)
+size <- Inf
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] >= 0.05 & results[ , 20] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 17]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[1]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[1]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[1]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[1]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] >= 0.05 & results[ , 20] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 20)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0 & results_sub[ , 5] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[2]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[2]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0 & results_sub[ , 5] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[2]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[2]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] < 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 18]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[3]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[3]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[3]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[3]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(18, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[4]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[4]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[4]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[4]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] < 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 18)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0 & results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[5]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[5]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0 & results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[5]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[5]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] < 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 18, 20, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0 & results_sub[ , 3] > 0 &
+    results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[6]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[6]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0 & results_sub[ , 3] < 0 &
+    results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[6]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[6]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 19]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[7]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[7]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[7]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[7]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[8]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[8]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[8]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[8]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 20]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 5] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[9]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[9]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 5] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[9]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[9]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 20)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0 & results_sub[ , 5] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[10]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[10]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0 & results_sub[ , 5] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[10]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[10]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 20, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0 & results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[11]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[11]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0 & results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[11]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[11]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(20, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[12]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[12]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[12]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[12]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 21]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[13]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[13]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[13]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[13]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results <- rbind(do.call(rbind, results_up), do.call(rbind, results_down))
+order_all <- append(results_up, results_down)
+order <- lapply(order_all, FUN = function(x) x[1, , drop = FALSE])
+results_sub <- results[rownames(results) %in% rownames(do.call(rbind, order)), ]
+results_sub <- results_sub[
+  match(rownames(do.call(rbind, order)), rownames(results_sub)),
+]
+results <- results[rownames(results) %notin% rownames(results_sub), ]
+results <- rbind(results_sub, results)
+```
+
+```{r}
+top_anno <- HeatmapAnnotation(
+  Batch = gse_data[[1]]$batch,
+  cell_type = anno_block(
+    gp = gpar(fill = "lightgray", col = "lightgray"),
+    labels = levels(gse_data[[1]]$genotype),
+    labels_gp = gpar(col = "black", fontsize = 9),
+    height = unit(5, "mm")
+  ),
+  col = list(
+    Batch = c(
+      "batch01" = anno_color[1], "batch02" = anno_color[2],
+      "batch03" = anno_color[3], "batch04" = anno_color[4]
+    )
+  ),
+  simple_anno_size = unit(3, "mm"),
+  show_legend = c("Batch" = FALSE),
+  annotation_name_gp = gpar(fontsize = 9)
+)
+
+selectizeInput(
+  "select",
+  label = "Select Genes:",
+  choices = results$symbol,
+  selected = do.call(rbind, order)$symbol,
+  multiple = TRUE,
+  width = "100%"
+)
+```
+
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
+<div>
+
+```{r}
+renderPlot(
+  {
+
+    gene_anno_sub <- gene_anno[gene_anno$symbol %in% input$select, ]
+    gene_anno_sub <- gene_anno_sub[match(input$select, gene_anno_sub$symbol), ]
+
+    order <- lapply(
+      order_all, FUN = function(x) x[rownames(x) %in% gene_anno_sub$ensembl, ]
+    )
+
+    row_split <- factor(
+      c(
+        rep(
+          "S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[1]])), yes = 0, no = nrow(order[[1]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[2]])), yes = 0, no = nrow(order[[2]])
+          )
+        ),
+        rep(
+          "P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[3]])), yes = 0, no = nrow(order[[3]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[4]])), yes = 0, no = nrow(order[[4]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[5]])), yes = 0, no = nrow(order[[5]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[6]])), yes = 0, no = nrow(order[[6]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nUP",
+          times = ifelse(
+            is.null(nrow(order[[7]])), yes = 0, no = nrow(order[[7]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[8]])), yes = 0, no = nrow(order[[8]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[9]])), yes = 0, no = nrow(order[[9]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[10]])), yes = 0, no = nrow(order[[10]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[11]])), yes = 0, no = nrow(order[[11]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[12]])), yes = 0, no = nrow(order[[12]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[13]])), yes = 0, no = nrow(order[[13]])
+          )
+        ),
+        rep(
+          "S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[14]])), yes = 0, no = nrow(order[[14]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[15]])), yes = 0, no = nrow(order[[15]])
+          )
+        ),
+        rep(
+          "P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[16]])), yes = 0, no = nrow(order[[16]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[17]])), yes = 0, no = nrow(order[[17]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[18]])), yes = 0, no = nrow(order[[18]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[19]])), yes = 0, no = nrow(order[[19]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[20]])), yes = 0, no = nrow(order[[20]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[21]])), yes = 0, no = nrow(order[[21]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[22]])), yes = 0, no = nrow(order[[22]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[23]])), yes = 0, no = nrow(order[[23]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[24]])), yes = 0, no = nrow(order[[24]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[25]])), yes = 0, no = nrow(order[[25]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[26]])), yes = 0, no = nrow(order[[26]])
+          )
+        )
+      ),
+      levels = c(
+        "S305N\nUP",
+        "S305N & NLGF S305N\nUP",
+        "P301S\nUP",
+        "P301S & NLGF P301S\nUP",
+        "S305N & P301S\nUP",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+        "NLGF MAPTKI\nUP",
+        "NLGF MAPTKI & NLGF P301S\nUP",
+        "NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+        "NLGF S305N & NLGF P301S\nUP",
+        "NLGF P301S\nUP",
+        "S305N\nDOWN",
+        "S305N & NLGF S305N\nDOWN",
+        "P301S\nDOWN",
+        "P301S & NLGF P301S\nDOWN",
+        "S305N & P301S\nDOWN",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF MAPTKI\nDOWN",
+        "NLGF MAPTKI & NLGF P301S\nDOWN",
+        "NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF P301S\nDOWN"
+      )
+    )
+
+    mat <- deg_corrected[
+      rownames(deg_corrected) %in% gene_anno_sub$ensembl, , drop = FALSE
+    ]
+    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    rownames(mat) <- gene_anno_sub$symbol
+
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+        column_title = names(ctypes)[ctype_idx],
+        cluster_rows = FALSE,
+        cluster_columns = FALSE,
+        row_split = row_split,
+        column_split = rep(seq(6), each = 4),
+        row_title_gp = gpar(fontsize = 8),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        heatmap_legend_param = list(
+          title = "logCPM", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+
+  width = 950,
+  height = 750,
+  res = 96
+)
+```
+
+</div>
+<div>
+
+```{r}
+renderPlot(
+  {
+
+    gene_anno_sub <- gene_anno[gene_anno$symbol %in% input$select, ]
+    gene_anno_sub <- gene_anno_sub[match(input$select, gene_anno_sub$symbol), ]
+
+    order <- lapply(
+      order_all, FUN = function(x) x[rownames(x) %in% gene_anno_sub$ensembl, ]
+    )
+
+    row_split <- factor(
+      c(
+        rep(
+          "S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[1]])), yes = 0, no = nrow(order[[1]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[2]])), yes = 0, no = nrow(order[[2]])
+          )
+        ),
+        rep(
+          "P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[3]])), yes = 0, no = nrow(order[[3]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[4]])), yes = 0, no = nrow(order[[4]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[5]])), yes = 0, no = nrow(order[[5]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[6]])), yes = 0, no = nrow(order[[6]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nUP",
+          times = ifelse(
+            is.null(nrow(order[[7]])), yes = 0, no = nrow(order[[7]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[8]])), yes = 0, no = nrow(order[[8]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[9]])), yes = 0, no = nrow(order[[9]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[10]])), yes = 0, no = nrow(order[[10]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[11]])), yes = 0, no = nrow(order[[11]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[12]])), yes = 0, no = nrow(order[[12]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[13]])), yes = 0, no = nrow(order[[13]])
+          )
+        ),
+        rep(
+          "S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[14]])), yes = 0, no = nrow(order[[14]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[15]])), yes = 0, no = nrow(order[[15]])
+          )
+        ),
+        rep(
+          "P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[16]])), yes = 0, no = nrow(order[[16]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[17]])), yes = 0, no = nrow(order[[17]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[18]])), yes = 0, no = nrow(order[[18]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[19]])), yes = 0, no = nrow(order[[19]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[20]])), yes = 0, no = nrow(order[[20]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[21]])), yes = 0, no = nrow(order[[21]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[22]])), yes = 0, no = nrow(order[[22]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[23]])), yes = 0, no = nrow(order[[23]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[24]])), yes = 0, no = nrow(order[[24]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[25]])), yes = 0, no = nrow(order[[25]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[26]])), yes = 0, no = nrow(order[[26]])
+          )
+        )
+      ),
+      levels = c(
+        "S305N\nUP",
+        "S305N & NLGF S305N\nUP",
+        "P301S\nUP",
+        "P301S & NLGF P301S\nUP",
+        "S305N & P301S\nUP",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+        "NLGF MAPTKI\nUP",
+        "NLGF MAPTKI & NLGF P301S\nUP",
+        "NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+        "NLGF S305N & NLGF P301S\nUP",
+        "NLGF P301S\nUP",
+        "S305N\nDOWN",
+        "S305N & NLGF S305N\nDOWN",
+        "P301S\nDOWN",
+        "P301S & NLGF P301S\nDOWN",
+        "S305N & P301S\nDOWN",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF MAPTKI\nDOWN",
+        "NLGF MAPTKI & NLGF P301S\nDOWN",
+        "NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF P301S\nDOWN"
+      )
+    )
+
+    mat <- deg_corrected[
+      rownames(deg_corrected) %in% gene_anno_sub$ensembl, , drop = FALSE
+    ]
+    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    rownames(mat) <- gene_anno_sub$symbol
+
+    mat <- t(
+      apply(
+        mat, MARGIN = 1,
+        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+      )
+    )
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+        column_title = names(ctypes)[ctype_idx],
+        cluster_rows = FALSE,
+        cluster_columns = FALSE,
+        row_split = row_split,
+        column_split = rep(seq(6), each = 4),
+        row_title_gp = gpar(fontsize = 8),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        heatmap_legend_param = list(
+          title = "Scaled logCPM", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+
+  width = 950,
+  height = 750,
+  res = 96
+)
+```
+
+</div>
+</div>
+
+Glutamatergic L2/3 ENT
+===
+
+```{r}
+ctype_idx <- 6
+
+gse <- gse_data[[ctype_idx]]
+deg <- deg_data[[ctype_idx]]
+
+gse_corrected <- removeBatchEffect(
+  logcounts(gse), batch = gse$batch, group = gse$genotype
+)
+deg_corrected <- removeBatchEffect(
+  logcounts(deg), batch = deg$batch, group = deg$genotype
+)
+
+gse_range <- c(
+  min(gse_corrected),
+  (min(gse_corrected) + max(gse_corrected)) / 2,
+  max(gse_corrected)
+)
+deg_range <- c(
+  min(deg_corrected),
+  (min(deg_corrected) + max(deg_corrected)) / 2,
+  max(deg_corrected)
+)
+```
+
+Row {.tabset}
+---
+
+### Search Genes
+
+```{r}
+design <- model.matrix(~ 0 + deg$genotype + deg$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  S305N_MAPTKI =
+    deg.genotypeS305N -
+    deg.genotypeMAPTKI,
+  P301S_MAPTKI =
+    deg.genotypeP301S -
+    deg.genotypeMAPTKI,
+  NLGF_MAPTKI_MAPTKI =
+    deg.genotypeNLGF_MAPTKI -
+    deg.genotypeMAPTKI,
+  NLGF_S305N_MAPTKI =
+    deg.genotypeNLGF_S305N -
+    deg.genotypeMAPTKI,
+  NLGF_P301S_MAPTKI =
+    deg.genotypeNLGF_P301S -
+    deg.genotypeMAPTKI,
+  levels = design
+)
+
+fit <- lmFit(logcounts(deg), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+write.fit(
+  fit, tests, file.path(data_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(data_dir, "results.tsv"))
+
+idx <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
+  idx <- idx + 1
+}
+
+rownames(results) <- results$X
+results <- results[ , -1]
+results <- results[ , 1:22]
+tests <- results[ , 17:21]
+results <- results[order(results$F, decreasing = TRUE), ]
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results), gene_anno_sub$ensembl),
+]
+results$symbol <- gene_anno_sub$symbol
+
+results_up <- vector("list", length = 13)
+results_down <- vector("list", length = 13)
+size <- Inf
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] >= 0.05 & results[ , 20] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 17]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[1]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[1]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[1]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[1]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] >= 0.05 & results[ , 20] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 20)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0 & results_sub[ , 5] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[2]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[2]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0 & results_sub[ , 5] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[2]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[2]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] < 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 18]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[3]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[3]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[3]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[3]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(18, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[4]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[4]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[4]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[4]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] < 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 18)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0 & results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[5]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[5]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0 & results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[5]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[5]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] < 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 18, 20, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0 & results_sub[ , 3] > 0 &
+    results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[6]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[6]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0 & results_sub[ , 3] < 0 &
+    results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[6]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[6]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 19]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[7]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[7]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[7]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[7]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[8]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[8]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[8]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[8]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 20]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 5] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[9]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[9]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 5] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[9]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[9]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 20)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0 & results_sub[ , 5] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[10]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[10]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0 & results_sub[ , 5] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[10]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[10]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 20, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0 & results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[11]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[11]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0 & results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[11]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[11]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(20, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[12]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[12]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[12]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[12]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 21]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[13]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[13]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[13]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[13]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results <- rbind(do.call(rbind, results_up), do.call(rbind, results_down))
+order_all <- append(results_up, results_down)
+order <- lapply(order_all, FUN = function(x) x[1, , drop = FALSE])
+results_sub <- results[rownames(results) %in% rownames(do.call(rbind, order)), ]
+results_sub <- results_sub[
+  match(rownames(do.call(rbind, order)), rownames(results_sub)),
+]
+results <- results[rownames(results) %notin% rownames(results_sub), ]
+results <- rbind(results_sub, results)
+```
+
+```{r}
+top_anno <- HeatmapAnnotation(
+  Batch = gse_data[[1]]$batch,
+  cell_type = anno_block(
+    gp = gpar(fill = "lightgray", col = "lightgray"),
+    labels = levels(gse_data[[1]]$genotype),
+    labels_gp = gpar(col = "black", fontsize = 9),
+    height = unit(5, "mm")
+  ),
+  col = list(
+    Batch = c(
+      "batch01" = anno_color[1], "batch02" = anno_color[2],
+      "batch03" = anno_color[3], "batch04" = anno_color[4]
+    )
+  ),
+  simple_anno_size = unit(3, "mm"),
+  show_legend = c("Batch" = FALSE),
+  annotation_name_gp = gpar(fontsize = 9)
+)
+
+selectizeInput(
+  "select",
+  label = "Select Genes:",
+  choices = results$symbol,
+  selected = do.call(rbind, order)$symbol,
+  multiple = TRUE,
+  width = "100%"
+)
+```
+
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
+<div>
+
+```{r}
+renderPlot(
+  {
+
+    gene_anno_sub <- gene_anno[gene_anno$symbol %in% input$select, ]
+    gene_anno_sub <- gene_anno_sub[match(input$select, gene_anno_sub$symbol), ]
+
+    order <- lapply(
+      order_all, FUN = function(x) x[rownames(x) %in% gene_anno_sub$ensembl, ]
+    )
+
+    row_split <- factor(
+      c(
+        rep(
+          "S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[1]])), yes = 0, no = nrow(order[[1]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[2]])), yes = 0, no = nrow(order[[2]])
+          )
+        ),
+        rep(
+          "P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[3]])), yes = 0, no = nrow(order[[3]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[4]])), yes = 0, no = nrow(order[[4]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[5]])), yes = 0, no = nrow(order[[5]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[6]])), yes = 0, no = nrow(order[[6]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nUP",
+          times = ifelse(
+            is.null(nrow(order[[7]])), yes = 0, no = nrow(order[[7]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[8]])), yes = 0, no = nrow(order[[8]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[9]])), yes = 0, no = nrow(order[[9]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[10]])), yes = 0, no = nrow(order[[10]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[11]])), yes = 0, no = nrow(order[[11]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[12]])), yes = 0, no = nrow(order[[12]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[13]])), yes = 0, no = nrow(order[[13]])
+          )
+        ),
+        rep(
+          "S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[14]])), yes = 0, no = nrow(order[[14]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[15]])), yes = 0, no = nrow(order[[15]])
+          )
+        ),
+        rep(
+          "P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[16]])), yes = 0, no = nrow(order[[16]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[17]])), yes = 0, no = nrow(order[[17]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[18]])), yes = 0, no = nrow(order[[18]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[19]])), yes = 0, no = nrow(order[[19]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[20]])), yes = 0, no = nrow(order[[20]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[21]])), yes = 0, no = nrow(order[[21]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[22]])), yes = 0, no = nrow(order[[22]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[23]])), yes = 0, no = nrow(order[[23]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[24]])), yes = 0, no = nrow(order[[24]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[25]])), yes = 0, no = nrow(order[[25]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[26]])), yes = 0, no = nrow(order[[26]])
+          )
+        )
+      ),
+      levels = c(
+        "S305N\nUP",
+        "S305N & NLGF S305N\nUP",
+        "P301S\nUP",
+        "P301S & NLGF P301S\nUP",
+        "S305N & P301S\nUP",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+        "NLGF MAPTKI\nUP",
+        "NLGF MAPTKI & NLGF P301S\nUP",
+        "NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+        "NLGF S305N & NLGF P301S\nUP",
+        "NLGF P301S\nUP",
+        "S305N\nDOWN",
+        "S305N & NLGF S305N\nDOWN",
+        "P301S\nDOWN",
+        "P301S & NLGF P301S\nDOWN",
+        "S305N & P301S\nDOWN",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF MAPTKI\nDOWN",
+        "NLGF MAPTKI & NLGF P301S\nDOWN",
+        "NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF P301S\nDOWN"
+      )
+    )
+
+    mat <- deg_corrected[
+      rownames(deg_corrected) %in% gene_anno_sub$ensembl, , drop = FALSE
+    ]
+    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    rownames(mat) <- gene_anno_sub$symbol
+
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+        column_title = names(ctypes)[ctype_idx],
+        cluster_rows = FALSE,
+        cluster_columns = FALSE,
+        row_split = row_split,
+        column_split = rep(seq(6), each = 4),
+        row_title_gp = gpar(fontsize = 8),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        heatmap_legend_param = list(
+          title = "logCPM", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+
+  width = 950,
+  height = 750,
+  res = 96
+)
+```
+
+</div>
+<div>
+
+```{r}
+renderPlot(
+  {
+
+    gene_anno_sub <- gene_anno[gene_anno$symbol %in% input$select, ]
+    gene_anno_sub <- gene_anno_sub[match(input$select, gene_anno_sub$symbol), ]
+
+    order <- lapply(
+      order_all, FUN = function(x) x[rownames(x) %in% gene_anno_sub$ensembl, ]
+    )
+
+    row_split <- factor(
+      c(
+        rep(
+          "S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[1]])), yes = 0, no = nrow(order[[1]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[2]])), yes = 0, no = nrow(order[[2]])
+          )
+        ),
+        rep(
+          "P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[3]])), yes = 0, no = nrow(order[[3]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[4]])), yes = 0, no = nrow(order[[4]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[5]])), yes = 0, no = nrow(order[[5]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[6]])), yes = 0, no = nrow(order[[6]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nUP",
+          times = ifelse(
+            is.null(nrow(order[[7]])), yes = 0, no = nrow(order[[7]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[8]])), yes = 0, no = nrow(order[[8]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[9]])), yes = 0, no = nrow(order[[9]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[10]])), yes = 0, no = nrow(order[[10]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[11]])), yes = 0, no = nrow(order[[11]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[12]])), yes = 0, no = nrow(order[[12]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[13]])), yes = 0, no = nrow(order[[13]])
+          )
+        ),
+        rep(
+          "S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[14]])), yes = 0, no = nrow(order[[14]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[15]])), yes = 0, no = nrow(order[[15]])
+          )
+        ),
+        rep(
+          "P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[16]])), yes = 0, no = nrow(order[[16]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[17]])), yes = 0, no = nrow(order[[17]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[18]])), yes = 0, no = nrow(order[[18]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[19]])), yes = 0, no = nrow(order[[19]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[20]])), yes = 0, no = nrow(order[[20]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[21]])), yes = 0, no = nrow(order[[21]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[22]])), yes = 0, no = nrow(order[[22]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[23]])), yes = 0, no = nrow(order[[23]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[24]])), yes = 0, no = nrow(order[[24]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[25]])), yes = 0, no = nrow(order[[25]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[26]])), yes = 0, no = nrow(order[[26]])
+          )
+        )
+      ),
+      levels = c(
+        "S305N\nUP",
+        "S305N & NLGF S305N\nUP",
+        "P301S\nUP",
+        "P301S & NLGF P301S\nUP",
+        "S305N & P301S\nUP",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+        "NLGF MAPTKI\nUP",
+        "NLGF MAPTKI & NLGF P301S\nUP",
+        "NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+        "NLGF S305N & NLGF P301S\nUP",
+        "NLGF P301S\nUP",
+        "S305N\nDOWN",
+        "S305N & NLGF S305N\nDOWN",
+        "P301S\nDOWN",
+        "P301S & NLGF P301S\nDOWN",
+        "S305N & P301S\nDOWN",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF MAPTKI\nDOWN",
+        "NLGF MAPTKI & NLGF P301S\nDOWN",
+        "NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF P301S\nDOWN"
+      )
+    )
+
+    mat <- deg_corrected[
+      rownames(deg_corrected) %in% gene_anno_sub$ensembl, , drop = FALSE
+    ]
+    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    rownames(mat) <- gene_anno_sub$symbol
+
+    mat <- t(
+      apply(
+        mat, MARGIN = 1,
+        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+      )
+    )
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+        column_title = names(ctypes)[ctype_idx],
+        cluster_rows = FALSE,
+        cluster_columns = FALSE,
+        row_split = row_split,
+        column_split = rep(seq(6), each = 4),
+        row_title_gp = gpar(fontsize = 8),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        heatmap_legend_param = list(
+          title = "Scaled logCPM", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+
+  width = 950,
+  height = 750,
+  res = 96
+)
+```
+
+</div>
+</div>
+
+GABAergic Sst
+===
+
+```{r}
+ctype_idx <- 7
+
+gse <- gse_data[[ctype_idx]]
+deg <- deg_data[[ctype_idx]]
+
+gse_corrected <- removeBatchEffect(
+  logcounts(gse), batch = gse$batch, group = gse$genotype
+)
+deg_corrected <- removeBatchEffect(
+  logcounts(deg), batch = deg$batch, group = deg$genotype
+)
+
+gse_range <- c(
+  min(gse_corrected),
+  (min(gse_corrected) + max(gse_corrected)) / 2,
+  max(gse_corrected)
+)
+deg_range <- c(
+  min(deg_corrected),
+  (min(deg_corrected) + max(deg_corrected)) / 2,
+  max(deg_corrected)
+)
+```
+
+Row {.tabset}
+---
+
+### Search Genes
+
+```{r}
+design <- model.matrix(~ 0 + deg$genotype + deg$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  S305N_MAPTKI =
+    deg.genotypeS305N -
+    deg.genotypeMAPTKI,
+  P301S_MAPTKI =
+    deg.genotypeP301S -
+    deg.genotypeMAPTKI,
+  NLGF_MAPTKI_MAPTKI =
+    deg.genotypeNLGF_MAPTKI -
+    deg.genotypeMAPTKI,
+  NLGF_S305N_MAPTKI =
+    deg.genotypeNLGF_S305N -
+    deg.genotypeMAPTKI,
+  NLGF_P301S_MAPTKI =
+    deg.genotypeNLGF_P301S -
+    deg.genotypeMAPTKI,
+  levels = design
+)
+
+fit <- lmFit(logcounts(deg), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+write.fit(
+  fit, tests, file.path(data_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(data_dir, "results.tsv"))
+
+idx <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]]) +
+  nrow(gse_list[[7]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]]) +
+  nrow(gse_list[[7]]) + nrow(deg_list[[7]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results[ , idx] <- corrections[[i]][length]
+  idx <- idx + 1
+}
+
+rownames(results) <- results$X
+results <- results[ , -1]
+results <- results[ , 1:22]
+tests <- results[ , 17:21]
+results <- results[order(results$F, decreasing = TRUE), ]
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results), gene_anno_sub$ensembl),
+]
+results$symbol <- gene_anno_sub$symbol
+
+results_up <- vector("list", length = 13)
+results_down <- vector("list", length = 13)
+size <- Inf
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] >= 0.05 & results[ , 20] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 17]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[1]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[1]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[1]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[1]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] >= 0.05 & results[ , 20] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 20)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0 & results_sub[ , 5] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[2]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[2]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0 & results_sub[ , 5] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[2]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[2]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] < 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 18]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[3]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[3]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[3]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[3]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(18, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 3] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[4]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[4]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 3] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[4]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[4]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] < 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 18)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0 & results_sub[ , 3] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[5]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[5]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0 & results_sub[ , 3] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[5]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[5]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] < 0.05 & results[ , 18] < 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(17, 18, 20, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 2] > 0 & results_sub[ , 3] > 0 &
+    results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[6]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[6]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 2] < 0 & results_sub[ , 3] < 0 &
+    results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[6]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[6]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 19]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[7]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[7]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[7]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[7]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[8]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[8]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[8]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[8]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 20]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 5] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[9]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[9]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 5] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[9]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[9]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] >= 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 20)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0 & results_sub[ , 5] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[10]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[10]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0 & results_sub[ , 5] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[10]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[10]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] < 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(19, 20, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 4] > 0 & results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[11]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[11]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 4] < 0 & results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[11]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[11]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
+    results[ , 20] < 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(rowSums(results_sub[ , c(20, 21)])), ]
+results_sub_up <- results_sub[
+  results_sub[ , 5] > 0 & results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[12]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[12]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 5] < 0 & results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[12]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[12]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results_sub <- results[
+  results[ , 17] >= 0.05 & results[ , 18] >= 0.05 & results[ , 19] >= 0.05 &
+    results[ , 20] >= 0.05 & results[ , 21] < 0.05,
+]
+results_sub <- results_sub[order(results_sub[ , 21]), ]
+results_sub_up <- results_sub[
+  results_sub[ , 6] > 0,
+]
+if (nrow(results_sub_up) > 0) {
+  if (nrow(results_sub_up) > size)
+    results_up[[13]] <- results_sub_up[1:size, ]
+  else {
+    results_up[[13]] <- results_sub_up[1:nrow(results_sub_up), ]
+  }
+}
+results_sub_down <- results_sub[
+  results_sub[ , 6] < 0,
+]
+if (nrow(results_sub_down) > 0) {
+  if (nrow(results_sub_down) > size)
+    results_down[[13]] <- results_sub_down[1:size, ]
+  else {
+    results_down[[13]] <- results_sub_down[1:nrow(results_sub_down), ]
+  }
+}
+
+results <- rbind(do.call(rbind, results_up), do.call(rbind, results_down))
+order_all <- append(results_up, results_down)
+order <- lapply(order_all, FUN = function(x) x[1, , drop = FALSE])
+results_sub <- results[rownames(results) %in% rownames(do.call(rbind, order)), ]
+results_sub <- results_sub[
+  match(rownames(do.call(rbind, order)), rownames(results_sub)),
+]
+results <- results[rownames(results) %notin% rownames(results_sub), ]
+results <- rbind(results_sub, results)
+```
+
+```{r}
+top_anno <- HeatmapAnnotation(
+  Batch = gse_data[[1]]$batch,
+  cell_type = anno_block(
+    gp = gpar(fill = "lightgray", col = "lightgray"),
+    labels = levels(gse_data[[1]]$genotype),
+    labels_gp = gpar(col = "black", fontsize = 9),
+    height = unit(5, "mm")
+  ),
+  col = list(
+    Batch = c(
+      "batch01" = anno_color[1], "batch02" = anno_color[2],
+      "batch03" = anno_color[3], "batch04" = anno_color[4]
+    )
+  ),
+  simple_anno_size = unit(3, "mm"),
+  show_legend = c("Batch" = FALSE),
+  annotation_name_gp = gpar(fontsize = 9)
+)
+
+selectizeInput(
+  "select",
+  label = "Select Genes:",
+  choices = results$symbol,
+  selected = do.call(rbind, order)$symbol,
+  multiple = TRUE,
+  width = "100%"
+)
+```
+
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
+<div>
+
+```{r}
+renderPlot(
+  {
+
+    gene_anno_sub <- gene_anno[gene_anno$symbol %in% input$select, ]
+    gene_anno_sub <- gene_anno_sub[match(input$select, gene_anno_sub$symbol), ]
+
+    order <- lapply(
+      order_all, FUN = function(x) x[rownames(x) %in% gene_anno_sub$ensembl, ]
+    )
+
+    row_split <- factor(
+      c(
+        rep(
+          "S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[1]])), yes = 0, no = nrow(order[[1]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[2]])), yes = 0, no = nrow(order[[2]])
+          )
+        ),
+        rep(
+          "P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[3]])), yes = 0, no = nrow(order[[3]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[4]])), yes = 0, no = nrow(order[[4]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[5]])), yes = 0, no = nrow(order[[5]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[6]])), yes = 0, no = nrow(order[[6]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nUP",
+          times = ifelse(
+            is.null(nrow(order[[7]])), yes = 0, no = nrow(order[[7]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[8]])), yes = 0, no = nrow(order[[8]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[9]])), yes = 0, no = nrow(order[[9]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[10]])), yes = 0, no = nrow(order[[10]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[11]])), yes = 0, no = nrow(order[[11]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[12]])), yes = 0, no = nrow(order[[12]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[13]])), yes = 0, no = nrow(order[[13]])
+          )
+        ),
+        rep(
+          "S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[14]])), yes = 0, no = nrow(order[[14]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[15]])), yes = 0, no = nrow(order[[15]])
+          )
+        ),
+        rep(
+          "P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[16]])), yes = 0, no = nrow(order[[16]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[17]])), yes = 0, no = nrow(order[[17]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[18]])), yes = 0, no = nrow(order[[18]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[19]])), yes = 0, no = nrow(order[[19]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[20]])), yes = 0, no = nrow(order[[20]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[21]])), yes = 0, no = nrow(order[[21]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[22]])), yes = 0, no = nrow(order[[22]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[23]])), yes = 0, no = nrow(order[[23]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[24]])), yes = 0, no = nrow(order[[24]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[25]])), yes = 0, no = nrow(order[[25]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[26]])), yes = 0, no = nrow(order[[26]])
+          )
+        )
+      ),
+      levels = c(
+        "S305N\nUP",
+        "S305N & NLGF S305N\nUP",
+        "P301S\nUP",
+        "P301S & NLGF P301S\nUP",
+        "S305N & P301S\nUP",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+        "NLGF MAPTKI\nUP",
+        "NLGF MAPTKI & NLGF P301S\nUP",
+        "NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+        "NLGF S305N & NLGF P301S\nUP",
+        "NLGF P301S\nUP",
+        "S305N\nDOWN",
+        "S305N & NLGF S305N\nDOWN",
+        "P301S\nDOWN",
+        "P301S & NLGF P301S\nDOWN",
+        "S305N & P301S\nDOWN",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF MAPTKI\nDOWN",
+        "NLGF MAPTKI & NLGF P301S\nDOWN",
+        "NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF P301S\nDOWN"
+      )
+    )
+
+    mat <- deg_corrected[
+      rownames(deg_corrected) %in% gene_anno_sub$ensembl, , drop = FALSE
+    ]
+    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    rownames(mat) <- gene_anno_sub$symbol
+
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(deg_range, colors = c("blue", "white", "red")),
+        column_title = names(ctypes)[ctype_idx],
+        cluster_rows = FALSE,
+        cluster_columns = FALSE,
+        row_split = row_split,
+        column_split = rep(seq(6), each = 4),
+        row_title_gp = gpar(fontsize = 8),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        heatmap_legend_param = list(
+          title = "logCPM", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+
+  width = 950,
+  height = 750,
+  res = 96
+)
+```
+
+</div>
+<div>
+
+```{r}
+renderPlot(
+  {
+
+    gene_anno_sub <- gene_anno[gene_anno$symbol %in% input$select, ]
+    gene_anno_sub <- gene_anno_sub[match(input$select, gene_anno_sub$symbol), ]
+
+    order <- lapply(
+      order_all, FUN = function(x) x[rownames(x) %in% gene_anno_sub$ensembl, ]
+    )
+
+    row_split <- factor(
+      c(
+        rep(
+          "S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[1]])), yes = 0, no = nrow(order[[1]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[2]])), yes = 0, no = nrow(order[[2]])
+          )
+        ),
+        rep(
+          "P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[3]])), yes = 0, no = nrow(order[[3]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[4]])), yes = 0, no = nrow(order[[4]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[5]])), yes = 0, no = nrow(order[[5]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[6]])), yes = 0, no = nrow(order[[6]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nUP",
+          times = ifelse(
+            is.null(nrow(order[[7]])), yes = 0, no = nrow(order[[7]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[8]])), yes = 0, no = nrow(order[[8]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[9]])), yes = 0, no = nrow(order[[9]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nUP",
+          times = ifelse(
+            is.null(nrow(order[[10]])), yes = 0, no = nrow(order[[10]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[11]])), yes = 0, no = nrow(order[[11]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[12]])), yes = 0, no = nrow(order[[12]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nUP",
+          times = ifelse(
+            is.null(nrow(order[[13]])), yes = 0, no = nrow(order[[13]])
+          )
+        ),
+        rep(
+          "S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[14]])), yes = 0, no = nrow(order[[14]])
+          )
+        ),
+        rep(
+          "S305N & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[15]])), yes = 0, no = nrow(order[[15]])
+          )
+        ),
+        rep(
+          "P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[16]])), yes = 0, no = nrow(order[[16]])
+          )
+        ),
+        rep(
+          "P301S & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[17]])), yes = 0, no = nrow(order[[17]])
+          )
+        ),
+        rep(
+          "S305N & P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[18]])), yes = 0, no = nrow(order[[18]])
+          )
+        ),
+        rep(
+          "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[19]])), yes = 0, no = nrow(order[[19]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[20]])), yes = 0, no = nrow(order[[20]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[21]])), yes = 0, no = nrow(order[[21]])
+          )
+        ),
+        rep(
+          "NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[22]])), yes = 0, no = nrow(order[[22]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[23]])), yes = 0, no = nrow(order[[23]])
+          )
+        ),
+        rep(
+          "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[24]])), yes = 0, no = nrow(order[[24]])
+          )
+        ),
+        rep(
+          "NLGF S305N & NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[25]])), yes = 0, no = nrow(order[[25]])
+          )
+        ),
+        rep(
+          "NLGF P301S\nDOWN",
+          times = ifelse(
+            is.null(nrow(order[[26]])), yes = 0, no = nrow(order[[26]])
+          )
+        )
+      ),
+      levels = c(
+        "S305N\nUP",
+        "S305N & NLGF S305N\nUP",
+        "P301S\nUP",
+        "P301S & NLGF P301S\nUP",
+        "S305N & P301S\nUP",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nUP",
+        "NLGF MAPTKI\nUP",
+        "NLGF MAPTKI & NLGF P301S\nUP",
+        "NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N\nUP",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nUP",
+        "NLGF S305N & NLGF P301S\nUP",
+        "NLGF P301S\nUP",
+        "S305N\nDOWN",
+        "S305N & NLGF S305N\nDOWN",
+        "P301S\nDOWN",
+        "P301S & NLGF P301S\nDOWN",
+        "S305N & P301S\nDOWN",
+        "S305N & P301S & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF MAPTKI\nDOWN",
+        "NLGF MAPTKI & NLGF P301S\nDOWN",
+        "NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N\nDOWN",
+        "NLGF MAPTKI & NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF S305N & NLGF P301S\nDOWN",
+        "NLGF P301S\nDOWN"
+      )
+    )
+
+    mat <- deg_corrected[
+      rownames(deg_corrected) %in% gene_anno_sub$ensembl, , drop = FALSE
+    ]
+    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    rownames(mat) <- gene_anno_sub$symbol
+
+    mat <- t(
+      apply(
+        mat, MARGIN = 1,
+        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+      )
+    )
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+        column_title = names(ctypes)[ctype_idx],
+        cluster_rows = FALSE,
+        cluster_columns = FALSE,
+        row_split = row_split,
+        column_split = rep(seq(6), each = 4),
+        row_title_gp = gpar(fontsize = 8),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        heatmap_legend_param = list(
+          title = "Scaled logCPM", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+
+  width = 950,
+  height = 750,
   res = 96
 )
 ```
