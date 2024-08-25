@@ -199,13 +199,30 @@ row_scores <- t(
     sig_tmp,
     MARGIN = 1,
     function(row) {
-      pos <- sum(row == 1)
-      neg <- sum(row == -1) * -1
-      return(c(pos, neg))
+      NLGF_P301S_up <- sum(row[5] == 1) * 5
+      NLGF_S305N_up <- sum(row[4] == 1) * 4
+      NLGF_MAPTKI_up <- sum(row[3] == 1) * 3
+      P301S_up <- sum(row[2] == 1) * 2
+      S305N_up <- sum(row[1] == 1) * 1
+      S305N_dn <- sum(row[1] == -1) * -1
+      P301S_dn <- sum(row[2] == -1) * -2
+      NLGF_MAPTKI_dn <- sum(row[3] == -1) * -3
+      NLGF_S305N_dn <- sum(row[4] == -1) * -4
+      NLGF_P301S_dn <- sum(row[5] == -1) * -5
+      return(
+        c(
+          NLGF_P301S_up, NLGF_S305N_up, NLGF_MAPTKI_up, P301S_up, S305N_up,
+          NLGF_P301S_dn, NLGF_S305N_dn, NLGF_MAPTKI_dn, P301S_dn, S305N_dn
+        )
+      )
     }
   )
 )
-order <- order(row_scores[, 1], row_scores[, 2])
+order <- order(
+  row_scores[, 1], row_scores[, 2], row_scores[, 3], row_scores[, 4],
+  row_scores[, 5], row_scores[, 6], row_scores[, 7], row_scores[, 8],
+  row_scores[, 9], row_scores[, 10], decreasing = TRUE
+)
 sig_tmp <- sig_tmp[order, ]
 
 sig_tmp <- ifelse(
@@ -429,13 +446,30 @@ row_scores <- t(
     sig_tmp,
     MARGIN = 1,
     function(row) {
-      pos <- sum(row == 1)
-      neg <- sum(row == -1) * -1
-      return(c(pos, neg))
+      NLGF_P301S_up <- sum(row[5] == 1) * 5
+      NLGF_S305N_up <- sum(row[4] == 1) * 4
+      NLGF_MAPTKI_up <- sum(row[3] == 1) * 3
+      P301S_up <- sum(row[2] == 1) * 2
+      S305N_up <- sum(row[1] == 1) * 1
+      S305N_dn <- sum(row[1] == -1) * -1
+      P301S_dn <- sum(row[2] == -1) * -2
+      NLGF_MAPTKI_dn <- sum(row[3] == -1) * -3
+      NLGF_S305N_dn <- sum(row[4] == -1) * -4
+      NLGF_P301S_dn <- sum(row[5] == -1) * -5
+      return(
+        c(
+          NLGF_P301S_up, NLGF_S305N_up, NLGF_MAPTKI_up, P301S_up, S305N_up,
+          NLGF_P301S_dn, NLGF_S305N_dn, NLGF_MAPTKI_dn, P301S_dn, S305N_dn
+        )
+      )
     }
   )
 )
-order <- order(row_scores[, 1], row_scores[, 2])
+order <- order(
+  row_scores[, 1], row_scores[, 2], row_scores[, 3], row_scores[, 4],
+  row_scores[, 5], row_scores[, 6], row_scores[, 7], row_scores[, 8],
+  row_scores[, 9], row_scores[, 10], decreasing = TRUE
+)
 sig_tmp <- sig_tmp[order, ]
 
 sig_tmp <- ifelse(
@@ -660,13 +694,30 @@ row_scores <- t(
     sig_tmp,
     MARGIN = 1,
     function(row) {
-      pos <- sum(row == 1)
-      neg <- sum(row == -1) * -1
-      return(c(pos, neg))
+      NLGF_P301S_up <- sum(row[5] == 1) * 5
+      NLGF_S305N_up <- sum(row[4] == 1) * 4
+      NLGF_MAPTKI_up <- sum(row[3] == 1) * 3
+      P301S_up <- sum(row[2] == 1) * 2
+      S305N_up <- sum(row[1] == 1) * 1
+      S305N_dn <- sum(row[1] == -1) * -1
+      P301S_dn <- sum(row[2] == -1) * -2
+      NLGF_MAPTKI_dn <- sum(row[3] == -1) * -3
+      NLGF_S305N_dn <- sum(row[4] == -1) * -4
+      NLGF_P301S_dn <- sum(row[5] == -1) * -5
+      return(
+        c(
+          NLGF_P301S_up, NLGF_S305N_up, NLGF_MAPTKI_up, P301S_up, S305N_up,
+          NLGF_P301S_dn, NLGF_S305N_dn, NLGF_MAPTKI_dn, P301S_dn, S305N_dn
+        )
+      )
     }
   )
 )
-order <- order(row_scores[, 1], row_scores[, 2])
+order <- order(
+  row_scores[, 1], row_scores[, 2], row_scores[, 3], row_scores[, 4],
+  row_scores[, 5], row_scores[, 6], row_scores[, 7], row_scores[, 8],
+  row_scores[, 9], row_scores[, 10], decreasing = TRUE
+)
 sig_tmp <- sig_tmp[order, ]
 
 sig_tmp <- ifelse(
@@ -893,13 +944,30 @@ row_scores <- t(
     sig_tmp,
     MARGIN = 1,
     function(row) {
-      pos <- sum(row == 1)
-      neg <- sum(row == -1) * -1
-      return(c(pos, neg))
+      NLGF_P301S_up <- sum(row[5] == 1) * 5
+      NLGF_S305N_up <- sum(row[4] == 1) * 4
+      NLGF_MAPTKI_up <- sum(row[3] == 1) * 3
+      P301S_up <- sum(row[2] == 1) * 2
+      S305N_up <- sum(row[1] == 1) * 1
+      S305N_dn <- sum(row[1] == -1) * -1
+      P301S_dn <- sum(row[2] == -1) * -2
+      NLGF_MAPTKI_dn <- sum(row[3] == -1) * -3
+      NLGF_S305N_dn <- sum(row[4] == -1) * -4
+      NLGF_P301S_dn <- sum(row[5] == -1) * -5
+      return(
+        c(
+          NLGF_P301S_up, NLGF_S305N_up, NLGF_MAPTKI_up, P301S_up, S305N_up,
+          NLGF_P301S_dn, NLGF_S305N_dn, NLGF_MAPTKI_dn, P301S_dn, S305N_dn
+        )
+      )
     }
   )
 )
-order <- order(row_scores[, 1], row_scores[, 2])
+order <- order(
+  row_scores[, 1], row_scores[, 2], row_scores[, 3], row_scores[, 4],
+  row_scores[, 5], row_scores[, 6], row_scores[, 7], row_scores[, 8],
+  row_scores[, 9], row_scores[, 10], decreasing = TRUE
+)
 sig_tmp <- sig_tmp[order, ]
 
 sig_tmp <- ifelse(
@@ -1127,13 +1195,30 @@ row_scores <- t(
     sig_tmp,
     MARGIN = 1,
     function(row) {
-      pos <- sum(row == 1)
-      neg <- sum(row == -1) * -1
-      return(c(pos, neg))
+      NLGF_P301S_up <- sum(row[5] == 1) * 5
+      NLGF_S305N_up <- sum(row[4] == 1) * 4
+      NLGF_MAPTKI_up <- sum(row[3] == 1) * 3
+      P301S_up <- sum(row[2] == 1) * 2
+      S305N_up <- sum(row[1] == 1) * 1
+      S305N_dn <- sum(row[1] == -1) * -1
+      P301S_dn <- sum(row[2] == -1) * -2
+      NLGF_MAPTKI_dn <- sum(row[3] == -1) * -3
+      NLGF_S305N_dn <- sum(row[4] == -1) * -4
+      NLGF_P301S_dn <- sum(row[5] == -1) * -5
+      return(
+        c(
+          NLGF_P301S_up, NLGF_S305N_up, NLGF_MAPTKI_up, P301S_up, S305N_up,
+          NLGF_P301S_dn, NLGF_S305N_dn, NLGF_MAPTKI_dn, P301S_dn, S305N_dn
+        )
+      )
     }
   )
 )
-order <- order(row_scores[, 1], row_scores[, 2])
+order <- order(
+  row_scores[, 1], row_scores[, 2], row_scores[, 3], row_scores[, 4],
+  row_scores[, 5], row_scores[, 6], row_scores[, 7], row_scores[, 8],
+  row_scores[, 9], row_scores[, 10], decreasing = TRUE
+)
 sig_tmp <- sig_tmp[order, ]
 
 sig_tmp <- ifelse(
@@ -1362,13 +1447,30 @@ row_scores <- t(
     sig_tmp,
     MARGIN = 1,
     function(row) {
-      pos <- sum(row == 1)
-      neg <- sum(row == -1) * -1
-      return(c(pos, neg))
+      NLGF_P301S_up <- sum(row[5] == 1) * 5
+      NLGF_S305N_up <- sum(row[4] == 1) * 4
+      NLGF_MAPTKI_up <- sum(row[3] == 1) * 3
+      P301S_up <- sum(row[2] == 1) * 2
+      S305N_up <- sum(row[1] == 1) * 1
+      S305N_dn <- sum(row[1] == -1) * -1
+      P301S_dn <- sum(row[2] == -1) * -2
+      NLGF_MAPTKI_dn <- sum(row[3] == -1) * -3
+      NLGF_S305N_dn <- sum(row[4] == -1) * -4
+      NLGF_P301S_dn <- sum(row[5] == -1) * -5
+      return(
+        c(
+          NLGF_P301S_up, NLGF_S305N_up, NLGF_MAPTKI_up, P301S_up, S305N_up,
+          NLGF_P301S_dn, NLGF_S305N_dn, NLGF_MAPTKI_dn, P301S_dn, S305N_dn
+        )
+      )
     }
   )
 )
-order <- order(row_scores[, 1], row_scores[, 2])
+order <- order(
+  row_scores[, 1], row_scores[, 2], row_scores[, 3], row_scores[, 4],
+  row_scores[, 5], row_scores[, 6], row_scores[, 7], row_scores[, 8],
+  row_scores[, 9], row_scores[, 10], decreasing = TRUE
+)
 sig_tmp <- sig_tmp[order, ]
 
 sig_tmp <- ifelse(
@@ -1599,13 +1701,30 @@ row_scores <- t(
     sig_tmp,
     MARGIN = 1,
     function(row) {
-      pos <- sum(row == 1)
-      neg <- sum(row == -1) * -1
-      return(c(pos, neg))
+      NLGF_P301S_up <- sum(row[5] == 1) * 5
+      NLGF_S305N_up <- sum(row[4] == 1) * 4
+      NLGF_MAPTKI_up <- sum(row[3] == 1) * 3
+      P301S_up <- sum(row[2] == 1) * 2
+      S305N_up <- sum(row[1] == 1) * 1
+      S305N_dn <- sum(row[1] == -1) * -1
+      P301S_dn <- sum(row[2] == -1) * -2
+      NLGF_MAPTKI_dn <- sum(row[3] == -1) * -3
+      NLGF_S305N_dn <- sum(row[4] == -1) * -4
+      NLGF_P301S_dn <- sum(row[5] == -1) * -5
+      return(
+        c(
+          NLGF_P301S_up, NLGF_S305N_up, NLGF_MAPTKI_up, P301S_up, S305N_up,
+          NLGF_P301S_dn, NLGF_S305N_dn, NLGF_MAPTKI_dn, P301S_dn, S305N_dn
+        )
+      )
     }
   )
 )
-order <- order(row_scores[, 1], row_scores[, 2])
+order <- order(
+  row_scores[, 1], row_scores[, 2], row_scores[, 3], row_scores[, 4],
+  row_scores[, 5], row_scores[, 6], row_scores[, 7], row_scores[, 8],
+  row_scores[, 9], row_scores[, 10], decreasing = TRUE
+)
 sig_tmp <- sig_tmp[order, ]
 
 sig_tmp <- ifelse(
