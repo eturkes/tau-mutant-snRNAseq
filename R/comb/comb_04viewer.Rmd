@@ -193,7 +193,6 @@ results_list[[idx]] <- results_list[[idx]][
 sig_tmp <- ifelse(results_list[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
 direction <- ifelse(results_list[[idx]][ , 3:7] > 0, yes = 1, no = -1)
 sig_tmp <- sig_tmp * direction
-sig_tmp <- sig_tmp[hclust(dist(sig_tmp))$order, ]
 sig_tmp <- ifelse(
   sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
 )
@@ -408,7 +407,6 @@ results_list[[idx]] <- results_list[[idx]][
 sig_tmp <- ifelse(results_list[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
 direction <- ifelse(results_list[[idx]][ , 3:7] > 0, yes = 1, no = -1)
 sig_tmp <- sig_tmp * direction
-sig_tmp <- sig_tmp[hclust(dist(sig_tmp))$order, ]
 sig_tmp <- ifelse(
   sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
 )
@@ -624,7 +622,6 @@ results_list[[idx]] <- results_list[[idx]][
 sig_tmp <- ifelse(results_list[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
 direction <- ifelse(results_list[[idx]][ , 3:7] > 0, yes = 1, no = -1)
 sig_tmp <- sig_tmp * direction
-sig_tmp <- sig_tmp[hclust(dist(sig_tmp))$order, ]
 sig_tmp <- ifelse(
   sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
 )
@@ -842,7 +839,6 @@ results_list[[idx]] <- results_list[[idx]][
 sig_tmp <- ifelse(results_list[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
 direction <- ifelse(results_list[[idx]][ , 3:7] > 0, yes = 1, no = -1)
 sig_tmp <- sig_tmp * direction
-sig_tmp <- sig_tmp[hclust(dist(sig_tmp))$order, ]
 sig_tmp <- ifelse(
   sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
 )
@@ -1061,7 +1057,6 @@ results_list[[idx]] <- results_list[[idx]][
 sig_tmp <- ifelse(results_list[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
 direction <- ifelse(results_list[[idx]][ , 3:7] > 0, yes = 1, no = -1)
 sig_tmp <- sig_tmp * direction
-sig_tmp <- sig_tmp[hclust(dist(sig_tmp))$order, ]
 sig_tmp <- ifelse(
   sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
 )
@@ -1281,7 +1276,6 @@ results_list[[idx]] <- results_list[[idx]][
 sig_tmp <- ifelse(results_list[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
 direction <- ifelse(results_list[[idx]][ , 3:7] > 0, yes = 1, no = -1)
 sig_tmp <- sig_tmp * direction
-sig_tmp <- sig_tmp[hclust(dist(sig_tmp))$order, ]
 sig_tmp <- ifelse(
   sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
 )
@@ -1503,7 +1497,6 @@ results_list[[idx]] <- results_list[[idx]][
 sig_tmp <- ifelse(results_list[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
 direction <- ifelse(results_list[[idx]][ , 3:7] > 0, yes = 1, no = -1)
 sig_tmp <- sig_tmp * direction
-sig_tmp <- sig_tmp[hclust(dist(sig_tmp))$order, ]
 sig_tmp <- ifelse(
   sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
 )
