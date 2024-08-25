@@ -319,9 +319,9 @@ xfun::Rscript_call(
 xfun::Rscript_call(
   rmarkdown::render,
   list(
-    file.path("comb", "comb_04dashboard.Rmd"),
+    file.path("comb", "comb_04viewer.Rmd"),
     output_file = file.path(
-      "..", "..", "results", "comb", "comb_04dashboard.html"
+      "..", "..", "results", "comb", "comb_04viewer.html"
     ),
     envir = new.env()
   )
