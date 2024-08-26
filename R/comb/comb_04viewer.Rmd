@@ -56,11 +56,11 @@ datatable_download_exp_15 <- function(dt) {
     extensions = "Buttons"
   )
 }
-datatable_download_exp_5 <- function(dt) {
+datatable_download_exp_7 <- function(dt) {
   datatable(
     dt,
     options = list(
-      pageLength = 5,
+      pageLength = 7,
       scrollX = TRUE,
       dom = "Blfrtip",
       buttons = list(
@@ -593,7 +593,7 @@ renderPlot(
 ### Gene Set Stats
 
 ```{r}
-datatable_download_exp_5(results_gse[[idx]])
+datatable_download_exp_7(results_gse[[idx]])
 ```
 
 ### Gene Set Genes
@@ -1190,7 +1190,7 @@ renderPlot(
 ### Gene Set Stats
 
 ```{r}
-datatable_download_exp_5(results_gse[[idx]])
+datatable_download_exp_7(results_gse[[idx]])
 ```
 
 ### Gene Set Genes
@@ -1790,7 +1790,7 @@ renderPlot(
 ### Gene Set Stats
 
 ```{r}
-datatable_download_exp_5(results_gse[[idx]])
+datatable_download_exp_7(results_gse[[idx]])
 ```
 
 ### Gene Set Genes
@@ -2393,7 +2393,7 @@ renderPlot(
 ### Gene Set Stats
 
 ```{r}
-datatable_download_exp_5(results_gse[[idx]])
+datatable_download_exp_7(results_gse[[idx]])
 ```
 
 ### Gene Set Genes
@@ -2998,7 +2998,7 @@ renderPlot(
 ### Gene Set Stats
 
 ```{r}
-datatable_download_exp_5(results_gse[[idx]])
+datatable_download_exp_7(results_gse[[idx]])
 ```
 
 ### Gene Set Genes
@@ -3606,7 +3606,7 @@ renderPlot(
 ### Gene Set Stats
 
 ```{r}
-datatable_download_exp_5(results_gse[[idx]])
+datatable_download_exp_7(results_gse[[idx]])
 ```
 
 ### Gene Set Genes
@@ -4217,7 +4217,7 @@ renderPlot(
 ### Gene Set Stats
 
 ```{r}
-datatable_download_exp_5(results_gse[[idx]])
+datatable_download_exp_7(results_gse[[idx]])
 ```
 
 ### Gene Set Genes
