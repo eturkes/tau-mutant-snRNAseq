@@ -60,9 +60,11 @@ datatable_download_exp <- function(dt) {
 `%notin%` <- Negate(`%in%`)
 
 data_dir <- file.path("..", "..", "cache", "comb", "step03")
-
+gene_sets <- readRDS(file.path(data_dir, "gene_sets.rds"))
+gene_sets_keep <- readRDS(file.path(data_dir, "gene_sets_keep.rds"))
 gene_anno <- readRDS(file.path(data_dir, "gene_anno.rds"))
 deg_data <- readRDS(file.path(data_dir, "deg_data.rds"))
+gse_data <- readRDS(file.path(data_dir, "gse_data.rds"))
 deg_list <- readRDS(file.path(data_dir, "deg_list.rds"))
 gse_list <- readRDS(file.path(data_dir, "gse_list.rds"))
 corrections <- readRDS(file.path(data_dir, "corrections.rds"))
@@ -73,7 +75,6 @@ ctypes <- c(
 )
 
 anno_color <- hue_pal()(4)
-
 top_anno <- HeatmapAnnotation(
   Batch = deg_data[[1]]$batch,
   cell_type = anno_block(
@@ -96,9 +97,9 @@ top_anno <- HeatmapAnnotation(
 )
 
 deg <- deg_data[[1]]
-design <- model.matrix(~ 0 + deg$genotype + deg$batch)
-colnames(design) <- make.names(colnames(design))
-cont_mat <- makeContrasts(
+design_deg <- model.matrix(~ 0 + deg$genotype + deg$batch)
+colnames(design_deg) <- make.names(colnames(design_deg))
+cont_mat_deg <- makeContrasts(
   S305N_MAPTKI =
     deg.genotypeS305N -
     deg.genotypeMAPTKI,
@@ -114,15 +115,42 @@ cont_mat <- makeContrasts(
   NLGF_P301S_MAPTKI =
     deg.genotypeNLGF_P301S -
     deg.genotypeMAPTKI,
-  levels = design
+  levels = design_deg
+)
+
+gse <- gse_data[[1]]
+design_gse <- model.matrix(~ 0 + gse$genotype + gse$batch)
+colnames(design_gse) <- make.names(colnames(design_gse))
+cont_mat_gse <- makeContrasts(
+  S305N_MAPTKI =
+    gse.genotypeS305N -
+    gse.genotypeMAPTKI,
+  P301S_MAPTKI =
+    gse.genotypeP301S -
+    gse.genotypeMAPTKI,
+  NLGF_MAPTKI_MAPTKI =
+    gse.genotypeNLGF_MAPTKI -
+    gse.genotypeMAPTKI,
+  NLGF_S305N_MAPTKI =
+    gse.genotypeNLGF_S305N -
+    gse.genotypeMAPTKI,
+  NLGF_P301S_MAPTKI =
+    gse.genotypeNLGF_P301S -
+    gse.genotypeMAPTKI,
+  levels = design_gse
 )
 
 ctype_name <- vector("list", length = 7)
 deg_corrected <- vector("list", length = 7)
+gse_corrected <- vector("list", length = 7)
 deg_range <- vector("list", length = 7)
-results_list <- vector("list", length = 7)
-sig <- vector("list", length = 7)
-sig_uniq <- vector("list", length = 7)
+gse_range <- vector("list", length = 7)
+results_deg <- vector("list", length = 7)
+results_gse <- vector("list", length = 7)
+sig_deg <- vector("list", length = 7)
+sig_gse <- vector("list", length = 7)
+sig_uniq_deg <- vector("list", length = 7)
+sig_uniq_gse <- vector("list", length = 7)
 ```
 
 Astrocytes
@@ -150,8 +178,8 @@ Row {.tabset}
 ### Search Genes
 
 ```{r, include = FALSE}
-fit <- lmFit(logcounts(deg), design)
-fit <- contrasts.fit(fit, cont_mat)
+fit <- lmFit(logcounts(deg), design_deg)
+fit <- contrasts.fit(fit, cont_mat_deg)
 fit <- eBayes(fit, trend = TRUE, robust = TRUE)
 
 tests <- decideTests(fit, method = "global")
@@ -161,37 +189,37 @@ write.fit(
   adjust = "BH", F.adjust = "BH", method = "global"
 )
 close(tc)
-results_list[[idx]] <- read.delim(text = results)
+results_deg[[idx]] <- read.delim(text = results)
 
 col <- 18
 length1 <- nrow(gse_list[[1]]) + 1
 length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]])
 length <- length1:length2
 for (i in seq_along(corrections)) {
-  results_list[[idx]][ , col] <- corrections[[i]][length]
+  results_deg[[idx]][ , col] <- corrections[[i]][length]
   col <- col + 1
 }
 
-rownames(results_list[[idx]]) <- results_list[[idx]]$X
-results_list[[idx]] <- results_list[[idx]][ , -1]
-results_list[[idx]] <- results_list[[idx]][ , 1:22]
-tests <- results_list[[idx]][ , 17:21]
-results_list[[idx]] <- results_list[[idx]][
-  order(results_list[[idx]]$F, decreasing = TRUE),
+rownames(results_deg[[idx]]) <- results_deg[[idx]]$X
+results_deg[[idx]] <- results_deg[[idx]][ , -1]
+results_deg[[idx]] <- results_deg[[idx]][ , 1:22]
+tests <- results_deg[[idx]][ , 17:21]
+results_deg[[idx]] <- results_deg[[idx]][
+  order(results_deg[[idx]]$F, decreasing = TRUE),
 ]
 gene_anno_sub <- gene_anno[
-  gene_anno$ensembl %in% rownames(results_list[[idx]]),
+  gene_anno$ensembl %in% rownames(results_deg[[idx]]),
 ]
 gene_anno_sub <- gene_anno_sub[
-  match(rownames(results_list[[idx]]), gene_anno_sub$ensembl),
+  match(rownames(results_deg[[idx]]), gene_anno_sub$ensembl),
 ]
-results_list[[idx]]$Gene <- gene_anno_sub$symbol
-results_list[[idx]] <- results_list[[idx]][
-  , c(ncol(results_list[[idx]]), 1:(ncol(results_list[[idx]]) - 1))
+results_deg[[idx]]$Gene <- gene_anno_sub$symbol
+results_deg[[idx]] <- results_deg[[idx]][
+  , c(ncol(results_deg[[idx]]), 1:(ncol(results_deg[[idx]]) - 1))
 ]
 
-sig_tmp <- ifelse(results_list[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
-direction <- ifelse(results_list[[idx]][ , 3:7] > 0, yes = 1, no = -1)
+sig_tmp <- ifelse(results_deg[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_deg[[idx]][ , 3:7] > 0, yes = 1, no = -1)
 sig_tmp <- sig_tmp * direction
 
 row_scores <- t(
@@ -229,24 +257,24 @@ sig_tmp <- ifelse(
   sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
 )
 sig_tmp <- cbind(rep("", nrow(sig_tmp)), sig_tmp)
-sig[[idx]] <- vector("list", length = 6)
+sig_deg[[idx]] <- vector("list", length = 6)
 for (i in seq_len(ncol(sig_tmp))) {
-  sig[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
+  sig_deg[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
 }
-sig[[idx]] <- do.call(cbind, sig[[idx]])
-results_list[[idx]] <- results_list[[idx]][
-  match(rownames(sig[[idx]]), rownames(results_list[[idx]])),
+sig_deg[[idx]] <- do.call(cbind, sig_deg[[idx]])
+results_deg[[idx]] <- results_deg[[idx]][
+  match(rownames(sig_deg[[idx]]), rownames(results_deg[[idx]])),
 ]
-rownames(sig[[idx]]) <- results_list[[idx]]$Gene
-sig_uniq[[idx]] <- unique(sig[[idx]])
+rownames(sig_deg[[idx]]) <- results_deg[[idx]]$Gene
+sig_uniq_deg[[idx]] <- unique(sig_deg[[idx]])
 ```
 
 ```{r}
 selectizeInput(
   paste0("select", idx),
   label = "Select Genes:",
-  choices = results_list[[idx]]$Gene,
-  selected = rownames(sig_uniq[[idx]]),
+  choices = results_deg[[idx]]$Gene,
+  selected = rownames(sig_uniq_deg[[idx]]),
   multiple = TRUE,
   width = "100%"
 )
@@ -265,7 +293,9 @@ renderPlot(
     gene_anno_sub <- gene_anno_sub[
       match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
     ]
-    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_deg[[idx]][
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+    ]
     sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
 
     mat <- deg_corrected[[idx]][
@@ -317,7 +347,9 @@ renderPlot(
     gene_anno_sub <- gene_anno_sub[
       match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
     ]
-    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_deg[[idx]][
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+    ]
     sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
 
     mat <- deg_corrected[[idx]][
@@ -368,7 +400,7 @@ renderPlot(
 ### Results Table
 
 ```{r}
-datatable_download_exp(results_list[[idx]])
+datatable_download_exp(results_deg[[idx]])
 ```
 
 Oligodendrocytes
@@ -396,8 +428,8 @@ Row {.tabset}
 ### Search Genes
 
 ```{r, include = FALSE}
-fit <- lmFit(logcounts(deg), design)
-fit <- contrasts.fit(fit, cont_mat)
+fit <- lmFit(logcounts(deg), design_deg)
+fit <- contrasts.fit(fit, cont_mat_deg)
 fit <- eBayes(fit, trend = TRUE, robust = TRUE)
 
 tests <- decideTests(fit, method = "global")
@@ -407,7 +439,7 @@ write.fit(
   adjust = "BH", F.adjust = "BH", method = "global"
 )
 close(tc)
-results_list[[idx]] <- read.delim(text = results)
+results_deg[[idx]] <- read.delim(text = results)
 
 col <- 18
 length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) + 1
@@ -415,30 +447,30 @@ length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
   nrow(deg_list[[2]])
 length <- length1:length2
 for (i in seq_along(corrections)) {
-  results_list[[idx]][ , col] <- corrections[[i]][length]
+  results_deg[[idx]][ , col] <- corrections[[i]][length]
   col <- col + 1
 }
 
-rownames(results_list[[idx]]) <- results_list[[idx]]$X
-results_list[[idx]] <- results_list[[idx]][ , -1]
-results_list[[idx]] <- results_list[[idx]][ , 1:22]
-tests <- results_list[[idx]][ , 17:21]
-results_list[[idx]] <- results_list[[idx]][
-  order(results_list[[idx]]$F, decreasing = TRUE),
+rownames(results_deg[[idx]]) <- results_deg[[idx]]$X
+results_deg[[idx]] <- results_deg[[idx]][ , -1]
+results_deg[[idx]] <- results_deg[[idx]][ , 1:22]
+tests <- results_deg[[idx]][ , 17:21]
+results_deg[[idx]] <- results_deg[[idx]][
+  order(results_deg[[idx]]$F, decreasing = TRUE),
 ]
 gene_anno_sub <- gene_anno[
-  gene_anno$ensembl %in% rownames(results_list[[idx]]),
+  gene_anno$ensembl %in% rownames(results_deg[[idx]]),
 ]
 gene_anno_sub <- gene_anno_sub[
-  match(rownames(results_list[[idx]]), gene_anno_sub$ensembl),
+  match(rownames(results_deg[[idx]]), gene_anno_sub$ensembl),
 ]
-results_list[[idx]]$Gene <- gene_anno_sub$symbol
-results_list[[idx]] <- results_list[[idx]][
-  , c(ncol(results_list[[idx]]), 1:(ncol(results_list[[idx]]) - 1))
+results_deg[[idx]]$Gene <- gene_anno_sub$symbol
+results_deg[[idx]] <- results_deg[[idx]][
+  , c(ncol(results_deg[[idx]]), 1:(ncol(results_deg[[idx]]) - 1))
 ]
 
-sig_tmp <- ifelse(results_list[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
-direction <- ifelse(results_list[[idx]][ , 3:7] > 0, yes = 1, no = -1)
+sig_tmp <- ifelse(results_deg[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_deg[[idx]][ , 3:7] > 0, yes = 1, no = -1)
 sig_tmp <- sig_tmp * direction
 
 row_scores <- t(
@@ -476,24 +508,24 @@ sig_tmp <- ifelse(
   sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
 )
 sig_tmp <- cbind(rep("", nrow(sig_tmp)), sig_tmp)
-sig[[idx]] <- vector("list", length = 6)
+sig_deg[[idx]] <- vector("list", length = 6)
 for (i in seq_len(ncol(sig_tmp))) {
-  sig[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
+  sig_deg[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
 }
-sig[[idx]] <- do.call(cbind, sig[[idx]])
-results_list[[idx]] <- results_list[[idx]][
-  match(rownames(sig[[idx]]), rownames(results_list[[idx]])),
+sig_deg[[idx]] <- do.call(cbind, sig_deg[[idx]])
+results_deg[[idx]] <- results_deg[[idx]][
+  match(rownames(sig_deg[[idx]]), rownames(results_deg[[idx]])),
 ]
-rownames(sig[[idx]]) <- results_list[[idx]]$Gene
-sig_uniq[[idx]] <- unique(sig[[idx]])
+rownames(sig_deg[[idx]]) <- results_deg[[idx]]$Gene
+sig_uniq_deg[[idx]] <- unique(sig_deg[[idx]])
 ```
 
 ```{r}
 selectizeInput(
   paste0("select", idx),
   label = "Select Genes:",
-  choices = results_list[[idx]]$Gene,
-  selected = rownames(sig_uniq[[idx]]),
+  choices = results_deg[[idx]]$Gene,
+  selected = rownames(sig_uniq_deg[[idx]]),
   multiple = TRUE,
   width = "100%"
 )
@@ -512,7 +544,9 @@ renderPlot(
     gene_anno_sub <- gene_anno_sub[
       match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
     ]
-    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_deg[[idx]][
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+    ]
     sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
 
     mat <- deg_corrected[[idx]][
@@ -564,7 +598,9 @@ renderPlot(
     gene_anno_sub <- gene_anno_sub[
       match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
     ]
-    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_deg[[idx]][
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+    ]
     sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
 
     mat <- deg_corrected[[idx]][
@@ -615,7 +651,7 @@ renderPlot(
 ### Results Table
 
 ```{r}
-datatable_download_exp(results_list[[idx]])
+datatable_download_exp(results_deg[[idx]])
 ```
 
 Microglia
@@ -643,8 +679,8 @@ Row {.tabset}
 ### Search Genes
 
 ```{r, include = FALSE}
-fit <- lmFit(logcounts(deg), design)
-fit <- contrasts.fit(fit, cont_mat)
+fit <- lmFit(logcounts(deg), design_deg)
+fit <- contrasts.fit(fit, cont_mat_deg)
 fit <- eBayes(fit, trend = TRUE, robust = TRUE)
 
 tests <- decideTests(fit, method = "global")
@@ -654,7 +690,7 @@ write.fit(
   adjust = "BH", F.adjust = "BH", method = "global"
 )
 close(tc)
-results_list[[idx]] <- read.delim(text = results)
+results_deg[[idx]] <- read.delim(text = results)
 
 col <- 18
 length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
@@ -663,30 +699,30 @@ length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
   nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]])
 length <- length1:length2
 for (i in seq_along(corrections)) {
-  results_list[[idx]][ , col] <- corrections[[i]][length]
+  results_deg[[idx]][ , col] <- corrections[[i]][length]
   col <- col + 1
 }
 
-rownames(results_list[[idx]]) <- results_list[[idx]]$X
-results_list[[idx]] <- results_list[[idx]][ , -1]
-results_list[[idx]] <- results_list[[idx]][ , 1:22]
-tests <- results_list[[idx]][ , 17:21]
-results_list[[idx]] <- results_list[[idx]][
-  order(results_list[[idx]]$F, decreasing = TRUE),
+rownames(results_deg[[idx]]) <- results_deg[[idx]]$X
+results_deg[[idx]] <- results_deg[[idx]][ , -1]
+results_deg[[idx]] <- results_deg[[idx]][ , 1:22]
+tests <- results_deg[[idx]][ , 17:21]
+results_deg[[idx]] <- results_deg[[idx]][
+  order(results_deg[[idx]]$F, decreasing = TRUE),
 ]
 gene_anno_sub <- gene_anno[
-  gene_anno$ensembl %in% rownames(results_list[[idx]]),
+  gene_anno$ensembl %in% rownames(results_deg[[idx]]),
 ]
 gene_anno_sub <- gene_anno_sub[
-  match(rownames(results_list[[idx]]), gene_anno_sub$ensembl),
+  match(rownames(results_deg[[idx]]), gene_anno_sub$ensembl),
 ]
-results_list[[idx]]$Gene <- gene_anno_sub$symbol
-results_list[[idx]] <- results_list[[idx]][
-  , c(ncol(results_list[[idx]]), 1:(ncol(results_list[[idx]]) - 1))
+results_deg[[idx]]$Gene <- gene_anno_sub$symbol
+results_deg[[idx]] <- results_deg[[idx]][
+  , c(ncol(results_deg[[idx]]), 1:(ncol(results_deg[[idx]]) - 1))
 ]
 
-sig_tmp <- ifelse(results_list[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
-direction <- ifelse(results_list[[idx]][ , 3:7] > 0, yes = 1, no = -1)
+sig_tmp <- ifelse(results_deg[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_deg[[idx]][ , 3:7] > 0, yes = 1, no = -1)
 sig_tmp <- sig_tmp * direction
 
 row_scores <- t(
@@ -724,24 +760,24 @@ sig_tmp <- ifelse(
   sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
 )
 sig_tmp <- cbind(rep("", nrow(sig_tmp)), sig_tmp)
-sig[[idx]] <- vector("list", length = 6)
+sig_deg[[idx]] <- vector("list", length = 6)
 for (i in seq_len(ncol(sig_tmp))) {
-  sig[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
+  sig_deg[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
 }
-sig[[idx]] <- do.call(cbind, sig[[idx]])
-results_list[[idx]] <- results_list[[idx]][
-  match(rownames(sig[[idx]]), rownames(results_list[[idx]])),
+sig_deg[[idx]] <- do.call(cbind, sig_deg[[idx]])
+results_deg[[idx]] <- results_deg[[idx]][
+  match(rownames(sig_deg[[idx]]), rownames(results_deg[[idx]])),
 ]
-rownames(sig[[idx]]) <- results_list[[idx]]$Gene
-sig_uniq[[idx]] <- unique(sig[[idx]])
+rownames(sig_deg[[idx]]) <- results_deg[[idx]]$Gene
+sig_uniq_deg[[idx]] <- unique(sig_deg[[idx]])
 ```
 
 ```{r}
 selectizeInput(
   paste0("select", idx),
   label = "Select Genes:",
-  choices = results_list[[idx]]$Gene,
-  selected = rownames(sig_uniq[[idx]]),
+  choices = results_deg[[idx]]$Gene,
+  selected = rownames(sig_uniq_deg[[idx]]),
   multiple = TRUE,
   width = "100%"
 )
@@ -760,7 +796,9 @@ renderPlot(
     gene_anno_sub <- gene_anno_sub[
       match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
     ]
-    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_deg[[idx]][
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+    ]
     sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
 
     mat <- deg_corrected[[idx]][
@@ -812,7 +850,9 @@ renderPlot(
     gene_anno_sub <- gene_anno_sub[
       match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
     ]
-    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_deg[[idx]][
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+    ]
     sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
 
     mat <- deg_corrected[[idx]][
@@ -863,7 +903,7 @@ renderPlot(
 ### Results Table
 
 ```{r}
-datatable_download_exp(results_list[[idx]])
+datatable_download_exp(results_deg[[idx]])
 ```
 
 Glutamatergic CA3
@@ -891,8 +931,8 @@ Row {.tabset}
 ### Search Genes
 
 ```{r, include = FALSE}
-fit <- lmFit(logcounts(deg), design)
-fit <- contrasts.fit(fit, cont_mat)
+fit <- lmFit(logcounts(deg), design_deg)
+fit <- contrasts.fit(fit, cont_mat_deg)
 fit <- eBayes(fit, trend = TRUE, robust = TRUE)
 
 tests <- decideTests(fit, method = "global")
@@ -902,7 +942,7 @@ write.fit(
   adjust = "BH", F.adjust = "BH", method = "global"
 )
 close(tc)
-results_list[[idx]] <- read.delim(text = results)
+results_deg[[idx]] <- read.delim(text = results)
 
 col <- 18
 length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
@@ -913,30 +953,30 @@ length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
   nrow(gse_list[[4]]) + nrow(deg_list[[4]])
 length <- length1:length2
 for (i in seq_along(corrections)) {
-  results_list[[idx]][ , col] <- corrections[[i]][length]
+  results_deg[[idx]][ , col] <- corrections[[i]][length]
   col <- col + 1
 }
 
-rownames(results_list[[idx]]) <- results_list[[idx]]$X
-results_list[[idx]] <- results_list[[idx]][ , -1]
-results_list[[idx]] <- results_list[[idx]][ , 1:22]
-tests <- results_list[[idx]][ , 17:21]
-results_list[[idx]] <- results_list[[idx]][
-  order(results_list[[idx]]$F, decreasing = TRUE),
+rownames(results_deg[[idx]]) <- results_deg[[idx]]$X
+results_deg[[idx]] <- results_deg[[idx]][ , -1]
+results_deg[[idx]] <- results_deg[[idx]][ , 1:22]
+tests <- results_deg[[idx]][ , 17:21]
+results_deg[[idx]] <- results_deg[[idx]][
+  order(results_deg[[idx]]$F, decreasing = TRUE),
 ]
 gene_anno_sub <- gene_anno[
-  gene_anno$ensembl %in% rownames(results_list[[idx]]),
+  gene_anno$ensembl %in% rownames(results_deg[[idx]]),
 ]
 gene_anno_sub <- gene_anno_sub[
-  match(rownames(results_list[[idx]]), gene_anno_sub$ensembl),
+  match(rownames(results_deg[[idx]]), gene_anno_sub$ensembl),
 ]
-results_list[[idx]]$Gene <- gene_anno_sub$symbol
-results_list[[idx]] <- results_list[[idx]][
-  , c(ncol(results_list[[idx]]), 1:(ncol(results_list[[idx]]) - 1))
+results_deg[[idx]]$Gene <- gene_anno_sub$symbol
+results_deg[[idx]] <- results_deg[[idx]][
+  , c(ncol(results_deg[[idx]]), 1:(ncol(results_deg[[idx]]) - 1))
 ]
 
-sig_tmp <- ifelse(results_list[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
-direction <- ifelse(results_list[[idx]][ , 3:7] > 0, yes = 1, no = -1)
+sig_tmp <- ifelse(results_deg[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_deg[[idx]][ , 3:7] > 0, yes = 1, no = -1)
 sig_tmp <- sig_tmp * direction
 
 row_scores <- t(
@@ -974,24 +1014,24 @@ sig_tmp <- ifelse(
   sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
 )
 sig_tmp <- cbind(rep("", nrow(sig_tmp)), sig_tmp)
-sig[[idx]] <- vector("list", length = 6)
+sig_deg[[idx]] <- vector("list", length = 6)
 for (i in seq_len(ncol(sig_tmp))) {
-  sig[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
+  sig_deg[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
 }
-sig[[idx]] <- do.call(cbind, sig[[idx]])
-results_list[[idx]] <- results_list[[idx]][
-  match(rownames(sig[[idx]]), rownames(results_list[[idx]])),
+sig_deg[[idx]] <- do.call(cbind, sig_deg[[idx]])
+results_deg[[idx]] <- results_deg[[idx]][
+  match(rownames(sig_deg[[idx]]), rownames(results_deg[[idx]])),
 ]
-rownames(sig[[idx]]) <- results_list[[idx]]$Gene
-sig_uniq[[idx]] <- unique(sig[[idx]])
+rownames(sig_deg[[idx]]) <- results_deg[[idx]]$Gene
+sig_uniq_deg[[idx]] <- unique(sig_deg[[idx]])
 ```
 
 ```{r}
 selectizeInput(
   paste0("select", idx),
   label = "Select Genes:",
-  choices = results_list[[idx]]$Gene,
-  selected = rownames(sig_uniq[[idx]]),
+  choices = results_deg[[idx]]$Gene,
+  selected = rownames(sig_uniq_deg[[idx]]),
   multiple = TRUE,
   width = "100%"
 )
@@ -1010,7 +1050,9 @@ renderPlot(
     gene_anno_sub <- gene_anno_sub[
       match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
     ]
-    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_deg[[idx]][
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+    ]
     sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
 
     mat <- deg_corrected[[idx]][
@@ -1062,7 +1104,9 @@ renderPlot(
     gene_anno_sub <- gene_anno_sub[
       match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
     ]
-    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_deg[[idx]][
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+    ]
     sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
 
     mat <- deg_corrected[[idx]][
@@ -1113,7 +1157,7 @@ renderPlot(
 ### Results Table
 
 ```{r}
-datatable_download_exp(results_list[[idx]])
+datatable_download_exp(results_deg[[idx]])
 ```
 
 Glutamatergic CA1
@@ -1141,8 +1185,8 @@ Row {.tabset}
 ### Search Genes
 
 ```{r, include = FALSE}
-fit <- lmFit(logcounts(deg), design)
-fit <- contrasts.fit(fit, cont_mat)
+fit <- lmFit(logcounts(deg), design_deg)
+fit <- contrasts.fit(fit, cont_mat_deg)
 fit <- eBayes(fit, trend = TRUE, robust = TRUE)
 
 tests <- decideTests(fit, method = "global")
@@ -1152,7 +1196,7 @@ write.fit(
   adjust = "BH", F.adjust = "BH", method = "global"
 )
 close(tc)
-results_list[[idx]] <- read.delim(text = results)
+results_deg[[idx]] <- read.delim(text = results)
 
 col <- 18
 length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
@@ -1164,30 +1208,30 @@ length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
   nrow(deg_list[[5]])
 length <- length1:length2
 for (i in seq_along(corrections)) {
-  results_list[[idx]][ , col] <- corrections[[i]][length]
+  results_deg[[idx]][ , col] <- corrections[[i]][length]
   col <- col + 1
 }
 
-rownames(results_list[[idx]]) <- results_list[[idx]]$X
-results_list[[idx]] <- results_list[[idx]][ , -1]
-results_list[[idx]] <- results_list[[idx]][ , 1:22]
-tests <- results_list[[idx]][ , 17:21]
-results_list[[idx]] <- results_list[[idx]][
-  order(results_list[[idx]]$F, decreasing = TRUE),
+rownames(results_deg[[idx]]) <- results_deg[[idx]]$X
+results_deg[[idx]] <- results_deg[[idx]][ , -1]
+results_deg[[idx]] <- results_deg[[idx]][ , 1:22]
+tests <- results_deg[[idx]][ , 17:21]
+results_deg[[idx]] <- results_deg[[idx]][
+  order(results_deg[[idx]]$F, decreasing = TRUE),
 ]
 gene_anno_sub <- gene_anno[
-  gene_anno$ensembl %in% rownames(results_list[[idx]]),
+  gene_anno$ensembl %in% rownames(results_deg[[idx]]),
 ]
 gene_anno_sub <- gene_anno_sub[
-  match(rownames(results_list[[idx]]), gene_anno_sub$ensembl),
+  match(rownames(results_deg[[idx]]), gene_anno_sub$ensembl),
 ]
-results_list[[idx]]$Gene <- gene_anno_sub$symbol
-results_list[[idx]] <- results_list[[idx]][
-  , c(ncol(results_list[[idx]]), 1:(ncol(results_list[[idx]]) - 1))
+results_deg[[idx]]$Gene <- gene_anno_sub$symbol
+results_deg[[idx]] <- results_deg[[idx]][
+  , c(ncol(results_deg[[idx]]), 1:(ncol(results_deg[[idx]]) - 1))
 ]
 
-sig_tmp <- ifelse(results_list[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
-direction <- ifelse(results_list[[idx]][ , 3:7] > 0, yes = 1, no = -1)
+sig_tmp <- ifelse(results_deg[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_deg[[idx]][ , 3:7] > 0, yes = 1, no = -1)
 sig_tmp <- sig_tmp * direction
 
 row_scores <- t(
@@ -1225,24 +1269,24 @@ sig_tmp <- ifelse(
   sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
 )
 sig_tmp <- cbind(rep("", nrow(sig_tmp)), sig_tmp)
-sig[[idx]] <- vector("list", length = 6)
+sig_deg[[idx]] <- vector("list", length = 6)
 for (i in seq_len(ncol(sig_tmp))) {
-  sig[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
+  sig_deg[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
 }
-sig[[idx]] <- do.call(cbind, sig[[idx]])
-results_list[[idx]] <- results_list[[idx]][
-  match(rownames(sig[[idx]]), rownames(results_list[[idx]])),
+sig_deg[[idx]] <- do.call(cbind, sig_deg[[idx]])
+results_deg[[idx]] <- results_deg[[idx]][
+  match(rownames(sig_deg[[idx]]), rownames(results_deg[[idx]])),
 ]
-rownames(sig[[idx]]) <- results_list[[idx]]$Gene
-sig_uniq[[idx]] <- unique(sig[[idx]])
+rownames(sig_deg[[idx]]) <- results_deg[[idx]]$Gene
+sig_uniq_deg[[idx]] <- unique(sig_deg[[idx]])
 ```
 
 ```{r}
 selectizeInput(
   paste0("select", idx),
   label = "Select Genes:",
-  choices = results_list[[idx]]$Gene,
-  selected = rownames(sig_uniq[[idx]]),
+  choices = results_deg[[idx]]$Gene,
+  selected = rownames(sig_uniq_deg[[idx]]),
   multiple = TRUE,
   width = "100%"
 )
@@ -1261,7 +1305,9 @@ renderPlot(
     gene_anno_sub <- gene_anno_sub[
       match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
     ]
-    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_deg[[idx]][
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+    ]
     sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
 
     mat <- deg_corrected[[idx]][
@@ -1313,7 +1359,9 @@ renderPlot(
     gene_anno_sub <- gene_anno_sub[
       match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
     ]
-    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_deg[[idx]][
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+    ]
     sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
 
     mat <- deg_corrected[[idx]][
@@ -1364,7 +1412,7 @@ renderPlot(
 ### Results Table
 
 ```{r}
-datatable_download_exp(results_list[[idx]])
+datatable_download_exp(results_deg[[idx]])
 ```
 
 Glutamatergic L2/3 ENT
@@ -1392,8 +1440,8 @@ Row {.tabset}
 ### Search Genes
 
 ```{r, include = FALSE}
-fit <- lmFit(logcounts(deg), design)
-fit <- contrasts.fit(fit, cont_mat)
+fit <- lmFit(logcounts(deg), design_deg)
+fit <- contrasts.fit(fit, cont_mat_deg)
 fit <- eBayes(fit, trend = TRUE, robust = TRUE)
 
 tests <- decideTests(fit, method = "global")
@@ -1403,7 +1451,7 @@ write.fit(
   adjust = "BH", F.adjust = "BH", method = "global"
 )
 close(tc)
-results_list[[idx]] <- read.delim(text = results)
+results_deg[[idx]] <- read.delim(text = results)
 
 col <- 18
 length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
@@ -1416,30 +1464,30 @@ length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
   nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]])
 length <- length1:length2
 for (i in seq_along(corrections)) {
-  results_list[[idx]][ , col] <- corrections[[i]][length]
+  results_deg[[idx]][ , col] <- corrections[[i]][length]
   col <- col + 1
 }
 
-rownames(results_list[[idx]]) <- results_list[[idx]]$X
-results_list[[idx]] <- results_list[[idx]][ , -1]
-results_list[[idx]] <- results_list[[idx]][ , 1:22]
-tests <- results_list[[idx]][ , 17:21]
-results_list[[idx]] <- results_list[[idx]][
-  order(results_list[[idx]]$F, decreasing = TRUE),
+rownames(results_deg[[idx]]) <- results_deg[[idx]]$X
+results_deg[[idx]] <- results_deg[[idx]][ , -1]
+results_deg[[idx]] <- results_deg[[idx]][ , 1:22]
+tests <- results_deg[[idx]][ , 17:21]
+results_deg[[idx]] <- results_deg[[idx]][
+  order(results_deg[[idx]]$F, decreasing = TRUE),
 ]
 gene_anno_sub <- gene_anno[
-  gene_anno$ensembl %in% rownames(results_list[[idx]]),
+  gene_anno$ensembl %in% rownames(results_deg[[idx]]),
 ]
 gene_anno_sub <- gene_anno_sub[
-  match(rownames(results_list[[idx]]), gene_anno_sub$ensembl),
+  match(rownames(results_deg[[idx]]), gene_anno_sub$ensembl),
 ]
-results_list[[idx]]$Gene <- gene_anno_sub$symbol
-results_list[[idx]] <- results_list[[idx]][
-  , c(ncol(results_list[[idx]]), 1:(ncol(results_list[[idx]]) - 1))
+results_deg[[idx]]$Gene <- gene_anno_sub$symbol
+results_deg[[idx]] <- results_deg[[idx]][
+  , c(ncol(results_deg[[idx]]), 1:(ncol(results_deg[[idx]]) - 1))
 ]
 
-sig_tmp <- ifelse(results_list[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
-direction <- ifelse(results_list[[idx]][ , 3:7] > 0, yes = 1, no = -1)
+sig_tmp <- ifelse(results_deg[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_deg[[idx]][ , 3:7] > 0, yes = 1, no = -1)
 sig_tmp <- sig_tmp * direction
 
 row_scores <- t(
@@ -1477,24 +1525,24 @@ sig_tmp <- ifelse(
   sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
 )
 sig_tmp <- cbind(rep("", nrow(sig_tmp)), sig_tmp)
-sig[[idx]] <- vector("list", length = 6)
+sig_deg[[idx]] <- vector("list", length = 6)
 for (i in seq_len(ncol(sig_tmp))) {
-  sig[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
+  sig_deg[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
 }
-sig[[idx]] <- do.call(cbind, sig[[idx]])
-results_list[[idx]] <- results_list[[idx]][
-  match(rownames(sig[[idx]]), rownames(results_list[[idx]])),
+sig_deg[[idx]] <- do.call(cbind, sig_deg[[idx]])
+results_deg[[idx]] <- results_deg[[idx]][
+  match(rownames(sig_deg[[idx]]), rownames(results_deg[[idx]])),
 ]
-rownames(sig[[idx]]) <- results_list[[idx]]$Gene
-sig_uniq[[idx]] <- unique(sig[[idx]])
+rownames(sig_deg[[idx]]) <- results_deg[[idx]]$Gene
+sig_uniq_deg[[idx]] <- unique(sig_deg[[idx]])
 ```
 
 ```{r}
 selectizeInput(
   paste0("select", idx),
   label = "Select Genes:",
-  choices = results_list[[idx]]$Gene,
-  selected = rownames(sig_uniq[[idx]]),
+  choices = results_deg[[idx]]$Gene,
+  selected = rownames(sig_uniq_deg[[idx]]),
   multiple = TRUE,
   width = "100%"
 )
@@ -1513,7 +1561,9 @@ renderPlot(
     gene_anno_sub <- gene_anno_sub[
       match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
     ]
-    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_deg[[idx]][
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+    ]
     sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
 
     mat <- deg_corrected[[idx]][
@@ -1565,7 +1615,9 @@ renderPlot(
     gene_anno_sub <- gene_anno_sub[
       match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
     ]
-    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_deg[[idx]][
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+    ]
     sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
 
     mat <- deg_corrected[[idx]][
@@ -1616,7 +1668,7 @@ renderPlot(
 ### Results Table
 
 ```{r}
-datatable_download_exp(results_list[[idx]])
+datatable_download_exp(results_deg[[idx]])
 ```
 
 GABAergic Sst
@@ -1644,8 +1696,8 @@ Row {.tabset}
 ### Search Genes
 
 ```{r, include = FALSE}
-fit <- lmFit(logcounts(deg), design)
-fit <- contrasts.fit(fit, cont_mat)
+fit <- lmFit(logcounts(deg), design_deg)
+fit <- contrasts.fit(fit, cont_mat_deg)
 fit <- eBayes(fit, trend = TRUE, robust = TRUE)
 
 tests <- decideTests(fit, method = "global")
@@ -1655,7 +1707,7 @@ write.fit(
   adjust = "BH", F.adjust = "BH", method = "global"
 )
 close(tc)
-results_list[[idx]] <- read.delim(text = results)
+results_deg[[idx]] <- read.delim(text = results)
 
 col <- 18
 length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
@@ -1670,30 +1722,30 @@ length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
   nrow(gse_list[[7]]) + nrow(deg_list[[7]])
 length <- length1:length2
 for (i in seq_along(corrections)) {
-  results_list[[idx]][ , col] <- corrections[[i]][length]
+  results_deg[[idx]][ , col] <- corrections[[i]][length]
   col <- col + 1
 }
 
-rownames(results_list[[idx]]) <- results_list[[idx]]$X
-results_list[[idx]] <- results_list[[idx]][ , -1]
-results_list[[idx]] <- results_list[[idx]][ , 1:22]
-tests <- results_list[[idx]][ , 17:21]
-results_list[[idx]] <- results_list[[idx]][
-  order(results_list[[idx]]$F, decreasing = TRUE),
+rownames(results_deg[[idx]]) <- results_deg[[idx]]$X
+results_deg[[idx]] <- results_deg[[idx]][ , -1]
+results_deg[[idx]] <- results_deg[[idx]][ , 1:22]
+tests <- results_deg[[idx]][ , 17:21]
+results_deg[[idx]] <- results_deg[[idx]][
+  order(results_deg[[idx]]$F, decreasing = TRUE),
 ]
 gene_anno_sub <- gene_anno[
-  gene_anno$ensembl %in% rownames(results_list[[idx]]),
+  gene_anno$ensembl %in% rownames(results_deg[[idx]]),
 ]
 gene_anno_sub <- gene_anno_sub[
-  match(rownames(results_list[[idx]]), gene_anno_sub$ensembl),
+  match(rownames(results_deg[[idx]]), gene_anno_sub$ensembl),
 ]
-results_list[[idx]]$Gene <- gene_anno_sub$symbol
-results_list[[idx]] <- results_list[[idx]][
-  , c(ncol(results_list[[idx]]), 1:(ncol(results_list[[idx]]) - 1))
+results_deg[[idx]]$Gene <- gene_anno_sub$symbol
+results_deg[[idx]] <- results_deg[[idx]][
+  , c(ncol(results_deg[[idx]]), 1:(ncol(results_deg[[idx]]) - 1))
 ]
 
-sig_tmp <- ifelse(results_list[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
-direction <- ifelse(results_list[[idx]][ , 3:7] > 0, yes = 1, no = -1)
+sig_tmp <- ifelse(results_deg[[idx]][ , 18:22] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_deg[[idx]][ , 3:7] > 0, yes = 1, no = -1)
 sig_tmp <- sig_tmp * direction
 
 row_scores <- t(
@@ -1731,24 +1783,24 @@ sig_tmp <- ifelse(
   sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
 )
 sig_tmp <- cbind(rep("", nrow(sig_tmp)), sig_tmp)
-sig[[idx]] <- vector("list", length = 6)
+sig_deg[[idx]] <- vector("list", length = 6)
 for (i in seq_len(ncol(sig_tmp))) {
-  sig[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
+  sig_deg[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
 }
-sig[[idx]] <- do.call(cbind, sig[[idx]])
-results_list[[idx]] <- results_list[[idx]][
-  match(rownames(sig[[idx]]), rownames(results_list[[idx]])),
+sig_deg[[idx]] <- do.call(cbind, sig_deg[[idx]])
+results_deg[[idx]] <- results_deg[[idx]][
+  match(rownames(sig_deg[[idx]]), rownames(results_deg[[idx]])),
 ]
-rownames(sig[[idx]]) <- results_list[[idx]]$Gene
-sig_uniq[[idx]] <- unique(sig[[idx]])
+rownames(sig_deg[[idx]]) <- results_deg[[idx]]$Gene
+sig_uniq_deg[[idx]] <- unique(sig_deg[[idx]])
 ```
 
 ```{r}
 selectizeInput(
   paste0("select", idx),
   label = "Select Genes:",
-  choices = results_list[[idx]]$Gene,
-  selected = rownames(sig_uniq[[idx]]),
+  choices = results_deg[[idx]]$Gene,
+  selected = rownames(sig_uniq_deg[[idx]]),
   multiple = TRUE,
   width = "100%"
 )
@@ -1767,7 +1819,9 @@ renderPlot(
     gene_anno_sub <- gene_anno_sub[
       match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
     ]
-    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_deg[[idx]][
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+    ]
     sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
 
     mat <- deg_corrected[[idx]][
@@ -1819,7 +1873,9 @@ renderPlot(
     gene_anno_sub <- gene_anno_sub[
       match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
     ]
-    sig_tmp <- sig[[idx]][rownames(sig[[idx]]) %in% gene_anno_sub$symbol, ]
+    sig_tmp <- sig_deg[[idx]][
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+    ]
     sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
 
     mat <- deg_corrected[[idx]][
@@ -1870,10 +1926,10 @@ renderPlot(
 ### Results Table
 
 ```{r}
-datatable_download_exp(results_list[[idx]])
+datatable_download_exp(results_deg[[idx]])
 ```
 
 ```{r, include = FALSE}
-rm(deg, deg_data, deg_list, gse_list, corrections)
+rm(deg, deg_data, deg_list, gse, gse_data, gse_list, corrections)
 gc()
 ```
