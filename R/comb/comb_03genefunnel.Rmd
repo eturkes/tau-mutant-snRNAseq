@@ -216,7 +216,7 @@ if (file.exists(rds)) {
   gene_sets_keep <- readRDS(rds)
 } else {
 
-  keep <- filterGeneSets(gene_sets, min.sz = 2, max.sz = 30)
+  keep <- filterGeneSets(gene_sets, min.sz = 2, max.sz = 45)
   gene_sets_keep <- gene_sets[names(gene_sets) %in% names(keep)]
 
   gene_sets_keep <- gene_sets_keep[
@@ -237,7 +237,8 @@ if (file.exists(rds)) {
   )
   remove <- gene_anno[
     gene_anno$chromosome_name == "Y" |
-      gene_anno$ensembl_gene_id == "ENSMUSG00000086503",
+      gene_anno$ensembl_gene_id == "ENSMUSG00000086503" |
+      gene_anno$ensembl_gene_id == "ENSMUSG00000085715",
   ]$ensembl_gene_id
   remove <- which(
     sapply(geneIds(gene_sets_keep), FUN = function(x) any(x %in% remove))
@@ -259,7 +260,7 @@ if (file.exists(rds)) {
   gene_sets_keep[upper.tri(gene_sets_keep)] <- 0
   diag(gene_sets_keep) <- 0
   gene_sets_keep <- apply(gene_sets_keep, MARGIN = 1, FUN = max)
-  gene_sets_keep <- gene_sets_keep[gene_sets_keep < 0.55]
+  gene_sets_keep <- gene_sets_keep[gene_sets_keep < 0.7]
 
   rm(gene_sets_ordered)
   saveRDS(gene_sets_keep, file = rds)
