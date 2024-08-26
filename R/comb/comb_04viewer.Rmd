@@ -550,55 +550,6 @@ renderPlot(
     ]
     mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
 
-    draw(
-      Heatmap(
-        mat,
-        col = colorRamp2(gse_range[[idx]], colors = c("blue", "white", "red")),
-        column_title = ctype_name[[idx]],
-        cluster_columns = FALSE,
-        cluster_rows = FALSE,
-        column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 12),
-        row_title_rot = 0,
-        top_annotation = top_anno,
-        show_column_names = FALSE,
-        cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
-        },
-        heatmap_legend_param = list(
-          title = "logGSE", direction = "horizontal",
-          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
-          grid_height = unit(3, "mm")
-        )
-      ),
-      heatmap_legend_side = "top"
-    )
-  },
-  width = 850,
-  height = 650,
-  res = 96
-)
-```
-
-</div>
-<div>
-
-```{r}
-renderPlot(
-  {
-    idx <- 1
-    sig_tmp <- sig_gse[[idx]][
-      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
-    ]
-    sig_tmp <- sig_tmp[
-      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
-    ]
-
-    mat <- gse_corrected[[idx]][
-      rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
-    ]
-    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
-
     mat <- t(
       apply(
         mat, MARGIN = 1,
@@ -617,6 +568,7 @@ renderPlot(
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
+        row_names_max_width = max_text_width(rownames(mat)),
         cell_fun = function(j, i, x, y, width, height, fill) {
           grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
         },
@@ -629,7 +581,7 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
+  width = 1350,
   height = 650,
   res = 96
 )
@@ -1018,55 +970,6 @@ renderPlot(
     ]
     mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
 
-    draw(
-      Heatmap(
-        mat,
-        col = colorRamp2(gse_range[[idx]], colors = c("blue", "white", "red")),
-        column_title = ctype_name[[idx]],
-        cluster_columns = FALSE,
-        cluster_rows = FALSE,
-        column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 12),
-        row_title_rot = 0,
-        top_annotation = top_anno,
-        show_column_names = FALSE,
-        cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
-        },
-        heatmap_legend_param = list(
-          title = "logGSE", direction = "horizontal",
-          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
-          grid_height = unit(3, "mm")
-        )
-      ),
-      heatmap_legend_side = "top"
-    )
-  },
-  width = 850,
-  height = 650,
-  res = 96
-)
-```
-
-</div>
-<div>
-
-```{r}
-renderPlot(
-  {
-    idx <- 2
-    sig_tmp <- sig_gse[[idx]][
-      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
-    ]
-    sig_tmp <- sig_tmp[
-      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
-    ]
-
-    mat <- gse_corrected[[idx]][
-      rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
-    ]
-    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
-
     mat <- t(
       apply(
         mat, MARGIN = 1,
@@ -1085,6 +988,7 @@ renderPlot(
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
+        row_names_max_width = max_text_width(rownames(mat)),
         cell_fun = function(j, i, x, y, width, height, fill) {
           grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
         },
@@ -1097,7 +1001,7 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
+  width = 1350,
   height = 650,
   res = 96
 )
@@ -1489,55 +1393,6 @@ renderPlot(
     ]
     mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
 
-    draw(
-      Heatmap(
-        mat,
-        col = colorRamp2(gse_range[[idx]], colors = c("blue", "white", "red")),
-        column_title = ctype_name[[idx]],
-        cluster_columns = FALSE,
-        cluster_rows = FALSE,
-        column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 12),
-        row_title_rot = 0,
-        top_annotation = top_anno,
-        show_column_names = FALSE,
-        cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
-        },
-        heatmap_legend_param = list(
-          title = "logGSE", direction = "horizontal",
-          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
-          grid_height = unit(3, "mm")
-        )
-      ),
-      heatmap_legend_side = "top"
-    )
-  },
-  width = 850,
-  height = 650,
-  res = 96
-)
-```
-
-</div>
-<div>
-
-```{r}
-renderPlot(
-  {
-    idx <- 3
-    sig_tmp <- sig_gse[[idx]][
-      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
-    ]
-    sig_tmp <- sig_tmp[
-      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
-    ]
-
-    mat <- gse_corrected[[idx]][
-      rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
-    ]
-    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
-
     mat <- t(
       apply(
         mat, MARGIN = 1,
@@ -1556,6 +1411,7 @@ renderPlot(
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
+        row_names_max_width = max_text_width(rownames(mat)),
         cell_fun = function(j, i, x, y, width, height, fill) {
           grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
         },
@@ -1568,7 +1424,7 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
+  width = 1350,
   height = 650,
   res = 96
 )
@@ -1963,55 +1819,6 @@ renderPlot(
     ]
     mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
 
-    draw(
-      Heatmap(
-        mat,
-        col = colorRamp2(gse_range[[idx]], colors = c("blue", "white", "red")),
-        column_title = ctype_name[[idx]],
-        cluster_columns = FALSE,
-        cluster_rows = FALSE,
-        column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 12),
-        row_title_rot = 0,
-        top_annotation = top_anno,
-        show_column_names = FALSE,
-        cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
-        },
-        heatmap_legend_param = list(
-          title = "logGSE", direction = "horizontal",
-          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
-          grid_height = unit(3, "mm")
-        )
-      ),
-      heatmap_legend_side = "top"
-    )
-  },
-  width = 850,
-  height = 650,
-  res = 96
-)
-```
-
-</div>
-<div>
-
-```{r}
-renderPlot(
-  {
-    idx <- 4
-    sig_tmp <- sig_gse[[idx]][
-      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
-    ]
-    sig_tmp <- sig_tmp[
-      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
-    ]
-
-    mat <- gse_corrected[[idx]][
-      rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
-    ]
-    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
-
     mat <- t(
       apply(
         mat, MARGIN = 1,
@@ -2030,6 +1837,7 @@ renderPlot(
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
+        row_names_max_width = max_text_width(rownames(mat)),
         cell_fun = function(j, i, x, y, width, height, fill) {
           grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
         },
@@ -2042,7 +1850,7 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
+  width = 1350,
   height = 650,
   res = 96
 )
@@ -2439,55 +2247,6 @@ renderPlot(
     ]
     mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
 
-    draw(
-      Heatmap(
-        mat,
-        col = colorRamp2(gse_range[[idx]], colors = c("blue", "white", "red")),
-        column_title = ctype_name[[idx]],
-        cluster_columns = FALSE,
-        cluster_rows = FALSE,
-        column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 12),
-        row_title_rot = 0,
-        top_annotation = top_anno,
-        show_column_names = FALSE,
-        cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
-        },
-        heatmap_legend_param = list(
-          title = "logGSE", direction = "horizontal",
-          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
-          grid_height = unit(3, "mm")
-        )
-      ),
-      heatmap_legend_side = "top"
-    )
-  },
-  width = 850,
-  height = 650,
-  res = 96
-)
-```
-
-</div>
-<div>
-
-```{r}
-renderPlot(
-  {
-    idx <- 5
-    sig_tmp <- sig_gse[[idx]][
-      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
-    ]
-    sig_tmp <- sig_tmp[
-      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
-    ]
-
-    mat <- gse_corrected[[idx]][
-      rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
-    ]
-    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
-
     mat <- t(
       apply(
         mat, MARGIN = 1,
@@ -2506,6 +2265,7 @@ renderPlot(
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
+        row_names_max_width = max_text_width(rownames(mat)),
         cell_fun = function(j, i, x, y, width, height, fill) {
           grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
         },
@@ -2518,7 +2278,7 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
+  width = 1350,
   height = 650,
   res = 96
 )
@@ -2918,55 +2678,6 @@ renderPlot(
     ]
     mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
 
-    draw(
-      Heatmap(
-        mat,
-        col = colorRamp2(gse_range[[idx]], colors = c("blue", "white", "red")),
-        column_title = ctype_name[[idx]],
-        cluster_columns = FALSE,
-        cluster_rows = FALSE,
-        column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 12),
-        row_title_rot = 0,
-        top_annotation = top_anno,
-        show_column_names = FALSE,
-        cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
-        },
-        heatmap_legend_param = list(
-          title = "logGSE", direction = "horizontal",
-          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
-          grid_height = unit(3, "mm")
-        )
-      ),
-      heatmap_legend_side = "top"
-    )
-  },
-  width = 850,
-  height = 650,
-  res = 96
-)
-```
-
-</div>
-<div>
-
-```{r}
-renderPlot(
-  {
-    idx <- 6
-    sig_tmp <- sig_gse[[idx]][
-      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
-    ]
-    sig_tmp <- sig_tmp[
-      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
-    ]
-
-    mat <- gse_corrected[[idx]][
-      rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
-    ]
-    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
-
     mat <- t(
       apply(
         mat, MARGIN = 1,
@@ -2985,6 +2696,7 @@ renderPlot(
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
+        row_names_max_width = max_text_width(rownames(mat)),
         cell_fun = function(j, i, x, y, width, height, fill) {
           grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
         },
@@ -2997,7 +2709,7 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
+  width = 1350,
   height = 650,
   res = 96
 )
@@ -3400,55 +3112,6 @@ renderPlot(
     ]
     mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
 
-    draw(
-      Heatmap(
-        mat,
-        col = colorRamp2(gse_range[[idx]], colors = c("blue", "white", "red")),
-        column_title = ctype_name[[idx]],
-        cluster_columns = FALSE,
-        cluster_rows = FALSE,
-        column_split = rep(seq(6), each = 4),
-        row_names_gp = gpar(fontsize = 12),
-        row_title_rot = 0,
-        top_annotation = top_anno,
-        show_column_names = FALSE,
-        cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
-        },
-        heatmap_legend_param = list(
-          title = "logGSE", direction = "horizontal",
-          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
-          grid_height = unit(3, "mm")
-        )
-      ),
-      heatmap_legend_side = "top"
-    )
-  },
-  width = 850,
-  height = 650,
-  res = 96
-)
-```
-
-</div>
-<div>
-
-```{r}
-renderPlot(
-  {
-    idx <- 7
-    sig_tmp <- sig_gse[[idx]][
-      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
-    ]
-    sig_tmp <- sig_tmp[
-      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
-    ]
-
-    mat <- gse_corrected[[idx]][
-      rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
-    ]
-    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
-
     mat <- t(
       apply(
         mat, MARGIN = 1,
@@ -3467,6 +3130,7 @@ renderPlot(
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
+        row_names_max_width = max_text_width(rownames(mat)),
         cell_fun = function(j, i, x, y, width, height, fill) {
           grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
         },
@@ -3479,7 +3143,7 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
+  width = 1350,
   height = 650,
   res = 96
 )
