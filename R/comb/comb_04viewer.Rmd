@@ -32,11 +32,35 @@ packages <- c(
 )
 lapply(packages, FUN = library, character.only = TRUE)
 
-datatable_download_exp <- function(dt) {
+datatable_download_exp_15 <- function(dt) {
   datatable(
     dt,
     options = list(
       pageLength = 15,
+      scrollX = TRUE,
+      dom = "Blfrtip",
+      buttons = list(
+        "copy", "print",
+        list(
+          extend = "collection", buttons = c("csv", "excel", "pdf"),
+          text = "Download"
+        )
+      ),
+      rowCallback = JS(
+        "function(row, data) {",
+        "for (i = 1; i < data.length; i++) {",
+        "if (data[i]>=1000 | data[i]<1000) {",
+        "$('td:eq('+i+')', row).html(data[i].toExponential(2));}}}"
+      )
+    ),
+    extensions = "Buttons"
+  )
+}
+datatable_download_exp_5 <- function(dt) {
+  datatable(
+    dt,
+    options = list(
+      pageLength = 5,
       scrollX = TRUE,
       dom = "Blfrtip",
       buttons = list(
@@ -164,11 +188,20 @@ deg <- deg_data[[idx]]
 deg_corrected[[idx]] <- removeBatchEffect(
   logcounts(deg), batch = deg$batch, group = deg$genotype
 )
-
 deg_range[[idx]] <- c(
   min(deg_corrected[[idx]]),
   (min(deg_corrected[[idx]]) + max(deg_corrected[[idx]])) / 2,
   max(deg_corrected[[idx]])
+)
+
+gse <- gse_data[[idx]]
+gse_corrected[[idx]] <- removeBatchEffect(
+  logcounts(gse), batch = gse$batch, group = gse$genotype
+)
+gse_range[[idx]] <- c(
+  min(gse_corrected[[idx]]),
+  (min(gse_corrected[[idx]]) + max(gse_corrected[[idx]])) / 2,
+  max(gse_corrected[[idx]])
 )
 ```
 
@@ -271,7 +304,7 @@ sig_uniq_deg[[idx]] <- unique(sig_deg[[idx]])
 
 ```{r}
 selectizeInput(
-  paste0("select", idx),
+  paste0("select_deg", idx),
   label = "Select Genes:",
   choices = results_deg[[idx]]$Gene,
   selected = rownames(sig_uniq_deg[[idx]]),
@@ -288,10 +321,10 @@ renderPlot(
   {
     idx <- 1
     gene_anno_sub <- gene_anno[
-      gene_anno$symbol %in% input[[paste0("select", idx)]],
+      gene_anno$symbol %in% input[[paste0("select_deg", idx)]],
     ]
     gene_anno_sub <- gene_anno_sub[
-      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+      match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
       rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
@@ -342,10 +375,10 @@ renderPlot(
   {
     idx <- 1
     gene_anno_sub <- gene_anno[
-      gene_anno$symbol %in% input[[paste0("select", idx)]],
+      gene_anno$symbol %in% input[[paste0("select_deg", idx)]],
     ]
     gene_anno_sub <- gene_anno_sub[
-      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+      match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
       rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
@@ -397,10 +430,218 @@ renderPlot(
 </div>
 </div>
 
-### Results Table
+### Gene Stats
 
 ```{r}
-datatable_download_exp(results_deg[[idx]])
+datatable_download_exp_15(results_deg[[idx]])
+```
+
+### Search Gene Sets
+
+```{r, include = FALSE}
+fit <- lmFit(logcounts(gse), design_gse)
+fit <- contrasts.fit(fit, cont_mat_gse)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+tc <- textConnection("results", open = "w")
+write.fit(
+  fit, tests, file = tc,
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+close(tc)
+results_gse[[idx]] <- read.delim(text = results)
+
+col <- 18
+length1 <- 1
+length2 <- nrow(gse_list[[1]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results_gse[[idx]][ , col] <- corrections[[i]][length]
+  col <- col + 1
+}
+
+rownames(results_gse[[idx]]) <- results_gse[[idx]]$X
+results_gse[[idx]] <- results_gse[[idx]][ , -1]
+results_gse[[idx]] <- results_gse[[idx]][ , 1:22]
+tests <- results_gse[[idx]][ , 17:21]
+results_gse[[idx]] <- results_gse[[idx]][
+  order(results_gse[[idx]]$F, decreasing = TRUE),
+]
+results_gse[[idx]]$GeneSet <- rownames(results_gse[[idx]])
+
+sig_tmp <- ifelse(results_gse[[idx]][ , 19:23] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_gse[[idx]][ , 4:8] > 0, yes = 1, no = -1)
+sig_tmp <- sig_tmp * direction
+
+row_scores <- t(
+  apply(
+    sig_tmp,
+    MARGIN = 1,
+    function(row) {
+      NLGF_P301S_up <- sum(row[5] == 1) * 5
+      NLGF_S305N_up <- sum(row[4] == 1) * 4
+      NLGF_MAPTKI_up <- sum(row[3] == 1) * 3
+      P301S_up <- sum(row[2] == 1) * 2
+      S305N_up <- sum(row[1] == 1) * 1
+      S305N_dn <- sum(row[1] == -1) * -1
+      P301S_dn <- sum(row[2] == -1) * -2
+      NLGF_MAPTKI_dn <- sum(row[3] == -1) * -3
+      NLGF_S305N_dn <- sum(row[4] == -1) * -4
+      NLGF_P301S_dn <- sum(row[5] == -1) * -5
+      return(
+        c(
+          NLGF_P301S_up, NLGF_S305N_up, NLGF_MAPTKI_up, P301S_up, S305N_up,
+          NLGF_P301S_dn, NLGF_S305N_dn, NLGF_MAPTKI_dn, P301S_dn, S305N_dn
+        )
+      )
+    }
+  )
+)
+order <- order(
+  row_scores[, 1], row_scores[, 2], row_scores[, 3], row_scores[, 4],
+  row_scores[, 5], row_scores[, 6], row_scores[, 7], row_scores[, 8],
+  row_scores[, 9], row_scores[, 10], decreasing = TRUE
+)
+sig_tmp <- sig_tmp[order, ]
+
+sig_tmp <- ifelse(
+  sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
+)
+sig_tmp <- cbind(rep("", nrow(sig_tmp)), sig_tmp)
+sig_gse[[idx]] <- vector("list", length = 6)
+for (i in seq_len(ncol(sig_tmp))) {
+  sig_gse[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
+}
+sig_gse[[idx]] <- do.call(cbind, sig_gse[[idx]])
+results_gse[[idx]] <- results_gse[[idx]][
+  match(rownames(sig_gse[[idx]]), rownames(results_gse[[idx]])),
+]
+sig_uniq_gse[[idx]] <- unique(sig_gse[[idx]])
+```
+
+```{r}
+selectizeInput(
+  paste0("select_gse", idx),
+  label = "Select Gene Sets:",
+  choices = results_gse[[idx]]$Gene,
+  selected = rownames(sig_uniq_gse[[idx]]),
+  multiple = TRUE,
+  width = "100%"
+)
+```
+
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 1
+    sig_tmp <- sig_gse[[idx]][
+      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
+    ]
+    sig_tmp <- sig_tmp[
+      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
+    ]
+
+    mat <- gse_corrected[[idx]][
+      rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
+    ]
+    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(gse_range[[idx]], colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+        },
+        heatmap_legend_param = list(
+          title = "logGSE", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 850,
+  height = 650,
+  res = 96
+)
+```
+
+</div>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 1
+    sig_tmp <- sig_gse[[idx]][
+      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
+    ]
+    sig_tmp <- sig_tmp[
+      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
+    ]
+
+    mat <- gse_corrected[[idx]][
+      rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
+    ]
+    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+
+    mat <- t(
+      apply(
+        mat, MARGIN = 1,
+        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+      )
+    )
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+        },
+        heatmap_legend_param = list(
+          title = "Scaled logGSE", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 850,
+  height = 650,
+  res = 96
+)
+```
+
+</div>
+</div>
+
+### Gene Set Stats
+
+```{r}
+datatable_download_exp_5(results_gse[[idx]])
 ```
 
 Oligodendrocytes
@@ -414,11 +655,20 @@ deg <- deg_data[[idx]]
 deg_corrected[[idx]] <- removeBatchEffect(
   logcounts(deg), batch = deg$batch, group = deg$genotype
 )
-
 deg_range[[idx]] <- c(
   min(deg_corrected[[idx]]),
   (min(deg_corrected[[idx]]) + max(deg_corrected[[idx]])) / 2,
   max(deg_corrected[[idx]])
+)
+
+gse <- gse_data[[idx]]
+gse_corrected[[idx]] <- removeBatchEffect(
+  logcounts(gse), batch = gse$batch, group = gse$genotype
+)
+gse_range[[idx]] <- c(
+  min(gse_corrected[[idx]]),
+  (min(gse_corrected[[idx]]) + max(gse_corrected[[idx]])) / 2,
+  max(gse_corrected[[idx]])
 )
 ```
 
@@ -522,7 +772,7 @@ sig_uniq_deg[[idx]] <- unique(sig_deg[[idx]])
 
 ```{r}
 selectizeInput(
-  paste0("select", idx),
+  paste0("select_deg", idx),
   label = "Select Genes:",
   choices = results_deg[[idx]]$Gene,
   selected = rownames(sig_uniq_deg[[idx]]),
@@ -539,10 +789,10 @@ renderPlot(
   {
     idx <- 2
     gene_anno_sub <- gene_anno[
-      gene_anno$symbol %in% input[[paste0("select", idx)]],
+      gene_anno$symbol %in% input[[paste0("select_deg", idx)]],
     ]
     gene_anno_sub <- gene_anno_sub[
-      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+      match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
       rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
@@ -593,10 +843,10 @@ renderPlot(
   {
     idx <- 2
     gene_anno_sub <- gene_anno[
-      gene_anno$symbol %in% input[[paste0("select", idx)]],
+      gene_anno$symbol %in% input[[paste0("select_deg", idx)]],
     ]
     gene_anno_sub <- gene_anno_sub[
-      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+      match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
       rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
@@ -648,10 +898,218 @@ renderPlot(
 </div>
 </div>
 
-### Results Table
+### Gene Stats
 
 ```{r}
-datatable_download_exp(results_deg[[idx]])
+datatable_download_exp_15(results_deg[[idx]])
+```
+
+### Search Gene Sets
+
+```{r, include = FALSE}
+fit <- lmFit(logcounts(gse), design_gse)
+fit <- contrasts.fit(fit, cont_mat_gse)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+tc <- textConnection("results", open = "w")
+write.fit(
+  fit, tests, file = tc,
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+close(tc)
+results_gse[[idx]] <- read.delim(text = results)
+
+col <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results_gse[[idx]][ , col] <- corrections[[i]][length]
+  col <- col + 1
+}
+
+rownames(results_gse[[idx]]) <- results_gse[[idx]]$X
+results_gse[[idx]] <- results_gse[[idx]][ , -1]
+results_gse[[idx]] <- results_gse[[idx]][ , 1:22]
+tests <- results_gse[[idx]][ , 17:21]
+results_gse[[idx]] <- results_gse[[idx]][
+  order(results_gse[[idx]]$F, decreasing = TRUE),
+]
+results_gse[[idx]]$GeneSet <- rownames(results_gse[[idx]])
+
+sig_tmp <- ifelse(results_gse[[idx]][ , 19:23] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_gse[[idx]][ , 4:8] > 0, yes = 1, no = -1)
+sig_tmp <- sig_tmp * direction
+
+row_scores <- t(
+  apply(
+    sig_tmp,
+    MARGIN = 1,
+    function(row) {
+      NLGF_P301S_up <- sum(row[5] == 1) * 5
+      NLGF_S305N_up <- sum(row[4] == 1) * 4
+      NLGF_MAPTKI_up <- sum(row[3] == 1) * 3
+      P301S_up <- sum(row[2] == 1) * 2
+      S305N_up <- sum(row[1] == 1) * 1
+      S305N_dn <- sum(row[1] == -1) * -1
+      P301S_dn <- sum(row[2] == -1) * -2
+      NLGF_MAPTKI_dn <- sum(row[3] == -1) * -3
+      NLGF_S305N_dn <- sum(row[4] == -1) * -4
+      NLGF_P301S_dn <- sum(row[5] == -1) * -5
+      return(
+        c(
+          NLGF_P301S_up, NLGF_S305N_up, NLGF_MAPTKI_up, P301S_up, S305N_up,
+          NLGF_P301S_dn, NLGF_S305N_dn, NLGF_MAPTKI_dn, P301S_dn, S305N_dn
+        )
+      )
+    }
+  )
+)
+order <- order(
+  row_scores[, 1], row_scores[, 2], row_scores[, 3], row_scores[, 4],
+  row_scores[, 5], row_scores[, 6], row_scores[, 7], row_scores[, 8],
+  row_scores[, 9], row_scores[, 10], decreasing = TRUE
+)
+sig_tmp <- sig_tmp[order, ]
+
+sig_tmp <- ifelse(
+  sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
+)
+sig_tmp <- cbind(rep("", nrow(sig_tmp)), sig_tmp)
+sig_gse[[idx]] <- vector("list", length = 6)
+for (i in seq_len(ncol(sig_tmp))) {
+  sig_gse[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
+}
+sig_gse[[idx]] <- do.call(cbind, sig_gse[[idx]])
+results_gse[[idx]] <- results_gse[[idx]][
+  match(rownames(sig_gse[[idx]]), rownames(results_gse[[idx]])),
+]
+sig_uniq_gse[[idx]] <- unique(sig_gse[[idx]])
+```
+
+```{r}
+selectizeInput(
+  paste0("select_gse", idx),
+  label = "Select Gene Sets:",
+  choices = results_gse[[idx]]$Gene,
+  selected = rownames(sig_uniq_gse[[idx]]),
+  multiple = TRUE,
+  width = "100%"
+)
+```
+
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 2
+    sig_tmp <- sig_gse[[idx]][
+      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
+    ]
+    sig_tmp <- sig_tmp[
+      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
+    ]
+
+    mat <- gse_corrected[[idx]][
+      rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
+    ]
+    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(gse_range[[idx]], colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+        },
+        heatmap_legend_param = list(
+          title = "logGSE", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 850,
+  height = 650,
+  res = 96
+)
+```
+
+</div>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 2
+    sig_tmp <- sig_gse[[idx]][
+      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
+    ]
+    sig_tmp <- sig_tmp[
+      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
+    ]
+
+    mat <- gse_corrected[[idx]][
+      rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
+    ]
+    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+
+    mat <- t(
+      apply(
+        mat, MARGIN = 1,
+        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+      )
+    )
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+        },
+        heatmap_legend_param = list(
+          title = "Scaled logGSE", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 850,
+  height = 650,
+  res = 96
+)
+```
+
+</div>
+</div>
+
+### Gene Set Stats
+
+```{r}
+datatable_download_exp_5(results_gse[[idx]])
 ```
 
 Microglia
@@ -665,11 +1123,20 @@ deg <- deg_data[[idx]]
 deg_corrected[[idx]] <- removeBatchEffect(
   logcounts(deg), batch = deg$batch, group = deg$genotype
 )
-
 deg_range[[idx]] <- c(
   min(deg_corrected[[idx]]),
   (min(deg_corrected[[idx]]) + max(deg_corrected[[idx]])) / 2,
   max(deg_corrected[[idx]])
+)
+
+gse <- gse_data[[idx]]
+gse_corrected[[idx]] <- removeBatchEffect(
+  logcounts(gse), batch = gse$batch, group = gse$genotype
+)
+gse_range[[idx]] <- c(
+  min(gse_corrected[[idx]]),
+  (min(gse_corrected[[idx]]) + max(gse_corrected[[idx]])) / 2,
+  max(gse_corrected[[idx]])
 )
 ```
 
@@ -774,7 +1241,7 @@ sig_uniq_deg[[idx]] <- unique(sig_deg[[idx]])
 
 ```{r}
 selectizeInput(
-  paste0("select", idx),
+  paste0("select_deg", idx),
   label = "Select Genes:",
   choices = results_deg[[idx]]$Gene,
   selected = rownames(sig_uniq_deg[[idx]]),
@@ -791,10 +1258,10 @@ renderPlot(
   {
     idx <- 3
     gene_anno_sub <- gene_anno[
-      gene_anno$symbol %in% input[[paste0("select", idx)]],
+      gene_anno$symbol %in% input[[paste0("select_deg", idx)]],
     ]
     gene_anno_sub <- gene_anno_sub[
-      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+      match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
       rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
@@ -845,10 +1312,10 @@ renderPlot(
   {
     idx <- 3
     gene_anno_sub <- gene_anno[
-      gene_anno$symbol %in% input[[paste0("select", idx)]],
+      gene_anno$symbol %in% input[[paste0("select_deg", idx)]],
     ]
     gene_anno_sub <- gene_anno_sub[
-      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+      match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
       rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
@@ -900,10 +1367,220 @@ renderPlot(
 </div>
 </div>
 
-### Results Table
+### Gene Stats
 
 ```{r}
-datatable_download_exp(results_deg[[idx]])
+datatable_download_exp_15(results_deg[[idx]])
+```
+
+### Search Gene Sets
+
+```{r, include = FALSE}
+fit <- lmFit(logcounts(gse), design_gse)
+fit <- contrasts.fit(fit, cont_mat_gse)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+tc <- textConnection("results", open = "w")
+write.fit(
+  fit, tests, file = tc,
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+close(tc)
+results_gse[[idx]] <- read.delim(text = results)
+
+col <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results_gse[[idx]][ , col] <- corrections[[i]][length]
+  col <- col + 1
+}
+
+rownames(results_gse[[idx]]) <- results_gse[[idx]]$X
+results_gse[[idx]] <- results_gse[[idx]][ , -1]
+results_gse[[idx]] <- results_gse[[idx]][ , 1:22]
+tests <- results_gse[[idx]][ , 17:21]
+results_gse[[idx]] <- results_gse[[idx]][
+  order(results_gse[[idx]]$F, decreasing = TRUE),
+]
+results_gse[[idx]]$GeneSet <- rownames(results_gse[[idx]])
+
+sig_tmp <- ifelse(results_gse[[idx]][ , 19:23] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_gse[[idx]][ , 4:8] > 0, yes = 1, no = -1)
+sig_tmp <- sig_tmp * direction
+
+row_scores <- t(
+  apply(
+    sig_tmp,
+    MARGIN = 1,
+    function(row) {
+      NLGF_P301S_up <- sum(row[5] == 1) * 5
+      NLGF_S305N_up <- sum(row[4] == 1) * 4
+      NLGF_MAPTKI_up <- sum(row[3] == 1) * 3
+      P301S_up <- sum(row[2] == 1) * 2
+      S305N_up <- sum(row[1] == 1) * 1
+      S305N_dn <- sum(row[1] == -1) * -1
+      P301S_dn <- sum(row[2] == -1) * -2
+      NLGF_MAPTKI_dn <- sum(row[3] == -1) * -3
+      NLGF_S305N_dn <- sum(row[4] == -1) * -4
+      NLGF_P301S_dn <- sum(row[5] == -1) * -5
+      return(
+        c(
+          NLGF_P301S_up, NLGF_S305N_up, NLGF_MAPTKI_up, P301S_up, S305N_up,
+          NLGF_P301S_dn, NLGF_S305N_dn, NLGF_MAPTKI_dn, P301S_dn, S305N_dn
+        )
+      )
+    }
+  )
+)
+order <- order(
+  row_scores[, 1], row_scores[, 2], row_scores[, 3], row_scores[, 4],
+  row_scores[, 5], row_scores[, 6], row_scores[, 7], row_scores[, 8],
+  row_scores[, 9], row_scores[, 10], decreasing = TRUE
+)
+sig_tmp <- sig_tmp[order, ]
+
+sig_tmp <- ifelse(
+  sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
+)
+sig_tmp <- cbind(rep("", nrow(sig_tmp)), sig_tmp)
+sig_gse[[idx]] <- vector("list", length = 6)
+for (i in seq_len(ncol(sig_tmp))) {
+  sig_gse[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
+}
+sig_gse[[idx]] <- do.call(cbind, sig_gse[[idx]])
+results_gse[[idx]] <- results_gse[[idx]][
+  match(rownames(sig_gse[[idx]]), rownames(results_gse[[idx]])),
+]
+sig_uniq_gse[[idx]] <- unique(sig_gse[[idx]])
+```
+
+```{r}
+selectizeInput(
+  paste0("select_gse", idx),
+  label = "Select Gene Sets:",
+  choices = results_gse[[idx]]$Gene,
+  selected = rownames(sig_uniq_gse[[idx]]),
+  multiple = TRUE,
+  width = "100%"
+)
+```
+
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 3
+    sig_tmp <- sig_gse[[idx]][
+      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
+    ]
+    sig_tmp <- sig_tmp[
+      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
+    ]
+
+    mat <- gse_corrected[[idx]][
+      rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
+    ]
+    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(gse_range[[idx]], colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+        },
+        heatmap_legend_param = list(
+          title = "logGSE", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 850,
+  height = 650,
+  res = 96
+)
+```
+
+</div>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 3
+    sig_tmp <- sig_gse[[idx]][
+      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
+    ]
+    sig_tmp <- sig_tmp[
+      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
+    ]
+
+    mat <- gse_corrected[[idx]][
+      rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
+    ]
+    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+
+    mat <- t(
+      apply(
+        mat, MARGIN = 1,
+        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+      )
+    )
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+        },
+        heatmap_legend_param = list(
+          title = "Scaled logGSE", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 850,
+  height = 650,
+  res = 96
+)
+```
+
+</div>
+</div>
+
+### Gene Set Stats
+
+```{r}
+datatable_download_exp_5(results_gse[[idx]])
 ```
 
 Glutamatergic CA3
@@ -917,11 +1594,20 @@ deg <- deg_data[[idx]]
 deg_corrected[[idx]] <- removeBatchEffect(
   logcounts(deg), batch = deg$batch, group = deg$genotype
 )
-
 deg_range[[idx]] <- c(
   min(deg_corrected[[idx]]),
   (min(deg_corrected[[idx]]) + max(deg_corrected[[idx]])) / 2,
   max(deg_corrected[[idx]])
+)
+
+gse <- gse_data[[idx]]
+gse_corrected[[idx]] <- removeBatchEffect(
+  logcounts(gse), batch = gse$batch, group = gse$genotype
+)
+gse_range[[idx]] <- c(
+  min(gse_corrected[[idx]]),
+  (min(gse_corrected[[idx]]) + max(gse_corrected[[idx]])) / 2,
+  max(gse_corrected[[idx]])
 )
 ```
 
@@ -1028,7 +1714,7 @@ sig_uniq_deg[[idx]] <- unique(sig_deg[[idx]])
 
 ```{r}
 selectizeInput(
-  paste0("select", idx),
+  paste0("select_deg", idx),
   label = "Select Genes:",
   choices = results_deg[[idx]]$Gene,
   selected = rownames(sig_uniq_deg[[idx]]),
@@ -1045,10 +1731,10 @@ renderPlot(
   {
     idx <- 4
     gene_anno_sub <- gene_anno[
-      gene_anno$symbol %in% input[[paste0("select", idx)]],
+      gene_anno$symbol %in% input[[paste0("select_deg", idx)]],
     ]
     gene_anno_sub <- gene_anno_sub[
-      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+      match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
       rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
@@ -1099,10 +1785,10 @@ renderPlot(
   {
     idx <- 4
     gene_anno_sub <- gene_anno[
-      gene_anno$symbol %in% input[[paste0("select", idx)]],
+      gene_anno$symbol %in% input[[paste0("select_deg", idx)]],
     ]
     gene_anno_sub <- gene_anno_sub[
-      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+      match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
       rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
@@ -1154,10 +1840,221 @@ renderPlot(
 </div>
 </div>
 
-### Results Table
+### Gene Stats
 
 ```{r}
-datatable_download_exp(results_deg[[idx]])
+datatable_download_exp_15(results_deg[[idx]])
+```
+
+### Search Gene Sets
+
+```{r, include = FALSE}
+fit <- lmFit(logcounts(gse), design_gse)
+fit <- contrasts.fit(fit, cont_mat_gse)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+tc <- textConnection("results", open = "w")
+write.fit(
+  fit, tests, file = tc,
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+close(tc)
+results_gse[[idx]] <- read.delim(text = results)
+
+col <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results_gse[[idx]][ , col] <- corrections[[i]][length]
+  col <- col + 1
+}
+
+rownames(results_gse[[idx]]) <- results_gse[[idx]]$X
+results_gse[[idx]] <- results_gse[[idx]][ , -1]
+results_gse[[idx]] <- results_gse[[idx]][ , 1:22]
+tests <- results_gse[[idx]][ , 17:21]
+results_gse[[idx]] <- results_gse[[idx]][
+  order(results_gse[[idx]]$F, decreasing = TRUE),
+]
+results_gse[[idx]]$GeneSet <- rownames(results_gse[[idx]])
+
+sig_tmp <- ifelse(results_gse[[idx]][ , 19:23] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_gse[[idx]][ , 4:8] > 0, yes = 1, no = -1)
+sig_tmp <- sig_tmp * direction
+
+row_scores <- t(
+  apply(
+    sig_tmp,
+    MARGIN = 1,
+    function(row) {
+      NLGF_P301S_up <- sum(row[5] == 1) * 5
+      NLGF_S305N_up <- sum(row[4] == 1) * 4
+      NLGF_MAPTKI_up <- sum(row[3] == 1) * 3
+      P301S_up <- sum(row[2] == 1) * 2
+      S305N_up <- sum(row[1] == 1) * 1
+      S305N_dn <- sum(row[1] == -1) * -1
+      P301S_dn <- sum(row[2] == -1) * -2
+      NLGF_MAPTKI_dn <- sum(row[3] == -1) * -3
+      NLGF_S305N_dn <- sum(row[4] == -1) * -4
+      NLGF_P301S_dn <- sum(row[5] == -1) * -5
+      return(
+        c(
+          NLGF_P301S_up, NLGF_S305N_up, NLGF_MAPTKI_up, P301S_up, S305N_up,
+          NLGF_P301S_dn, NLGF_S305N_dn, NLGF_MAPTKI_dn, P301S_dn, S305N_dn
+        )
+      )
+    }
+  )
+)
+order <- order(
+  row_scores[, 1], row_scores[, 2], row_scores[, 3], row_scores[, 4],
+  row_scores[, 5], row_scores[, 6], row_scores[, 7], row_scores[, 8],
+  row_scores[, 9], row_scores[, 10], decreasing = TRUE
+)
+sig_tmp <- sig_tmp[order, ]
+
+sig_tmp <- ifelse(
+  sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
+)
+sig_tmp <- cbind(rep("", nrow(sig_tmp)), sig_tmp)
+sig_gse[[idx]] <- vector("list", length = 6)
+for (i in seq_len(ncol(sig_tmp))) {
+  sig_gse[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
+}
+sig_gse[[idx]] <- do.call(cbind, sig_gse[[idx]])
+results_gse[[idx]] <- results_gse[[idx]][
+  match(rownames(sig_gse[[idx]]), rownames(results_gse[[idx]])),
+]
+sig_uniq_gse[[idx]] <- unique(sig_gse[[idx]])
+```
+
+```{r}
+selectizeInput(
+  paste0("select_gse", idx),
+  label = "Select Gene Sets:",
+  choices = results_gse[[idx]]$Gene,
+  selected = rownames(sig_uniq_gse[[idx]]),
+  multiple = TRUE,
+  width = "100%"
+)
+```
+
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 4
+    sig_tmp <- sig_gse[[idx]][
+      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
+    ]
+    sig_tmp <- sig_tmp[
+      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
+    ]
+
+    mat <- gse_corrected[[idx]][
+      rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
+    ]
+    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(gse_range[[idx]], colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+        },
+        heatmap_legend_param = list(
+          title = "logGSE", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 850,
+  height = 650,
+  res = 96
+)
+```
+
+</div>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 4
+    sig_tmp <- sig_gse[[idx]][
+      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
+    ]
+    sig_tmp <- sig_tmp[
+      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
+    ]
+
+    mat <- gse_corrected[[idx]][
+      rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
+    ]
+    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+
+    mat <- t(
+      apply(
+        mat, MARGIN = 1,
+        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+      )
+    )
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+        },
+        heatmap_legend_param = list(
+          title = "Scaled logGSE", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 850,
+  height = 650,
+  res = 96
+)
+```
+
+</div>
+</div>
+
+### Gene Set Stats
+
+```{r}
+datatable_download_exp_5(results_gse[[idx]])
 ```
 
 Glutamatergic CA1
@@ -1171,11 +2068,20 @@ deg <- deg_data[[idx]]
 deg_corrected[[idx]] <- removeBatchEffect(
   logcounts(deg), batch = deg$batch, group = deg$genotype
 )
-
 deg_range[[idx]] <- c(
   min(deg_corrected[[idx]]),
   (min(deg_corrected[[idx]]) + max(deg_corrected[[idx]])) / 2,
   max(deg_corrected[[idx]])
+)
+
+gse <- gse_data[[idx]]
+gse_corrected[[idx]] <- removeBatchEffect(
+  logcounts(gse), batch = gse$batch, group = gse$genotype
+)
+gse_range[[idx]] <- c(
+  min(gse_corrected[[idx]]),
+  (min(gse_corrected[[idx]]) + max(gse_corrected[[idx]])) / 2,
+  max(gse_corrected[[idx]])
 )
 ```
 
@@ -1283,7 +2189,7 @@ sig_uniq_deg[[idx]] <- unique(sig_deg[[idx]])
 
 ```{r}
 selectizeInput(
-  paste0("select", idx),
+  paste0("select_deg", idx),
   label = "Select Genes:",
   choices = results_deg[[idx]]$Gene,
   selected = rownames(sig_uniq_deg[[idx]]),
@@ -1300,10 +2206,10 @@ renderPlot(
   {
     idx <- 5
     gene_anno_sub <- gene_anno[
-      gene_anno$symbol %in% input[[paste0("select", idx)]],
+      gene_anno$symbol %in% input[[paste0("select_deg", idx)]],
     ]
     gene_anno_sub <- gene_anno_sub[
-      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+      match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
       rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
@@ -1354,10 +2260,10 @@ renderPlot(
   {
     idx <- 5
     gene_anno_sub <- gene_anno[
-      gene_anno$symbol %in% input[[paste0("select", idx)]],
+      gene_anno$symbol %in% input[[paste0("select_deg", idx)]],
     ]
     gene_anno_sub <- gene_anno_sub[
-      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+      match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
       rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
@@ -1409,10 +2315,222 @@ renderPlot(
 </div>
 </div>
 
-### Results Table
+### Gene Stats
 
 ```{r}
-datatable_download_exp(results_deg[[idx]])
+datatable_download_exp_15(results_deg[[idx]])
+```
+
+### Search Gene Sets
+
+```{r, include = FALSE}
+fit <- lmFit(logcounts(gse), design_gse)
+fit <- contrasts.fit(fit, cont_mat_gse)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+tc <- textConnection("results", open = "w")
+write.fit(
+  fit, tests, file = tc,
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+close(tc)
+results_gse[[idx]] <- read.delim(text = results)
+
+col <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results_gse[[idx]][ , col] <- corrections[[i]][length]
+  col <- col + 1
+}
+
+rownames(results_gse[[idx]]) <- results_gse[[idx]]$X
+results_gse[[idx]] <- results_gse[[idx]][ , -1]
+results_gse[[idx]] <- results_gse[[idx]][ , 1:22]
+tests <- results_gse[[idx]][ , 17:21]
+results_gse[[idx]] <- results_gse[[idx]][
+  order(results_gse[[idx]]$F, decreasing = TRUE),
+]
+results_gse[[idx]]$GeneSet <- rownames(results_gse[[idx]])
+
+sig_tmp <- ifelse(results_gse[[idx]][ , 19:23] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_gse[[idx]][ , 4:8] > 0, yes = 1, no = -1)
+sig_tmp <- sig_tmp * direction
+
+row_scores <- t(
+  apply(
+    sig_tmp,
+    MARGIN = 1,
+    function(row) {
+      NLGF_P301S_up <- sum(row[5] == 1) * 5
+      NLGF_S305N_up <- sum(row[4] == 1) * 4
+      NLGF_MAPTKI_up <- sum(row[3] == 1) * 3
+      P301S_up <- sum(row[2] == 1) * 2
+      S305N_up <- sum(row[1] == 1) * 1
+      S305N_dn <- sum(row[1] == -1) * -1
+      P301S_dn <- sum(row[2] == -1) * -2
+      NLGF_MAPTKI_dn <- sum(row[3] == -1) * -3
+      NLGF_S305N_dn <- sum(row[4] == -1) * -4
+      NLGF_P301S_dn <- sum(row[5] == -1) * -5
+      return(
+        c(
+          NLGF_P301S_up, NLGF_S305N_up, NLGF_MAPTKI_up, P301S_up, S305N_up,
+          NLGF_P301S_dn, NLGF_S305N_dn, NLGF_MAPTKI_dn, P301S_dn, S305N_dn
+        )
+      )
+    }
+  )
+)
+order <- order(
+  row_scores[, 1], row_scores[, 2], row_scores[, 3], row_scores[, 4],
+  row_scores[, 5], row_scores[, 6], row_scores[, 7], row_scores[, 8],
+  row_scores[, 9], row_scores[, 10], decreasing = TRUE
+)
+sig_tmp <- sig_tmp[order, ]
+
+sig_tmp <- ifelse(
+  sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
+)
+sig_tmp <- cbind(rep("", nrow(sig_tmp)), sig_tmp)
+sig_gse[[idx]] <- vector("list", length = 6)
+for (i in seq_len(ncol(sig_tmp))) {
+  sig_gse[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
+}
+sig_gse[[idx]] <- do.call(cbind, sig_gse[[idx]])
+results_gse[[idx]] <- results_gse[[idx]][
+  match(rownames(sig_gse[[idx]]), rownames(results_gse[[idx]])),
+]
+sig_uniq_gse[[idx]] <- unique(sig_gse[[idx]])
+```
+
+```{r}
+selectizeInput(
+  paste0("select_gse", idx),
+  label = "Select Gene Sets:",
+  choices = results_gse[[idx]]$Gene,
+  selected = rownames(sig_uniq_gse[[idx]]),
+  multiple = TRUE,
+  width = "100%"
+)
+```
+
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 5
+    sig_tmp <- sig_gse[[idx]][
+      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
+    ]
+    sig_tmp <- sig_tmp[
+      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
+    ]
+
+    mat <- gse_corrected[[idx]][
+      rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
+    ]
+    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(gse_range[[idx]], colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+        },
+        heatmap_legend_param = list(
+          title = "logGSE", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 850,
+  height = 650,
+  res = 96
+)
+```
+
+</div>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 5
+    sig_tmp <- sig_gse[[idx]][
+      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
+    ]
+    sig_tmp <- sig_tmp[
+      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
+    ]
+
+    mat <- gse_corrected[[idx]][
+      rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
+    ]
+    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+
+    mat <- t(
+      apply(
+        mat, MARGIN = 1,
+        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+      )
+    )
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+        },
+        heatmap_legend_param = list(
+          title = "Scaled logGSE", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 850,
+  height = 650,
+  res = 96
+)
+```
+
+</div>
+</div>
+
+### Gene Set Stats
+
+```{r}
+datatable_download_exp_5(results_gse[[idx]])
 ```
 
 Glutamatergic L2/3 ENT
@@ -1426,11 +2544,20 @@ deg <- deg_data[[idx]]
 deg_corrected[[idx]] <- removeBatchEffect(
   logcounts(deg), batch = deg$batch, group = deg$genotype
 )
-
 deg_range[[idx]] <- c(
   min(deg_corrected[[idx]]),
   (min(deg_corrected[[idx]]) + max(deg_corrected[[idx]])) / 2,
   max(deg_corrected[[idx]])
+)
+
+gse <- gse_data[[idx]]
+gse_corrected[[idx]] <- removeBatchEffect(
+  logcounts(gse), batch = gse$batch, group = gse$genotype
+)
+gse_range[[idx]] <- c(
+  min(gse_corrected[[idx]]),
+  (min(gse_corrected[[idx]]) + max(gse_corrected[[idx]])) / 2,
+  max(gse_corrected[[idx]])
 )
 ```
 
@@ -1539,7 +2666,7 @@ sig_uniq_deg[[idx]] <- unique(sig_deg[[idx]])
 
 ```{r}
 selectizeInput(
-  paste0("select", idx),
+  paste0("select_deg", idx),
   label = "Select Genes:",
   choices = results_deg[[idx]]$Gene,
   selected = rownames(sig_uniq_deg[[idx]]),
@@ -1556,10 +2683,10 @@ renderPlot(
   {
     idx <- 6
     gene_anno_sub <- gene_anno[
-      gene_anno$symbol %in% input[[paste0("select", idx)]],
+      gene_anno$symbol %in% input[[paste0("select_deg", idx)]],
     ]
     gene_anno_sub <- gene_anno_sub[
-      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+      match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
       rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
@@ -1610,10 +2737,10 @@ renderPlot(
   {
     idx <- 6
     gene_anno_sub <- gene_anno[
-      gene_anno$symbol %in% input[[paste0("select", idx)]],
+      gene_anno$symbol %in% input[[paste0("select_deg", idx)]],
     ]
     gene_anno_sub <- gene_anno_sub[
-      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+      match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
       rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
@@ -1665,10 +2792,224 @@ renderPlot(
 </div>
 </div>
 
-### Results Table
+### Gene Stats
 
 ```{r}
-datatable_download_exp(results_deg[[idx]])
+datatable_download_exp_15(results_deg[[idx]])
+```
+
+### Search Gene Sets
+
+```{r, include = FALSE}
+fit <- lmFit(logcounts(gse), design_gse)
+fit <- contrasts.fit(fit, cont_mat_gse)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+tc <- textConnection("results", open = "w")
+write.fit(
+  fit, tests, file = tc,
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+close(tc)
+results_gse[[idx]] <- read.delim(text = results)
+
+col <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results_gse[[idx]][ , col] <- corrections[[i]][length]
+  col <- col + 1
+}
+
+rownames(results_gse[[idx]]) <- results_gse[[idx]]$X
+results_gse[[idx]] <- results_gse[[idx]][ , -1]
+results_gse[[idx]] <- results_gse[[idx]][ , 1:22]
+tests <- results_gse[[idx]][ , 17:21]
+results_gse[[idx]] <- results_gse[[idx]][
+  order(results_gse[[idx]]$F, decreasing = TRUE),
+]
+results_gse[[idx]]$GeneSet <- rownames(results_gse[[idx]])
+
+sig_tmp <- ifelse(results_gse[[idx]][ , 19:23] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_gse[[idx]][ , 4:8] > 0, yes = 1, no = -1)
+sig_tmp <- sig_tmp * direction
+
+row_scores <- t(
+  apply(
+    sig_tmp,
+    MARGIN = 1,
+    function(row) {
+      NLGF_P301S_up <- sum(row[5] == 1) * 5
+      NLGF_S305N_up <- sum(row[4] == 1) * 4
+      NLGF_MAPTKI_up <- sum(row[3] == 1) * 3
+      P301S_up <- sum(row[2] == 1) * 2
+      S305N_up <- sum(row[1] == 1) * 1
+      S305N_dn <- sum(row[1] == -1) * -1
+      P301S_dn <- sum(row[2] == -1) * -2
+      NLGF_MAPTKI_dn <- sum(row[3] == -1) * -3
+      NLGF_S305N_dn <- sum(row[4] == -1) * -4
+      NLGF_P301S_dn <- sum(row[5] == -1) * -5
+      return(
+        c(
+          NLGF_P301S_up, NLGF_S305N_up, NLGF_MAPTKI_up, P301S_up, S305N_up,
+          NLGF_P301S_dn, NLGF_S305N_dn, NLGF_MAPTKI_dn, P301S_dn, S305N_dn
+        )
+      )
+    }
+  )
+)
+order <- order(
+  row_scores[, 1], row_scores[, 2], row_scores[, 3], row_scores[, 4],
+  row_scores[, 5], row_scores[, 6], row_scores[, 7], row_scores[, 8],
+  row_scores[, 9], row_scores[, 10], decreasing = TRUE
+)
+sig_tmp <- sig_tmp[order, ]
+
+sig_tmp <- ifelse(
+  sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
+)
+sig_tmp <- cbind(rep("", nrow(sig_tmp)), sig_tmp)
+sig_gse[[idx]] <- vector("list", length = 6)
+for (i in seq_len(ncol(sig_tmp))) {
+  sig_gse[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
+}
+sig_gse[[idx]] <- do.call(cbind, sig_gse[[idx]])
+results_gse[[idx]] <- results_gse[[idx]][
+  match(rownames(sig_gse[[idx]]), rownames(results_gse[[idx]])),
+]
+sig_uniq_gse[[idx]] <- unique(sig_gse[[idx]])
+```
+
+```{r}
+selectizeInput(
+  paste0("select_gse", idx),
+  label = "Select Gene Sets:",
+  choices = results_gse[[idx]]$Gene,
+  selected = rownames(sig_uniq_gse[[idx]]),
+  multiple = TRUE,
+  width = "100%"
+)
+```
+
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 6
+    sig_tmp <- sig_gse[[idx]][
+      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
+    ]
+    sig_tmp <- sig_tmp[
+      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
+    ]
+
+    mat <- gse_corrected[[idx]][
+      rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
+    ]
+    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(gse_range[[idx]], colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+        },
+        heatmap_legend_param = list(
+          title = "logGSE", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 850,
+  height = 650,
+  res = 96
+)
+```
+
+</div>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 6
+    sig_tmp <- sig_gse[[idx]][
+      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
+    ]
+    sig_tmp <- sig_tmp[
+      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
+    ]
+
+    mat <- gse_corrected[[idx]][
+      rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
+    ]
+    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+
+    mat <- t(
+      apply(
+        mat, MARGIN = 1,
+        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+      )
+    )
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+        },
+        heatmap_legend_param = list(
+          title = "Scaled logGSE", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 850,
+  height = 650,
+  res = 96
+)
+```
+
+</div>
+</div>
+
+### Gene Set Stats
+
+```{r}
+datatable_download_exp_5(results_gse[[idx]])
 ```
 
 GABAergic Sst
@@ -1682,11 +3023,20 @@ deg <- deg_data[[idx]]
 deg_corrected[[idx]] <- removeBatchEffect(
   logcounts(deg), batch = deg$batch, group = deg$genotype
 )
-
 deg_range[[idx]] <- c(
   min(deg_corrected[[idx]]),
   (min(deg_corrected[[idx]]) + max(deg_corrected[[idx]])) / 2,
   max(deg_corrected[[idx]])
+)
+
+gse <- gse_data[[idx]]
+gse_corrected[[idx]] <- removeBatchEffect(
+  logcounts(gse), batch = gse$batch, group = gse$genotype
+)
+gse_range[[idx]] <- c(
+  min(gse_corrected[[idx]]),
+  (min(gse_corrected[[idx]]) + max(gse_corrected[[idx]])) / 2,
+  max(gse_corrected[[idx]])
 )
 ```
 
@@ -1797,7 +3147,7 @@ sig_uniq_deg[[idx]] <- unique(sig_deg[[idx]])
 
 ```{r}
 selectizeInput(
-  paste0("select", idx),
+  paste0("select_deg", idx),
   label = "Select Genes:",
   choices = results_deg[[idx]]$Gene,
   selected = rownames(sig_uniq_deg[[idx]]),
@@ -1814,10 +3164,10 @@ renderPlot(
   {
     idx <- 7
     gene_anno_sub <- gene_anno[
-      gene_anno$symbol %in% input[[paste0("select", idx)]],
+      gene_anno$symbol %in% input[[paste0("select_deg", idx)]],
     ]
     gene_anno_sub <- gene_anno_sub[
-      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+      match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
       rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
@@ -1868,10 +3218,10 @@ renderPlot(
   {
     idx <- 7
     gene_anno_sub <- gene_anno[
-      gene_anno$symbol %in% input[[paste0("select", idx)]],
+      gene_anno$symbol %in% input[[paste0("select_deg", idx)]],
     ]
     gene_anno_sub <- gene_anno_sub[
-      match(input[[paste0("select", idx)]], gene_anno_sub$symbol),
+      match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
       rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
@@ -1923,10 +3273,225 @@ renderPlot(
 </div>
 </div>
 
-### Results Table
+### Gene Stats
 
 ```{r}
-datatable_download_exp(results_deg[[idx]])
+datatable_download_exp_15(results_deg[[idx]])
+```
+
+### Search Gene Sets
+
+```{r, include = FALSE}
+fit <- lmFit(logcounts(gse), design_gse)
+fit <- contrasts.fit(fit, cont_mat_gse)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+tc <- textConnection("results", open = "w")
+write.fit(
+  fit, tests, file = tc,
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+close(tc)
+results_gse[[idx]] <- read.delim(text = results)
+
+col <- 18
+length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
+  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
+  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]]) +
+  nrow(gse_list[[7]])
+length <- length1:length2
+for (i in seq_along(corrections)) {
+  results_gse[[idx]][ , col] <- corrections[[i]][length]
+  col <- col + 1
+}
+
+rownames(results_gse[[idx]]) <- results_gse[[idx]]$X
+results_gse[[idx]] <- results_gse[[idx]][ , -1]
+results_gse[[idx]] <- results_gse[[idx]][ , 1:22]
+tests <- results_gse[[idx]][ , 17:21]
+results_gse[[idx]] <- results_gse[[idx]][
+  order(results_gse[[idx]]$F, decreasing = TRUE),
+]
+results_gse[[idx]]$GeneSet <- rownames(results_gse[[idx]])
+
+sig_tmp <- ifelse(results_gse[[idx]][ , 19:23] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_gse[[idx]][ , 4:8] > 0, yes = 1, no = -1)
+sig_tmp <- sig_tmp * direction
+
+row_scores <- t(
+  apply(
+    sig_tmp,
+    MARGIN = 1,
+    function(row) {
+      NLGF_P301S_up <- sum(row[5] == 1) * 5
+      NLGF_S305N_up <- sum(row[4] == 1) * 4
+      NLGF_MAPTKI_up <- sum(row[3] == 1) * 3
+      P301S_up <- sum(row[2] == 1) * 2
+      S305N_up <- sum(row[1] == 1) * 1
+      S305N_dn <- sum(row[1] == -1) * -1
+      P301S_dn <- sum(row[2] == -1) * -2
+      NLGF_MAPTKI_dn <- sum(row[3] == -1) * -3
+      NLGF_S305N_dn <- sum(row[4] == -1) * -4
+      NLGF_P301S_dn <- sum(row[5] == -1) * -5
+      return(
+        c(
+          NLGF_P301S_up, NLGF_S305N_up, NLGF_MAPTKI_up, P301S_up, S305N_up,
+          NLGF_P301S_dn, NLGF_S305N_dn, NLGF_MAPTKI_dn, P301S_dn, S305N_dn
+        )
+      )
+    }
+  )
+)
+order <- order(
+  row_scores[, 1], row_scores[, 2], row_scores[, 3], row_scores[, 4],
+  row_scores[, 5], row_scores[, 6], row_scores[, 7], row_scores[, 8],
+  row_scores[, 9], row_scores[, 10], decreasing = TRUE
+)
+sig_tmp <- sig_tmp[order, ]
+
+sig_tmp <- ifelse(
+  sig_tmp == -1, yes = "↓", no = ifelse(sig_tmp == 1, yes = "↑", no = "")
+)
+sig_tmp <- cbind(rep("", nrow(sig_tmp)), sig_tmp)
+sig_gse[[idx]] <- vector("list", length = 6)
+for (i in seq_len(ncol(sig_tmp))) {
+  sig_gse[[idx]][[i]] <- replicate(4, expr = sig_tmp[ , i])
+}
+sig_gse[[idx]] <- do.call(cbind, sig_gse[[idx]])
+results_gse[[idx]] <- results_gse[[idx]][
+  match(rownames(sig_gse[[idx]]), rownames(results_gse[[idx]])),
+]
+sig_uniq_gse[[idx]] <- unique(sig_gse[[idx]])
+```
+
+```{r}
+selectizeInput(
+  paste0("select_gse", idx),
+  label = "Select Gene Sets:",
+  choices = results_gse[[idx]]$Gene,
+  selected = rownames(sig_uniq_gse[[idx]]),
+  multiple = TRUE,
+  width = "100%"
+)
+```
+
+<div style='display:flex; flex-direction:row; justify-content:space-evenly;'>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 7
+    sig_tmp <- sig_gse[[idx]][
+      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
+    ]
+    sig_tmp <- sig_tmp[
+      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
+    ]
+
+    mat <- gse_corrected[[idx]][
+      rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
+    ]
+    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(gse_range[[idx]], colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+        },
+        heatmap_legend_param = list(
+          title = "logGSE", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 850,
+  height = 650,
+  res = 96
+)
+```
+
+</div>
+<div>
+
+```{r}
+renderPlot(
+  {
+    idx <- 7
+    sig_tmp <- sig_gse[[idx]][
+      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
+    ]
+    sig_tmp <- sig_tmp[
+      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
+    ]
+
+    mat <- gse_corrected[[idx]][
+      rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
+    ]
+    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+
+    mat <- t(
+      apply(
+        mat, MARGIN = 1,
+        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+      )
+    )
+    draw(
+      Heatmap(
+        mat,
+        col = colorRamp2(c(-1, 0, 1), colors = c("blue", "white", "red")),
+        column_title = ctype_name[[idx]],
+        cluster_columns = FALSE,
+        cluster_rows = FALSE,
+        column_split = rep(seq(6), each = 4),
+        row_names_gp = gpar(fontsize = 12),
+        row_title_rot = 0,
+        top_annotation = top_anno,
+        show_column_names = FALSE,
+        cell_fun = function(j, i, x, y, width, height, fill) {
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+        },
+        heatmap_legend_param = list(
+          title = "Scaled logGSE", direction = "horizontal",
+          title_position = "topcenter", labels_gp = gpar(fontsize = 9),
+          grid_height = unit(3, "mm")
+        )
+      ),
+      heatmap_legend_side = "top"
+    )
+  },
+  width = 850,
+  height = 650,
+  res = 96
+)
+```
+
+</div>
+</div>
+
+### Gene Set Stats
+
+```{r}
+datatable_download_exp_5(results_gse[[idx]])
 ```
 
 ```{r, include = FALSE}
