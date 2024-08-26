@@ -327,14 +327,22 @@ renderPlot(
       match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
     rownames(mat) <- gene_anno_sub$symbol
 
     draw(
@@ -381,14 +389,22 @@ renderPlot(
       match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
     rownames(mat) <- gene_anno_sub$symbol
 
     mat <- t(
@@ -539,16 +555,21 @@ renderPlot(
   {
     idx <- 1
     sig_tmp <- sig_gse[[idx]][
-      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
+      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]], ,
+        drop = FALSE
     ]
-    sig_tmp <- sig_tmp[
-      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
-    ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
+      ]
+    }
 
     mat <- gse_corrected[[idx]][
       rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
     ]
-    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+    if (nrow(mat) > 1) {
+      mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+    }
 
     mat <- t(
       apply(
@@ -631,17 +652,27 @@ renderPlot(
       gene_anno_sub$symbol %in% rownames(sig_deg[[idx]]),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
-    rownames(mat) <- gene_anno_sub$symbol
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
+    if (nrow(mat) > 0) {
+      rownames(mat) <- gene_anno_sub$symbol
+    }
 
-    add <- matrix(NA, nrow = nrow(add_anno), ncol = ncol(mat))
+    add <- matrix(NA, nrow = nrow(add_anno), ncol = 24)
     rownames(add) <- add_anno$symbol
     mat <- rbind(mat, add)
     sig_tmp <- rbind(sig_tmp, add)
@@ -668,9 +699,9 @@ renderPlot(
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
-        cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
-        },
+        # cell_fun = function(j, i, x, y, width, height, fill) {
+        #   grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+        # },
         heatmap_legend_param = list(
           title = "logCPM", direction = "horizontal",
           title_position = "topcenter", labels_gp = gpar(fontsize = 9),
@@ -709,17 +740,27 @@ renderPlot(
       gene_anno_sub$symbol %in% rownames(sig_deg[[idx]]),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
-    rownames(mat) <- gene_anno_sub$symbol
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
+    if (nrow(mat) > 0) {
+      rownames(mat) <- gene_anno_sub$symbol
+    }
 
-    add <- matrix(NA, nrow = nrow(add_anno), ncol = ncol(mat))
+    add <- matrix(NA, nrow = nrow(add_anno), ncol = 24)
     rownames(add) <- add_anno$symbol
     mat <- rbind(mat, add)
     sig_tmp <- rbind(sig_tmp, add)
@@ -924,14 +965,22 @@ renderPlot(
       match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
     rownames(mat) <- gene_anno_sub$symbol
 
     draw(
@@ -978,14 +1027,22 @@ renderPlot(
       match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
     rownames(mat) <- gene_anno_sub$symbol
 
     mat <- t(
@@ -1136,16 +1193,21 @@ renderPlot(
   {
     idx <- 2
     sig_tmp <- sig_gse[[idx]][
-      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
+      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]], ,
+        drop = FALSE
     ]
-    sig_tmp <- sig_tmp[
-      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
-    ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
+      ]
+    }
 
     mat <- gse_corrected[[idx]][
       rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
     ]
-    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+    if (nrow(mat) > 1) {
+      mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+    }
 
     mat <- t(
       apply(
@@ -1228,17 +1290,27 @@ renderPlot(
       gene_anno_sub$symbol %in% rownames(sig_deg[[idx]]),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
-    rownames(mat) <- gene_anno_sub$symbol
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
+    if (nrow(mat) > 0) {
+      rownames(mat) <- gene_anno_sub$symbol
+    }
 
-    add <- matrix(NA, nrow = nrow(add_anno), ncol = ncol(mat))
+    add <- matrix(NA, nrow = nrow(add_anno), ncol = 24)
     rownames(add) <- add_anno$symbol
     mat <- rbind(mat, add)
     sig_tmp <- rbind(sig_tmp, add)
@@ -1265,9 +1337,9 @@ renderPlot(
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
-        cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
-        },
+        # cell_fun = function(j, i, x, y, width, height, fill) {
+        #   grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+        # },
         heatmap_legend_param = list(
           title = "logCPM", direction = "horizontal",
           title_position = "topcenter", labels_gp = gpar(fontsize = 9),
@@ -1306,17 +1378,27 @@ renderPlot(
       gene_anno_sub$symbol %in% rownames(sig_deg[[idx]]),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
-    rownames(mat) <- gene_anno_sub$symbol
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
+    if (nrow(mat) > 0) {
+      rownames(mat) <- gene_anno_sub$symbol
+    }
 
-    add <- matrix(NA, nrow = nrow(add_anno), ncol = ncol(mat))
+    add <- matrix(NA, nrow = nrow(add_anno), ncol = 24)
     rownames(add) <- add_anno$symbol
     mat <- rbind(mat, add)
     sig_tmp <- rbind(sig_tmp, add)
@@ -1522,14 +1604,22 @@ renderPlot(
       match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
     rownames(mat) <- gene_anno_sub$symbol
 
     draw(
@@ -1576,14 +1666,22 @@ renderPlot(
       match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
     rownames(mat) <- gene_anno_sub$symbol
 
     mat <- t(
@@ -1736,16 +1834,21 @@ renderPlot(
   {
     idx <- 3
     sig_tmp <- sig_gse[[idx]][
-      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
+      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]], ,
+        drop = FALSE
     ]
-    sig_tmp <- sig_tmp[
-      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
-    ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
+      ]
+    }
 
     mat <- gse_corrected[[idx]][
       rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
     ]
-    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+    if (nrow(mat) > 1) {
+      mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+    }
 
     mat <- t(
       apply(
@@ -1828,17 +1931,27 @@ renderPlot(
       gene_anno_sub$symbol %in% rownames(sig_deg[[idx]]),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
-    rownames(mat) <- gene_anno_sub$symbol
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
+    if (nrow(mat) > 0) {
+      rownames(mat) <- gene_anno_sub$symbol
+    }
 
-    add <- matrix(NA, nrow = nrow(add_anno), ncol = ncol(mat))
+    add <- matrix(NA, nrow = nrow(add_anno), ncol = 24)
     rownames(add) <- add_anno$symbol
     mat <- rbind(mat, add)
     sig_tmp <- rbind(sig_tmp, add)
@@ -1865,9 +1978,9 @@ renderPlot(
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
-        cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
-        },
+        # cell_fun = function(j, i, x, y, width, height, fill) {
+        #   grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+        # },
         heatmap_legend_param = list(
           title = "logCPM", direction = "horizontal",
           title_position = "topcenter", labels_gp = gpar(fontsize = 9),
@@ -1906,17 +2019,27 @@ renderPlot(
       gene_anno_sub$symbol %in% rownames(sig_deg[[idx]]),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
-    rownames(mat) <- gene_anno_sub$symbol
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
+    if (nrow(mat) > 0) {
+      rownames(mat) <- gene_anno_sub$symbol
+    }
 
-    add <- matrix(NA, nrow = nrow(add_anno), ncol = ncol(mat))
+    add <- matrix(NA, nrow = nrow(add_anno), ncol = 24)
     rownames(add) <- add_anno$symbol
     mat <- rbind(mat, add)
     sig_tmp <- rbind(sig_tmp, add)
@@ -2124,14 +2247,22 @@ renderPlot(
       match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
     rownames(mat) <- gene_anno_sub$symbol
 
     draw(
@@ -2178,14 +2309,22 @@ renderPlot(
       match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
     rownames(mat) <- gene_anno_sub$symbol
 
     mat <- t(
@@ -2339,16 +2478,21 @@ renderPlot(
   {
     idx <- 4
     sig_tmp <- sig_gse[[idx]][
-      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
+      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]], ,
+        drop = FALSE
     ]
-    sig_tmp <- sig_tmp[
-      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
-    ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
+      ]
+    }
 
     mat <- gse_corrected[[idx]][
       rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
     ]
-    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+    if (nrow(mat) > 1) {
+      mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+    }
 
     mat <- t(
       apply(
@@ -2431,17 +2575,27 @@ renderPlot(
       gene_anno_sub$symbol %in% rownames(sig_deg[[idx]]),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
-    rownames(mat) <- gene_anno_sub$symbol
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
+    if (nrow(mat) > 0) {
+      rownames(mat) <- gene_anno_sub$symbol
+    }
 
-    add <- matrix(NA, nrow = nrow(add_anno), ncol = ncol(mat))
+    add <- matrix(NA, nrow = nrow(add_anno), ncol = 24)
     rownames(add) <- add_anno$symbol
     mat <- rbind(mat, add)
     sig_tmp <- rbind(sig_tmp, add)
@@ -2468,9 +2622,9 @@ renderPlot(
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
-        cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
-        },
+        # cell_fun = function(j, i, x, y, width, height, fill) {
+        #   grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+        # },
         heatmap_legend_param = list(
           title = "logCPM", direction = "horizontal",
           title_position = "topcenter", labels_gp = gpar(fontsize = 9),
@@ -2509,17 +2663,27 @@ renderPlot(
       gene_anno_sub$symbol %in% rownames(sig_deg[[idx]]),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
-    rownames(mat) <- gene_anno_sub$symbol
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
+    if (nrow(mat) > 0) {
+      rownames(mat) <- gene_anno_sub$symbol
+    }
 
-    add <- matrix(NA, nrow = nrow(add_anno), ncol = ncol(mat))
+    add <- matrix(NA, nrow = nrow(add_anno), ncol = 24)
     rownames(add) <- add_anno$symbol
     mat <- rbind(mat, add)
     sig_tmp <- rbind(sig_tmp, add)
@@ -2728,14 +2892,22 @@ renderPlot(
       match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
     rownames(mat) <- gene_anno_sub$symbol
 
     draw(
@@ -2782,14 +2954,22 @@ renderPlot(
       match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
     rownames(mat) <- gene_anno_sub$symbol
 
     mat <- t(
@@ -2944,16 +3124,21 @@ renderPlot(
   {
     idx <- 5
     sig_tmp <- sig_gse[[idx]][
-      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
+      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]], ,
+        drop = FALSE
     ]
-    sig_tmp <- sig_tmp[
-      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
-    ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
+      ]
+    }
 
     mat <- gse_corrected[[idx]][
       rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
     ]
-    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+    if (nrow(mat) > 1) {
+      mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+    }
 
     mat <- t(
       apply(
@@ -3036,17 +3221,27 @@ renderPlot(
       gene_anno_sub$symbol %in% rownames(sig_deg[[idx]]),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
-    rownames(mat) <- gene_anno_sub$symbol
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
+    if (nrow(mat) > 0) {
+      rownames(mat) <- gene_anno_sub$symbol
+    }
 
-    add <- matrix(NA, nrow = nrow(add_anno), ncol = ncol(mat))
+    add <- matrix(NA, nrow = nrow(add_anno), ncol = 24)
     rownames(add) <- add_anno$symbol
     mat <- rbind(mat, add)
     sig_tmp <- rbind(sig_tmp, add)
@@ -3073,9 +3268,9 @@ renderPlot(
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
-        cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
-        },
+        # cell_fun = function(j, i, x, y, width, height, fill) {
+        #   grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+        # },
         heatmap_legend_param = list(
           title = "logCPM", direction = "horizontal",
           title_position = "topcenter", labels_gp = gpar(fontsize = 9),
@@ -3114,17 +3309,27 @@ renderPlot(
       gene_anno_sub$symbol %in% rownames(sig_deg[[idx]]),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
-    rownames(mat) <- gene_anno_sub$symbol
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
+    if (nrow(mat) > 0) {
+      rownames(mat) <- gene_anno_sub$symbol
+    }
 
-    add <- matrix(NA, nrow = nrow(add_anno), ncol = ncol(mat))
+    add <- matrix(NA, nrow = nrow(add_anno), ncol = 24)
     rownames(add) <- add_anno$symbol
     mat <- rbind(mat, add)
     sig_tmp <- rbind(sig_tmp, add)
@@ -3334,14 +3539,22 @@ renderPlot(
       match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
     rownames(mat) <- gene_anno_sub$symbol
 
     draw(
@@ -3388,14 +3601,22 @@ renderPlot(
       match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
     rownames(mat) <- gene_anno_sub$symbol
 
     mat <- t(
@@ -3552,16 +3773,21 @@ renderPlot(
   {
     idx <- 6
     sig_tmp <- sig_gse[[idx]][
-      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
+      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]], ,
+        drop = FALSE
     ]
-    sig_tmp <- sig_tmp[
-      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
-    ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
+      ]
+    }
 
     mat <- gse_corrected[[idx]][
       rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
     ]
-    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+    if (nrow(mat) > 1) {
+      mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+    }
 
     mat <- t(
       apply(
@@ -3644,17 +3870,27 @@ renderPlot(
       gene_anno_sub$symbol %in% rownames(sig_deg[[idx]]),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
-    rownames(mat) <- gene_anno_sub$symbol
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
+    if (nrow(mat) > 0) {
+      rownames(mat) <- gene_anno_sub$symbol
+    }
 
-    add <- matrix(NA, nrow = nrow(add_anno), ncol = ncol(mat))
+    add <- matrix(NA, nrow = nrow(add_anno), ncol = 24)
     rownames(add) <- add_anno$symbol
     mat <- rbind(mat, add)
     sig_tmp <- rbind(sig_tmp, add)
@@ -3681,9 +3917,9 @@ renderPlot(
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
-        cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
-        },
+        # cell_fun = function(j, i, x, y, width, height, fill) {
+        #   grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+        # },
         heatmap_legend_param = list(
           title = "logCPM", direction = "horizontal",
           title_position = "topcenter", labels_gp = gpar(fontsize = 9),
@@ -3722,17 +3958,27 @@ renderPlot(
       gene_anno_sub$symbol %in% rownames(sig_deg[[idx]]),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
-    rownames(mat) <- gene_anno_sub$symbol
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
+    if (nrow(mat) > 0) {
+      rownames(mat) <- gene_anno_sub$symbol
+    }
 
-    add <- matrix(NA, nrow = nrow(add_anno), ncol = ncol(mat))
+    add <- matrix(NA, nrow = nrow(add_anno), ncol = 24)
     rownames(add) <- add_anno$symbol
     mat <- rbind(mat, add)
     sig_tmp <- rbind(sig_tmp, add)
@@ -3944,14 +4190,22 @@ renderPlot(
       match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
     rownames(mat) <- gene_anno_sub$symbol
 
     draw(
@@ -3998,14 +4252,22 @@ renderPlot(
       match(input[[paste0("select_deg", idx)]], gene_anno_sub$symbol),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
     rownames(mat) <- gene_anno_sub$symbol
 
     mat <- t(
@@ -4163,16 +4425,21 @@ renderPlot(
   {
     idx <- 7
     sig_tmp <- sig_gse[[idx]][
-      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]],
+      rownames(sig_gse[[idx]]) %in% input[[paste0("select_gse", idx)]], ,
+        drop = FALSE
     ]
-    sig_tmp <- sig_tmp[
-      match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
-    ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(input[[paste0("select_gse", idx)]], rownames(sig_tmp)),
+      ]
+    }
 
     mat <- gse_corrected[[idx]][
       rownames(gse_corrected[[idx]]) %in% rownames(sig_tmp), , drop = FALSE
     ]
-    mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+    if (nrow(mat) > 1) {
+      mat <- mat[match(rownames(sig_tmp), rownames(mat)), ]
+    }
 
     mat <- t(
       apply(
@@ -4255,17 +4522,27 @@ renderPlot(
       gene_anno_sub$symbol %in% rownames(sig_deg[[idx]]),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
-    rownames(mat) <- gene_anno_sub$symbol
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
+    if (nrow(mat) > 0) {
+      rownames(mat) <- gene_anno_sub$symbol
+    }
 
-    add <- matrix(NA, nrow = nrow(add_anno), ncol = ncol(mat))
+    add <- matrix(NA, nrow = nrow(add_anno), ncol = 24)
     rownames(add) <- add_anno$symbol
     mat <- rbind(mat, add)
     sig_tmp <- rbind(sig_tmp, add)
@@ -4333,17 +4610,27 @@ renderPlot(
       gene_anno_sub$symbol %in% rownames(sig_deg[[idx]]),
     ]
     sig_tmp <- sig_deg[[idx]][
-      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol,
+      rownames(sig_deg[[idx]]) %in% gene_anno_sub$symbol, , drop = FALSE
     ]
-    sig_tmp <- sig_tmp[match(gene_anno_sub$symbol, rownames(sig_tmp)), ]
+    if (nrow(sig_tmp) > 1) {
+      sig_tmp <- sig_tmp[
+        match(gene_anno_sub$symbol, rownames(sig_tmp)), , drop = FALSE
+      ]
+    }
 
     mat <- deg_corrected[[idx]][
       rownames(deg_corrected[[idx]]) %in% gene_anno_sub$ensembl, , drop = FALSE
     ]
-    mat <- mat[match(gene_anno_sub$ensembl, rownames(mat)), ]
-    rownames(mat) <- gene_anno_sub$symbol
+    if (nrow(mat) > 1) {
+      mat <- mat[
+        match(gene_anno_sub$ensembl, rownames(mat)), , drop = FALSE
+      ]
+    }
+    if (nrow(mat) > 0) {
+      rownames(mat) <- gene_anno_sub$symbol
+    }
 
-    add <- matrix(NA, nrow = nrow(add_anno), ncol = ncol(mat))
+    add <- matrix(NA, nrow = nrow(add_anno), ncol = 24)
     rownames(add) <- add_anno$symbol
     mat <- rbind(mat, add)
     sig_tmp <- rbind(sig_tmp, add)
