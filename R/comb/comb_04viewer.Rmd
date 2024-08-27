@@ -490,8 +490,8 @@ results_gse[[idx]] <- results_gse[[idx]][
 ]
 results_gse[[idx]]$GeneSet <- rownames(results_gse[[idx]])
 
-sig_tmp <- ifelse(results_gse[[idx]][ , 19:23] < 0.05, yes = 1, no = 0)
-direction <- ifelse(results_gse[[idx]][ , 4:8] > 0, yes = 1, no = -1)
+sig_tmp <- ifelse(results_gse[[idx]][ , 17:21] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_gse[[idx]][ , 2:6] > 0, yes = 1, no = -1)
 sig_tmp <- sig_tmp * direction
 
 row_scores <- t(
@@ -544,7 +544,7 @@ sig_uniq_gse[[idx]] <- unique(sig_gse[[idx]])
 selectizeInput(
   paste0("select_gse", idx),
   label = "Select Gene Sets:",
-  choices = results_gse[[idx]]$Gene,
+  choices = results_gse[[idx]]$GeneSet,
   selected = rownames(sig_uniq_gse[[idx]]),
   multiple = TRUE,
   width = "100%"
@@ -1138,8 +1138,8 @@ results_gse[[idx]] <- results_gse[[idx]][
 ]
 results_gse[[idx]]$GeneSet <- rownames(results_gse[[idx]])
 
-sig_tmp <- ifelse(results_gse[[idx]][ , 19:23] < 0.05, yes = 1, no = 0)
-direction <- ifelse(results_gse[[idx]][ , 4:8] > 0, yes = 1, no = -1)
+sig_tmp <- ifelse(results_gse[[idx]][ , 17:21] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_gse[[idx]][ , 2:6] > 0, yes = 1, no = -1)
 sig_tmp <- sig_tmp * direction
 
 row_scores <- t(
@@ -1192,7 +1192,7 @@ sig_uniq_gse[[idx]] <- unique(sig_gse[[idx]])
 selectizeInput(
   paste0("select_gse", idx),
   label = "Select Gene Sets:",
-  choices = results_gse[[idx]]$Gene,
+  choices = results_gse[[idx]]$GeneSet,
   selected = rownames(sig_uniq_gse[[idx]]),
   multiple = TRUE,
   width = "100%"
@@ -1789,8 +1789,8 @@ results_gse[[idx]] <- results_gse[[idx]][
 ]
 results_gse[[idx]]$GeneSet <- rownames(results_gse[[idx]])
 
-sig_tmp <- ifelse(results_gse[[idx]][ , 19:23] < 0.05, yes = 1, no = 0)
-direction <- ifelse(results_gse[[idx]][ , 4:8] > 0, yes = 1, no = -1)
+sig_tmp <- ifelse(results_gse[[idx]][ , 17:21] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_gse[[idx]][ , 2:6] > 0, yes = 1, no = -1)
 sig_tmp <- sig_tmp * direction
 
 row_scores <- t(
@@ -1843,7 +1843,7 @@ sig_uniq_gse[[idx]] <- unique(sig_gse[[idx]])
 selectizeInput(
   paste0("select_gse", idx),
   label = "Select Gene Sets:",
-  choices = results_gse[[idx]]$Gene,
+  choices = results_gse[[idx]]$GeneSet,
   selected = rownames(sig_uniq_gse[[idx]]),
   multiple = TRUE,
   width = "100%"
@@ -2443,8 +2443,8 @@ results_gse[[idx]] <- results_gse[[idx]][
 ]
 results_gse[[idx]]$GeneSet <- rownames(results_gse[[idx]])
 
-sig_tmp <- ifelse(results_gse[[idx]][ , 19:23] < 0.05, yes = 1, no = 0)
-direction <- ifelse(results_gse[[idx]][ , 4:8] > 0, yes = 1, no = -1)
+sig_tmp <- ifelse(results_gse[[idx]][ , 17:21] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_gse[[idx]][ , 2:6] > 0, yes = 1, no = -1)
 sig_tmp <- sig_tmp * direction
 
 row_scores <- t(
@@ -2497,7 +2497,7 @@ sig_uniq_gse[[idx]] <- unique(sig_gse[[idx]])
 selectizeInput(
   paste0("select_gse", idx),
   label = "Select Gene Sets:",
-  choices = results_gse[[idx]]$Gene,
+  choices = results_gse[[idx]]$GeneSet,
   selected = rownames(sig_uniq_gse[[idx]]),
   multiple = TRUE,
   width = "100%"
@@ -3099,8 +3099,8 @@ results_gse[[idx]] <- results_gse[[idx]][
 ]
 results_gse[[idx]]$GeneSet <- rownames(results_gse[[idx]])
 
-sig_tmp <- ifelse(results_gse[[idx]][ , 19:23] < 0.05, yes = 1, no = 0)
-direction <- ifelse(results_gse[[idx]][ , 4:8] > 0, yes = 1, no = -1)
+sig_tmp <- ifelse(results_gse[[idx]][ , 17:21] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_gse[[idx]][ , 2:6] > 0, yes = 1, no = -1)
 sig_tmp <- sig_tmp * direction
 
 row_scores <- t(
@@ -3153,7 +3153,7 @@ sig_uniq_gse[[idx]] <- unique(sig_gse[[idx]])
 selectizeInput(
   paste0("select_gse", idx),
   label = "Select Gene Sets:",
-  choices = results_gse[[idx]]$Gene,
+  choices = results_gse[[idx]]$GeneSet,
   selected = rownames(sig_uniq_gse[[idx]]),
   multiple = TRUE,
   width = "100%"
@@ -3758,8 +3758,8 @@ results_gse[[idx]] <- results_gse[[idx]][
 ]
 results_gse[[idx]]$GeneSet <- rownames(results_gse[[idx]])
 
-sig_tmp <- ifelse(results_gse[[idx]][ , 19:23] < 0.05, yes = 1, no = 0)
-direction <- ifelse(results_gse[[idx]][ , 4:8] > 0, yes = 1, no = -1)
+sig_tmp <- ifelse(results_gse[[idx]][ , 17:21] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_gse[[idx]][ , 2:6] > 0, yes = 1, no = -1)
 sig_tmp <- sig_tmp * direction
 
 row_scores <- t(
@@ -3812,7 +3812,7 @@ sig_uniq_gse[[idx]] <- unique(sig_gse[[idx]])
 selectizeInput(
   paste0("select_gse", idx),
   label = "Select Gene Sets:",
-  choices = results_gse[[idx]]$Gene,
+  choices = results_gse[[idx]]$GeneSet,
   selected = rownames(sig_uniq_gse[[idx]]),
   multiple = TRUE,
   width = "100%"
@@ -4420,8 +4420,8 @@ results_gse[[idx]] <- results_gse[[idx]][
 ]
 results_gse[[idx]]$GeneSet <- rownames(results_gse[[idx]])
 
-sig_tmp <- ifelse(results_gse[[idx]][ , 19:23] < 0.05, yes = 1, no = 0)
-direction <- ifelse(results_gse[[idx]][ , 4:8] > 0, yes = 1, no = -1)
+sig_tmp <- ifelse(results_gse[[idx]][ , 17:21] < 0.05, yes = 1, no = 0)
+direction <- ifelse(results_gse[[idx]][ , 2:6] > 0, yes = 1, no = -1)
 sig_tmp <- sig_tmp * direction
 
 row_scores <- t(
@@ -4474,7 +4474,7 @@ sig_uniq_gse[[idx]] <- unique(sig_gse[[idx]])
 selectizeInput(
   paste0("select_gse", idx),
   label = "Select Gene Sets:",
-  choices = results_gse[[idx]]$Gene,
+  choices = results_gse[[idx]]$GeneSet,
   selected = rownames(sig_uniq_gse[[idx]]),
   multiple = TRUE,
   width = "100%"
