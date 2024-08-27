@@ -32,11 +32,11 @@ packages <- c(
 )
 lapply(packages, FUN = library, character.only = TRUE)
 
-datatable_download_exp_15 <- function(dt) {
+datatable_download_exp_10 <- function(dt) {
   datatable(
     dt,
     options = list(
-      pageLength = 15,
+      pageLength = 10,
       scrollX = TRUE,
       dom = "Blfrtip",
       buttons = list(
@@ -56,11 +56,11 @@ datatable_download_exp_15 <- function(dt) {
     extensions = "Buttons"
   )
 }
-datatable_download_exp_7 <- function(dt) {
+datatable_download_exp_5 <- function(dt) {
   datatable(
     dt,
     options = list(
-      pageLength = 7,
+      pageLength = 5,
       scrollX = TRUE,
       dom = "Blfrtip",
       buttons = list(
@@ -106,7 +106,7 @@ top_anno <- HeatmapAnnotation(
     labels = sub(
       pattern = "_", replacement = " ", x = levels(deg_data[[1]]$genotype)
     ),
-    labels_gp = gpar(col = "black", fontsize = 11),
+    labels_gp = gpar(col = "black", fontsize = 10),
     height = unit(5, "mm")
   ),
   col = list(
@@ -117,7 +117,7 @@ top_anno <- HeatmapAnnotation(
   ),
   simple_anno_size = unit(3, "mm"),
   show_legend = c("Batch" = FALSE),
-  annotation_name_gp = gpar(fontsize = 9)
+  annotation_name_gp = gpar(fontsize = 8)
 )
 
 deg <- deg_data[[1]]
@@ -355,12 +355,12 @@ renderPlot(
         column_split = rep(seq(6), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 10),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 9))
         },
         heatmap_legend_param = list(
           title = "logCPM", direction = "horizontal",
@@ -371,8 +371,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 650,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -425,12 +425,12 @@ renderPlot(
         column_split = rep(seq(6), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 10),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 9))
         },
         heatmap_legend_param = list(
           title = "Scaled logCPM", direction = "horizontal",
@@ -441,8 +441,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 650,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -453,7 +453,7 @@ renderPlot(
 ### Gene Stats
 
 ```{r}
-datatable_download_exp_15(results_deg[[idx]])
+datatable_download_exp_10(results_deg[[idx]])
 ```
 
 ### Search Gene Sets
@@ -591,13 +591,13 @@ renderPlot(
         column_split = rep(seq(6), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 10),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
         row_names_max_width = max_text_width(rownames(mat)),
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 9))
         },
         heatmap_legend_param = list(
           title = "Scaled logGSE", direction = "horizontal",
@@ -608,8 +608,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 1350,
-  height = 650,
+  width = 1250,
+  height = 550,
   res = 96
 )
 ```
@@ -620,7 +620,7 @@ renderPlot(
 ### Gene Set Stats
 
 ```{r}
-datatable_download_exp_7(results_gse[[idx]])
+datatable_download_exp_5(results_gse[[idx]])
 ```
 
 ### Gene Set Genes
@@ -719,8 +719,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 750,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -815,8 +815,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 750,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -1003,12 +1003,12 @@ renderPlot(
         column_split = rep(seq(6), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 10),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 9))
         },
         heatmap_legend_param = list(
           title = "logCPM", direction = "horizontal",
@@ -1019,8 +1019,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 650,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -1073,12 +1073,12 @@ renderPlot(
         column_split = rep(seq(6), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 10),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 9))
         },
         heatmap_legend_param = list(
           title = "Scaled logCPM", direction = "horizontal",
@@ -1089,8 +1089,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 650,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -1101,7 +1101,7 @@ renderPlot(
 ### Gene Stats
 
 ```{r}
-datatable_download_exp_15(results_deg[[idx]])
+datatable_download_exp_10(results_deg[[idx]])
 ```
 
 ### Search Gene Sets
@@ -1239,13 +1239,13 @@ renderPlot(
         column_split = rep(seq(6), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 10),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
         row_names_max_width = max_text_width(rownames(mat)),
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 9))
         },
         heatmap_legend_param = list(
           title = "Scaled logGSE", direction = "horizontal",
@@ -1256,8 +1256,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 1350,
-  height = 650,
+  width = 1250,
+  height = 550,
   res = 96
 )
 ```
@@ -1268,7 +1268,7 @@ renderPlot(
 ### Gene Set Stats
 
 ```{r}
-datatable_download_exp_7(results_gse[[idx]])
+datatable_download_exp_5(results_gse[[idx]])
 ```
 
 ### Gene Set Genes
@@ -1367,8 +1367,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 750,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -1463,8 +1463,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 750,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -1652,12 +1652,12 @@ renderPlot(
         column_split = rep(seq(6), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 10),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 9))
         },
         heatmap_legend_param = list(
           title = "logCPM", direction = "horizontal",
@@ -1668,8 +1668,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 650,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -1722,12 +1722,12 @@ renderPlot(
         column_split = rep(seq(6), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 10),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 9))
         },
         heatmap_legend_param = list(
           title = "Scaled logCPM", direction = "horizontal",
@@ -1738,8 +1738,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 650,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -1750,7 +1750,7 @@ renderPlot(
 ### Gene Stats
 
 ```{r}
-datatable_download_exp_15(results_deg[[idx]])
+datatable_download_exp_10(results_deg[[idx]])
 ```
 
 ### Search Gene Sets
@@ -1890,13 +1890,13 @@ renderPlot(
         column_split = rep(seq(6), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 10),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
         row_names_max_width = max_text_width(rownames(mat)),
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 9))
         },
         heatmap_legend_param = list(
           title = "Scaled logGSE", direction = "horizontal",
@@ -1907,8 +1907,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 1350,
-  height = 650,
+  width = 1250,
+  height = 550,
   res = 96
 )
 ```
@@ -1919,7 +1919,7 @@ renderPlot(
 ### Gene Set Stats
 
 ```{r}
-datatable_download_exp_7(results_gse[[idx]])
+datatable_download_exp_5(results_gse[[idx]])
 ```
 
 ### Gene Set Genes
@@ -2018,8 +2018,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 750,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -2114,8 +2114,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 750,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -2305,12 +2305,12 @@ renderPlot(
         column_split = rep(seq(6), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 10),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 9))
         },
         heatmap_legend_param = list(
           title = "logCPM", direction = "horizontal",
@@ -2321,8 +2321,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 650,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -2375,12 +2375,12 @@ renderPlot(
         column_split = rep(seq(6), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 10),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 9))
         },
         heatmap_legend_param = list(
           title = "Scaled logCPM", direction = "horizontal",
@@ -2391,8 +2391,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 650,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -2403,7 +2403,7 @@ renderPlot(
 ### Gene Stats
 
 ```{r}
-datatable_download_exp_15(results_deg[[idx]])
+datatable_download_exp_10(results_deg[[idx]])
 ```
 
 ### Search Gene Sets
@@ -2544,13 +2544,13 @@ renderPlot(
         column_split = rep(seq(6), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 10),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
         row_names_max_width = max_text_width(rownames(mat)),
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 9))
         },
         heatmap_legend_param = list(
           title = "Scaled logGSE", direction = "horizontal",
@@ -2561,8 +2561,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 1350,
-  height = 650,
+  width = 1250,
+  height = 550,
   res = 96
 )
 ```
@@ -2573,7 +2573,7 @@ renderPlot(
 ### Gene Set Stats
 
 ```{r}
-datatable_download_exp_7(results_gse[[idx]])
+datatable_download_exp_5(results_gse[[idx]])
 ```
 
 ### Gene Set Genes
@@ -2672,8 +2672,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 750,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -2768,8 +2768,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 750,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -2960,12 +2960,12 @@ renderPlot(
         column_split = rep(seq(6), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 10),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 9))
         },
         heatmap_legend_param = list(
           title = "logCPM", direction = "horizontal",
@@ -2976,8 +2976,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 650,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -3030,12 +3030,12 @@ renderPlot(
         column_split = rep(seq(6), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 10),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 9))
         },
         heatmap_legend_param = list(
           title = "Scaled logCPM", direction = "horizontal",
@@ -3046,8 +3046,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 650,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -3058,7 +3058,7 @@ renderPlot(
 ### Gene Stats
 
 ```{r}
-datatable_download_exp_15(results_deg[[idx]])
+datatable_download_exp_10(results_deg[[idx]])
 ```
 
 ### Search Gene Sets
@@ -3200,13 +3200,13 @@ renderPlot(
         column_split = rep(seq(6), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 10),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
         row_names_max_width = max_text_width(rownames(mat)),
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 9))
         },
         heatmap_legend_param = list(
           title = "Scaled logGSE", direction = "horizontal",
@@ -3217,8 +3217,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 1350,
-  height = 650,
+  width = 1250,
+  height = 550,
   res = 96
 )
 ```
@@ -3229,7 +3229,7 @@ renderPlot(
 ### Gene Set Stats
 
 ```{r}
-datatable_download_exp_7(results_gse[[idx]])
+datatable_download_exp_5(results_gse[[idx]])
 ```
 
 ### Gene Set Genes
@@ -3328,8 +3328,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 750,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -3424,8 +3424,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 750,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -3617,12 +3617,12 @@ renderPlot(
         column_split = rep(seq(6), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 10),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 9))
         },
         heatmap_legend_param = list(
           title = "logCPM", direction = "horizontal",
@@ -3633,8 +3633,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 650,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -3687,12 +3687,12 @@ renderPlot(
         column_split = rep(seq(6), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 10),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 9))
         },
         heatmap_legend_param = list(
           title = "Scaled logCPM", direction = "horizontal",
@@ -3703,8 +3703,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 650,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -3715,7 +3715,7 @@ renderPlot(
 ### Gene Stats
 
 ```{r}
-datatable_download_exp_15(results_deg[[idx]])
+datatable_download_exp_10(results_deg[[idx]])
 ```
 
 ### Search Gene Sets
@@ -3859,13 +3859,13 @@ renderPlot(
         column_split = rep(seq(6), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 10),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
         row_names_max_width = max_text_width(rownames(mat)),
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 9))
         },
         heatmap_legend_param = list(
           title = "Scaled logGSE", direction = "horizontal",
@@ -3876,8 +3876,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 1350,
-  height = 650,
+  width = 1250,
+  height = 550,
   res = 96
 )
 ```
@@ -3888,7 +3888,7 @@ renderPlot(
 ### Gene Set Stats
 
 ```{r}
-datatable_download_exp_7(results_gse[[idx]])
+datatable_download_exp_5(results_gse[[idx]])
 ```
 
 ### Gene Set Genes
@@ -3987,8 +3987,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 750,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -4083,8 +4083,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 750,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -4278,12 +4278,12 @@ renderPlot(
         column_split = rep(seq(6), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 10),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 9))
         },
         heatmap_legend_param = list(
           title = "logCPM", direction = "horizontal",
@@ -4294,8 +4294,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 650,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -4348,12 +4348,12 @@ renderPlot(
         column_split = rep(seq(6), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 10),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 9))
         },
         heatmap_legend_param = list(
           title = "Scaled logCPM", direction = "horizontal",
@@ -4364,8 +4364,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 650,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -4376,7 +4376,7 @@ renderPlot(
 ### Gene Stats
 
 ```{r}
-datatable_download_exp_15(results_deg[[idx]])
+datatable_download_exp_10(results_deg[[idx]])
 ```
 
 ### Search Gene Sets
@@ -4521,13 +4521,13 @@ renderPlot(
         column_split = rep(seq(6), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
-        row_names_gp = gpar(fontsize = 12),
+        row_names_gp = gpar(fontsize = 10),
         row_title_rot = 0,
         top_annotation = top_anno,
         show_column_names = FALSE,
         row_names_max_width = max_text_width(rownames(mat)),
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 9))
         },
         heatmap_legend_param = list(
           title = "Scaled logGSE", direction = "horizontal",
@@ -4538,8 +4538,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 1350,
-  height = 650,
+  width = 1250,
+  height = 550,
   res = 96
 )
 ```
@@ -4550,7 +4550,7 @@ renderPlot(
 ### Gene Set Stats
 
 ```{r}
-datatable_download_exp_7(results_gse[[idx]])
+datatable_download_exp_5(results_gse[[idx]])
 ```
 
 ### Gene Set Genes
@@ -4649,8 +4649,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 750,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
@@ -4745,8 +4745,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 850,
-  height = 750,
+  width = 750,
+  height = 550,
   res = 96
 )
 ```
