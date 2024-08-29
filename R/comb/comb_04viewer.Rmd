@@ -372,8 +372,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -443,8 +443,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -611,8 +611,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 1100,
-  height = 450,
+  width = 1400,
+  height = 500,
   res = 96
 )
 ```
@@ -723,8 +723,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -820,8 +820,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -1025,8 +1025,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -1096,8 +1096,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -1264,8 +1264,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 1100,
-  height = 450,
+  width = 1400,
+  height = 500,
   res = 96
 )
 ```
@@ -1376,8 +1376,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -1473,8 +1473,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -1679,8 +1679,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -1750,8 +1750,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -1920,8 +1920,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 1100,
-  height = 450,
+  width = 1400,
+  height = 500,
   res = 96
 )
 ```
@@ -2032,8 +2032,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -2129,8 +2129,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -2337,8 +2337,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -2408,8 +2408,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -2579,8 +2579,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 1100,
-  height = 450,
+  width = 1400,
+  height = 500,
   res = 96
 )
 ```
@@ -2691,8 +2691,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -2788,8 +2788,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -2997,8 +2997,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -3068,8 +3068,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -3240,8 +3240,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 1100,
-  height = 450,
+  width = 1400,
+  height = 500,
   res = 96
 )
 ```
@@ -3352,8 +3352,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -3449,8 +3449,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -3659,8 +3659,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -3730,8 +3730,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -3904,8 +3904,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 1100,
-  height = 450,
+  width = 1400,
+  height = 500,
   res = 96
 )
 ```
@@ -4016,8 +4016,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -4113,8 +4113,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -4325,8 +4325,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -4396,8 +4396,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -4571,8 +4571,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 1100,
-  height = 450,
+  width = 1400,
+  height = 500,
   res = 96
 )
 ```
@@ -4683,8 +4683,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
@@ -4780,8 +4780,8 @@ renderPlot(
       heatmap_legend_side = "top"
     )
   },
-  width = 650,
-  height = 450,
+  width = 750,
+  height = 500,
   res = 96
 )
 ```
