@@ -1,3 +1,5 @@
+Sort Later
+
 ---
 title: "Tau Mutant snRNAseq Viewer"
 output:
@@ -32,11 +34,11 @@ packages <- c(
 )
 lapply(packages, FUN = library, character.only = TRUE)
 
-datatable_download_exp_10 <- function(dt) {
+datatable_download_exp_15 <- function(dt) {
   datatable(
     dt,
     options = list(
-      pageLength = 10,
+      pageLength = 15,
       scrollX = TRUE,
       dom = "Blfrtip",
       buttons = list(
@@ -56,11 +58,11 @@ datatable_download_exp_10 <- function(dt) {
     extensions = "Buttons"
   )
 }
-datatable_download_exp_5 <- function(dt) {
+datatable_download_exp_7 <- function(dt) {
   datatable(
     dt,
     options = list(
-      pageLength = 5,
+      pageLength = 7,
       scrollX = TRUE,
       dom = "Blfrtip",
       buttons = list(
@@ -91,7 +93,8 @@ deg_data <- readRDS(file.path(data_dir, "deg_data.rds"))
 gse_data <- readRDS(file.path(data_dir, "gse_data.rds"))
 deg_list <- readRDS(file.path(data_dir, "deg_list.rds"))
 gse_list <- readRDS(file.path(data_dir, "gse_list.rds"))
-corrections <- readRDS(file.path(data_dir, "corrections.rds"))
+gse_corrections <- readRDS(file.path(data_dir, "gse_corrections.rds"))
+deg_corrections <- readRDS(file.path(data_dir, "deg_corrections.rds"))
 
 ctypes <- c(
   "Astrocytes", "Oligodendrocytes", "Microglia", "Glutamatergic CA3",
@@ -225,11 +228,11 @@ close(tc)
 results_deg[[idx]] <- read.delim(text = results)
 
 col <- 18
-length1 <- nrow(gse_list[[1]]) + 1
-length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]])
+length1 <- 1
+length2 <- nrow(deg_list[[1]])
 length <- length1:length2
-for (i in seq_along(corrections)) {
-  results_deg[[idx]][ , col] <- corrections[[i]][length]
+for (i in seq_along(deg_corrections)) {
+  results_deg[[idx]][ , col] <- deg_corrections[[i]][length]
   col <- col + 1
 }
 
@@ -373,7 +376,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -444,7 +447,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -455,7 +458,7 @@ renderPlot(
 ### Gene Stats
 
 ```{r}
-datatable_download_exp_10(results_deg[[idx]])
+datatable_download_exp_15(results_deg[[idx]])
 ```
 
 ### Search Gene Sets
@@ -478,8 +481,8 @@ col <- 18
 length1 <- 1
 length2 <- nrow(gse_list[[1]])
 length <- length1:length2
-for (i in seq_along(corrections)) {
-  results_gse[[idx]][ , col] <- corrections[[i]][length]
+for (i in seq_along(gse_corrections)) {
+  results_gse[[idx]][ , col] <- gse_corrections[[i]][length]
   col <- col + 1
 }
 
@@ -612,7 +615,7 @@ renderPlot(
     )
   },
   width = 1400,
-  height = 500,
+  height = 650,
   res = 96
 )
 ```
@@ -623,7 +626,7 @@ renderPlot(
 ### Gene Set Stats
 
 ```{r}
-datatable_download_exp_5(results_gse[[idx]])
+datatable_download_exp_7(results_gse[[idx]])
 ```
 
 ### Gene Set Genes
@@ -724,7 +727,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -821,7 +824,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -877,12 +880,11 @@ close(tc)
 results_deg[[idx]] <- read.delim(text = results)
 
 col <- 18
-length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) + 1
-length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
-  nrow(deg_list[[2]])
+length1 <- nrow(deg_list[[1]]) + 1
+length2 <- nrow(deg_list[[1]]) + nrow(deg_list[[2]])
 length <- length1:length2
-for (i in seq_along(corrections)) {
-  results_deg[[idx]][ , col] <- corrections[[i]][length]
+for (i in seq_along(deg_corrections)) {
+  results_deg[[idx]][ , col] <- deg_corrections[[i]][length]
   col <- col + 1
 }
 
@@ -1026,7 +1028,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -1097,7 +1099,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -1108,7 +1110,7 @@ renderPlot(
 ### Gene Stats
 
 ```{r}
-datatable_download_exp_10(results_deg[[idx]])
+datatable_download_exp_15(results_deg[[idx]])
 ```
 
 ### Search Gene Sets
@@ -1128,11 +1130,11 @@ close(tc)
 results_gse[[idx]] <- read.delim(text = results)
 
 col <- 18
-length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + 1
-length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]])
+length1 <- nrow(gse_list[[1]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(gse_list[[2]])
 length <- length1:length2
-for (i in seq_along(corrections)) {
-  results_gse[[idx]][ , col] <- corrections[[i]][length]
+for (i in seq_along(gse_corrections)) {
+  results_gse[[idx]][ , col] <- gse_corrections[[i]][length]
   col <- col + 1
 }
 
@@ -1265,7 +1267,7 @@ renderPlot(
     )
   },
   width = 1400,
-  height = 500,
+  height = 650,
   res = 96
 )
 ```
@@ -1276,7 +1278,7 @@ renderPlot(
 ### Gene Set Stats
 
 ```{r}
-datatable_download_exp_5(results_gse[[idx]])
+datatable_download_exp_7(results_gse[[idx]])
 ```
 
 ### Gene Set Genes
@@ -1377,7 +1379,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -1474,7 +1476,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -1530,13 +1532,11 @@ close(tc)
 results_deg[[idx]] <- read.delim(text = results)
 
 col <- 18
-length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
-  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + 1
-length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
-  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]])
+length1 <- nrow(deg_list[[1]]) + nrow(deg_list[[2]]) + 1
+length2 <- nrow(deg_list[[1]]) + nrow(deg_list[[2]]) + nrow(deg_list[[3]])
 length <- length1:length2
-for (i in seq_along(corrections)) {
-  results_deg[[idx]][ , col] <- corrections[[i]][length]
+for (i in seq_along(deg_corrections)) {
+  results_deg[[idx]][ , col] <- deg_corrections[[i]][length]
   col <- col + 1
 }
 
@@ -1680,7 +1680,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -1751,7 +1751,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -1762,7 +1762,7 @@ renderPlot(
 ### Gene Stats
 
 ```{r}
-datatable_download_exp_10(results_deg[[idx]])
+datatable_download_exp_15(results_deg[[idx]])
 ```
 
 ### Search Gene Sets
@@ -1782,13 +1782,11 @@ close(tc)
 results_gse[[idx]] <- read.delim(text = results)
 
 col <- 18
-length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
-  nrow(deg_list[[2]]) + 1
-length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
-  nrow(deg_list[[2]]) + nrow(gse_list[[3]])
+length1 <- nrow(gse_list[[1]]) + nrow(gse_list[[2]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(gse_list[[2]]) + nrow(gse_list[[3]])
 length <- length1:length2
-for (i in seq_along(corrections)) {
-  results_gse[[idx]][ , col] <- corrections[[i]][length]
+for (i in seq_along(gse_corrections)) {
+  results_gse[[idx]][ , col] <- gse_corrections[[i]][length]
   col <- col + 1
 }
 
@@ -1921,7 +1919,7 @@ renderPlot(
     )
   },
   width = 1400,
-  height = 500,
+  height = 650,
   res = 96
 )
 ```
@@ -1932,7 +1930,7 @@ renderPlot(
 ### Gene Set Stats
 
 ```{r}
-datatable_download_exp_5(results_gse[[idx]])
+datatable_download_exp_7(results_gse[[idx]])
 ```
 
 ### Gene Set Genes
@@ -2033,7 +2031,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -2130,7 +2128,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -2186,15 +2184,12 @@ close(tc)
 results_deg[[idx]] <- read.delim(text = results)
 
 col <- 18
-length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
-  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
-  nrow(gse_list[[4]]) + 1
-length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
-  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
-  nrow(gse_list[[4]]) + nrow(deg_list[[4]])
+length1 <- nrow(deg_list[[1]]) + nrow(deg_list[[2]]) + nrow(deg_list[[3]]) + 1
+length2 <- nrow(deg_list[[1]]) + nrow(deg_list[[2]]) + nrow(deg_list[[3]]) +
+  nrow(deg_list[[4]])
 length <- length1:length2
-for (i in seq_along(corrections)) {
-  results_deg[[idx]][ , col] <- corrections[[i]][length]
+for (i in seq_along(deg_corrections)) {
+  results_deg[[idx]][ , col] <- deg_corrections[[i]][length]
   col <- col + 1
 }
 
@@ -2338,7 +2333,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -2409,7 +2404,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -2420,7 +2415,7 @@ renderPlot(
 ### Gene Stats
 
 ```{r}
-datatable_download_exp_10(results_deg[[idx]])
+datatable_download_exp_15(results_deg[[idx]])
 ```
 
 ### Search Gene Sets
@@ -2440,14 +2435,12 @@ close(tc)
 results_gse[[idx]] <- read.delim(text = results)
 
 col <- 18
-length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
-  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) + 1
-length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
-  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
+length1 <- nrow(gse_list[[1]]) + nrow(gse_list[[2]]) + nrow(gse_list[[3]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(gse_list[[2]]) + nrow(gse_list[[3]]) +
   nrow(gse_list[[4]])
 length <- length1:length2
-for (i in seq_along(corrections)) {
-  results_gse[[idx]][ , col] <- corrections[[i]][length]
+for (i in seq_along(gse_corrections)) {
+  results_gse[[idx]][ , col] <- gse_corrections[[i]][length]
   col <- col + 1
 }
 
@@ -2580,7 +2573,7 @@ renderPlot(
     )
   },
   width = 1400,
-  height = 500,
+  height = 650,
   res = 96
 )
 ```
@@ -2591,7 +2584,7 @@ renderPlot(
 ### Gene Set Stats
 
 ```{r}
-datatable_download_exp_5(results_gse[[idx]])
+datatable_download_exp_7(results_gse[[idx]])
 ```
 
 ### Gene Set Genes
@@ -2692,7 +2685,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -2789,7 +2782,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -2845,16 +2838,13 @@ close(tc)
 results_deg[[idx]] <- read.delim(text = results)
 
 col <- 18
-length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
-  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
-  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) + 1
-length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
-  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
-  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
-  nrow(deg_list[[5]])
+length1 <- nrow(deg_list[[1]]) + nrow(deg_list[[2]]) + nrow(deg_list[[3]]) +
+  nrow(deg_list[[4]]) + 1
+length2 <- nrow(deg_list[[1]]) + nrow(deg_list[[2]]) + nrow(deg_list[[3]]) +
+  nrow(deg_list[[4]]) + nrow(deg_list[[5]])
 length <- length1:length2
-for (i in seq_along(corrections)) {
-  results_deg[[idx]][ , col] <- corrections[[i]][length]
+for (i in seq_along(deg_corrections)) {
+  results_deg[[idx]][ , col] <- deg_corrections[[i]][length]
   col <- col + 1
 }
 
@@ -2998,7 +2988,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -3069,7 +3059,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -3080,7 +3070,7 @@ renderPlot(
 ### Gene Stats
 
 ```{r}
-datatable_download_exp_10(results_deg[[idx]])
+datatable_download_exp_15(results_deg[[idx]])
 ```
 
 ### Search Gene Sets
@@ -3100,15 +3090,13 @@ close(tc)
 results_gse[[idx]] <- read.delim(text = results)
 
 col <- 18
-length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
-  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
-  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + 1
-length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
-  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
-  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]])
+length1 <- nrow(gse_list[[1]]) + nrow(gse_list[[2]]) + nrow(gse_list[[3]]) +
+  nrow(gse_list[[4]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(gse_list[[2]]) + nrow(gse_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(gse_list[[5]])
 length <- length1:length2
-for (i in seq_along(corrections)) {
-  results_gse[[idx]][ , col] <- corrections[[i]][length]
+for (i in seq_along(gse_corrections)) {
+  results_gse[[idx]][ , col] <- gse_corrections[[i]][length]
   col <- col + 1
 }
 
@@ -3241,7 +3229,7 @@ renderPlot(
     )
   },
   width = 1400,
-  height = 500,
+  height = 650,
   res = 96
 )
 ```
@@ -3252,7 +3240,7 @@ renderPlot(
 ### Gene Set Stats
 
 ```{r}
-datatable_download_exp_5(results_gse[[idx]])
+datatable_download_exp_7(results_gse[[idx]])
 ```
 
 ### Gene Set Genes
@@ -3353,7 +3341,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -3450,7 +3438,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -3506,17 +3494,13 @@ close(tc)
 results_deg[[idx]] <- read.delim(text = results)
 
 col <- 18
-length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
-  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
-  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
-  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + 1
-length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
-  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
-  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
-  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]])
+length1 <- nrow(deg_list[[1]]) + nrow(deg_list[[2]]) + nrow(deg_list[[3]]) +
+  nrow(deg_list[[4]]) + nrow(deg_list[[5]]) + 1
+length2 <- nrow(deg_list[[1]]) + nrow(deg_list[[2]]) + nrow(deg_list[[3]]) +
+  nrow(deg_list[[4]]) + nrow(deg_list[[5]]) + nrow(deg_list[[6]])
 length <- length1:length2
-for (i in seq_along(corrections)) {
-  results_deg[[idx]][ , col] <- corrections[[i]][length]
+for (i in seq_along(deg_corrections)) {
+  results_deg[[idx]][ , col] <- deg_corrections[[i]][length]
   col <- col + 1
 }
 
@@ -3660,7 +3644,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -3731,7 +3715,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -3742,7 +3726,7 @@ renderPlot(
 ### Gene Stats
 
 ```{r}
-datatable_download_exp_10(results_deg[[idx]])
+datatable_download_exp_15(results_deg[[idx]])
 ```
 
 ### Search Gene Sets
@@ -3762,17 +3746,13 @@ close(tc)
 results_gse[[idx]] <- read.delim(text = results)
 
 col <- 18
-length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
-  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
-  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
-  nrow(deg_list[[5]]) + 1
-length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
-  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
-  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
-  nrow(deg_list[[5]]) + nrow(gse_list[[6]])
+length1 <- nrow(gse_list[[1]]) + nrow(gse_list[[2]]) + nrow(gse_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(gse_list[[5]]) + 1
+length2 <- nrow(gse_list[[1]]) + nrow(gse_list[[2]]) + nrow(gse_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(gse_list[[5]]) + nrow(gse_list[[6]])
 length <- length1:length2
-for (i in seq_along(corrections)) {
-  results_gse[[idx]][ , col] <- corrections[[i]][length]
+for (i in seq_along(gse_corrections)) {
+  results_gse[[idx]][ , col] <- gse_corrections[[i]][length]
   col <- col + 1
 }
 
@@ -3905,7 +3885,7 @@ renderPlot(
     )
   },
   width = 1400,
-  height = 500,
+  height = 650,
   res = 96
 )
 ```
@@ -3916,7 +3896,7 @@ renderPlot(
 ### Gene Set Stats
 
 ```{r}
-datatable_download_exp_5(results_gse[[idx]])
+datatable_download_exp_7(results_gse[[idx]])
 ```
 
 ### Gene Set Genes
@@ -4017,7 +3997,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -4114,7 +4094,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -4170,19 +4150,14 @@ close(tc)
 results_deg[[idx]] <- read.delim(text = results)
 
 col <- 18
-length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
-  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
-  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
-  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]]) +
-  nrow(gse_list[[7]]) + 1
-length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
-  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
-  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
-  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]]) +
-  nrow(gse_list[[7]]) + nrow(deg_list[[7]])
+length1 <- nrow(deg_list[[1]]) + nrow(deg_list[[2]]) + nrow(deg_list[[3]]) +
+  nrow(deg_list[[4]]) + nrow(deg_list[[5]]) + nrow(deg_list[[6]]) +1
+length2 <- nrow(deg_list[[1]]) + nrow(deg_list[[2]]) + nrow(deg_list[[3]]) +
+  nrow(deg_list[[4]]) + nrow(deg_list[[5]]) + nrow(deg_list[[6]]) +
+  nrow(deg_list[[7]])
 length <- length1:length2
-for (i in seq_along(corrections)) {
-  results_deg[[idx]][ , col] <- corrections[[i]][length]
+for (i in seq_along(deg_corrections)) {
+  results_deg[[idx]][ , col] <- deg_corrections[[i]][length]
   col <- col + 1
 }
 
@@ -4326,7 +4301,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -4397,7 +4372,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -4408,7 +4383,7 @@ renderPlot(
 ### Gene Stats
 
 ```{r}
-datatable_download_exp_10(results_deg[[idx]])
+datatable_download_exp_15(results_deg[[idx]])
 ```
 
 ### Search Gene Sets
@@ -4428,18 +4403,14 @@ close(tc)
 results_gse[[idx]] <- read.delim(text = results)
 
 col <- 18
-length1 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
-  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
-  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
-  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]]) + 1
-length2 <- nrow(gse_list[[1]]) + nrow(deg_list[[1]]) + nrow(gse_list[[2]]) +
-  nrow(deg_list[[2]]) + nrow(gse_list[[3]]) + nrow(deg_list[[3]]) +
-  nrow(gse_list[[4]]) + nrow(deg_list[[4]]) + nrow(gse_list[[5]]) +
-  nrow(deg_list[[5]]) + nrow(gse_list[[6]]) + nrow(deg_list[[6]]) +
+length1 <- nrow(gse_list[[1]]) + nrow(gse_list[[2]]) + nrow(gse_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(gse_list[[5]]) + nrow(gse_list[[6]]) +1
+length2 <- nrow(gse_list[[1]]) + nrow(gse_list[[2]]) + nrow(gse_list[[3]]) +
+  nrow(gse_list[[4]]) + nrow(gse_list[[5]]) + nrow(gse_list[[6]]) +
   nrow(gse_list[[7]])
 length <- length1:length2
-for (i in seq_along(corrections)) {
-  results_gse[[idx]][ , col] <- corrections[[i]][length]
+for (i in seq_along(gse_corrections)) {
+  results_gse[[idx]][ , col] <- gse_corrections[[i]][length]
   col <- col + 1
 }
 
@@ -4572,7 +4543,7 @@ renderPlot(
     )
   },
   width = 1400,
-  height = 500,
+  height = 650,
   res = 96
 )
 ```
@@ -4583,7 +4554,7 @@ renderPlot(
 ### Gene Set Stats
 
 ```{r}
-datatable_download_exp_5(results_gse[[idx]])
+datatable_download_exp_7(results_gse[[idx]])
 ```
 
 ### Gene Set Genes
@@ -4684,7 +4655,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -4781,7 +4752,7 @@ renderPlot(
     )
   },
   width = 750,
-  height = 500,
+  height = 700,
   res = 96
 )
 ```
@@ -4790,6 +4761,10 @@ renderPlot(
 </div>
 
 ```{r, include = FALSE}
-rm(deg, deg_data, deg_list, gse, gse_data, gse_list, corrections)
+rm(
+  deg, deg_data, deg_list,
+  gse, gse_data, gse_list,
+  deg_corrections, gse_corrections
+)
 gc()
 ```

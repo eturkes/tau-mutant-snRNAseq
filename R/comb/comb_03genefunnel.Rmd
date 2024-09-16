@@ -446,7 +446,7 @@ for (i in seq_along(seurat_list)) {
 
   deg <- deg[rownames(deg) %in% rownames(dge)]
   logcounts(deg, withDimnames = FALSE) <- cpm(
-    dge, log = TRUE, prior.count = 3
+    dge, log = TRUE, prior.count = 1
   )
   deg_data[[i]] <- deg
 
@@ -497,22 +497,43 @@ for (i in seq_along(seurat_list)) {
 }
 
 results <- rbind(
-  gse_list[[1]], deg_list[[1]], gse_list[[2]], deg_list[[2]],
-  gse_list[[3]], deg_list[[3]], gse_list[[4]], deg_list[[4]],
-  gse_list[[5]], deg_list[[5]], gse_list[[6]], deg_list[[6]],
-  gse_list[[7]], deg_list[[7]]
+  gse_list[[1]], gse_list[[2]],
+  gse_list[[3]], gse_list[[4]],
+  gse_list[[5]], gse_list[[6]],
+  gse_list[[7]]
 )
-
-corrections <- c(
+gse_corrections <- c(
   results[ , 13], results[ , 14], results[ , 15],
   results[ , 16], results[ , 17]
 )
-corrections <- data.frame(mean = rep(results[ , 2], times = 5), p = corrections)
-corrections <- ihw(p ~ mean,  data = corrections, alpha = 0.05)
-corrections <- adj_pvalues(corrections)
-corrections <- split(
-  corrections,
-  f = gl(5, k = length(corrections) / 5, length = length(corrections))
+gse_corrections <- data.frame(
+  mean = rep(results[ , 2], times = 5), p = gse_corrections
+)
+gse_corrections <- ihw(p ~ mean,  data = gse_corrections, alpha = 0.05)
+gse_corrections <- adj_pvalues(gse_corrections)
+gse_corrections <- split(
+  gse_corrections,
+  f = gl(5, k = length(gse_corrections) / 5, length = length(gse_corrections))
+)
+
+results <- rbind(
+  deg_list[[1]], deg_list[[2]],
+  deg_list[[3]], deg_list[[4]],
+  deg_list[[5]], deg_list[[6]],
+  deg_list[[7]]
+)
+deg_corrections <- c(
+  results[ , 13], results[ , 14], results[ , 15],
+  results[ , 16], results[ , 17]
+)
+deg_corrections <- data.frame(
+  mean = rep(results[ , 2], times = 5), p = deg_corrections
+)
+deg_corrections <- ihw(p ~ mean,  data = deg_corrections, alpha = 0.05)
+deg_corrections <- adj_pvalues(deg_corrections)
+deg_corrections <- split(
+  deg_corrections,
+  f = gl(5, k = length(deg_corrections) / 5, length = length(deg_corrections))
 )
 
 rds <- file.path(cache_dir, "gse_data.rds")
@@ -531,9 +552,13 @@ rds <- file.path(cache_dir, "deg_list.rds")
 if (!file.exists(rds)) {
   saveRDS(deg_list, file = rds)
 }
-rds <- file.path(cache_dir, "corrections.rds")
+rds <- file.path(cache_dir, "gse_corrections.rds")
 if (!file.exists(rds)) {
-  saveRDS(corrections, file = rds)
+  saveRDS(gse_corrections, file = rds)
+}
+rds <- file.path(cache_dir, "deg_corrections.rds")
+if (!file.exists(rds)) {
+  saveRDS(deg_corrections, file = rds)
 }
 ```
 
