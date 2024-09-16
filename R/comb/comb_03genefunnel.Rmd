@@ -417,7 +417,7 @@ for (i in seq_along(seurat_list)) {
   dge$samples$norm.factors <- dge_orig$samples$norm.factors
   keep <- filterByExpr(
     dge, group = gse$tau,
-    min.count = 200, min.total.count = 300
+    min.count = 1, min.total.count = 1.5
   )
   dge <- dge[keep, , keep.lib.sizes = FALSE]
   dge <- calcNormFactors(dge)
@@ -439,7 +439,7 @@ for (i in seq_along(seurat_list)) {
   dge$samples$norm.factors <- dge_orig$samples$norm.factors
   keep <- filterByExpr(
     dge, group = deg$tau,
-    min.count = 5, min.total.count = 7.5
+    min.count = 4, min.total.count = 6
   )
   dge <- dge[keep, , keep.lib.sizes = FALSE]
   dge <- calcNormFactors(dge)
