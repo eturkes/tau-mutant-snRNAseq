@@ -26,9 +26,10 @@ runtime: shiny
 #    Emir Turkes can be contacted at emir.turkes@eturkes.com
 
 library(conflicted)
+conflicts_prefer(DT::JS)
 packages <- c(
   "GSEABase", "SingleCellExperiment", "scales", "ComplexHeatmap", "circlize",
-  "limma", "DT"
+  "limma", "DT", "purrr", "dplyr", "networkD3"
 )
 lapply(packages, FUN = library, character.only = TRUE)
 
@@ -93,6 +94,8 @@ deg_list <- readRDS(file.path(data_dir, "deg_list.rds"))
 gse_list <- readRDS(file.path(data_dir, "gse_list.rds"))
 gse_corrections <- readRDS(file.path(data_dir, "gse_corrections.rds"))
 deg_corrections <- readRDS(file.path(data_dir, "deg_corrections.rds"))
+
+map <- setNames(gene_anno$symbol, gene_anno$ensembl)
 
 ctypes <- c(
   "Astrocytes", "Oligodendrocytes", "Microglia", "Glutamatergic CA3",
@@ -236,7 +239,7 @@ for (i in seq_along(deg_corrections)) {
 
 rownames(results_deg[[idx]]) <- results_deg[[idx]]$X
 results_deg[[idx]] <- results_deg[[idx]][ , -1]
-results_deg[[idx]] <- results_deg[[idx]][ , 1:22]
+results_deg[[idx]] <- results_deg[[idx]][ , 1:23]
 tests <- results_deg[[idx]][ , 17:21]
 results_deg[[idx]] <- results_deg[[idx]][
   order(results_deg[[idx]]$F, decreasing = TRUE),
@@ -486,7 +489,7 @@ for (i in seq_along(gse_corrections)) {
 
 rownames(results_gse[[idx]]) <- results_gse[[idx]]$X
 results_gse[[idx]] <- results_gse[[idx]][ , -1]
-results_gse[[idx]] <- results_gse[[idx]][ , 1:22]
+results_gse[[idx]] <- results_gse[[idx]][ , 1:23]
 tests <- results_gse[[idx]][ , 17:21]
 results_gse[[idx]] <- results_gse[[idx]][
   order(results_gse[[idx]]$F, decreasing = TRUE),
@@ -830,6 +833,76 @@ renderPlot(
 </div>
 </div>
 
+### Gene Connectivity
+
+```{r}
+selectizeInput(
+  paste0("deg_conn", idx),
+  label = "Select Genes:",
+  choices = results_deg[[idx]]$Gene,
+  selected = rownames(sig_uniq_deg[[idx]])[1:2],
+  multiple = TRUE,
+  width = "100%"
+)
+
+renderSankeyNetwork(
+  {
+    idx <- 1
+
+    links_list <- vector(
+      "list", length = length(input[[paste0("deg_conn", idx)]])
+    )
+    for (i in seq_along(input[[paste0("deg_conn", idx)]])) {
+      gse_sub <- results_gse[[idx]][results_gse[[idx]]$F.p.value < 0.05, ]
+      gene_ids <- geneIds(gene_sets)[names(gene_sets) %in% gse_sub$GeneSet]
+      gene_ids <- gene_ids[order(names(gene_ids))]
+
+      links_orig <- data.frame(
+        source = rep(names(gene_ids), times = lengths(gene_ids)),
+        target = gene_ids %>% map_dfr(as_tibble)
+      )
+      links <- links_orig
+      links_orig[] <- map[unlist(links_orig)]
+      links$value <- links_orig$value
+      colnames(links) <- c("source", "target")
+      links <- links[links$target %in% input[[paste0("deg_conn", idx)]][i], ]
+      links$value <- rep(1, times = nrow(links))
+      links_list[[i]] <- links
+    }
+    links_comb <- do.call(rbind, args = links_list)
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    if (nrow(nodes) > 0) {
+      select_length <- length(
+        which(input[[paste0("deg_conn", idx)]] %in% nodes$name)
+      )
+      nodes$group <- c(
+        rep("target", times = nrow(nodes) - select_length),
+        nodes$name[(nrow(nodes) - (select_length - 1)):nrow(nodes)]
+      )
+      colour <- c(hue_pal()(select_length), "#D3D3D3")
+      colour <- paste0(
+        'd3.scaleOrdinal().range(["', paste(colour, collapse = '", "'), '"])'
+      )
+
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20, NodeGroup = "group",
+        LinkGroup = "target", colourScale = colour, margin = list(bottom = 100)
+      )
+    }
+  }
+)
+```
+
 Oligodendrocytes
 ===
 
@@ -888,7 +961,7 @@ for (i in seq_along(deg_corrections)) {
 
 rownames(results_deg[[idx]]) <- results_deg[[idx]]$X
 results_deg[[idx]] <- results_deg[[idx]][ , -1]
-results_deg[[idx]] <- results_deg[[idx]][ , 1:22]
+results_deg[[idx]] <- results_deg[[idx]][ , 1:23]
 tests <- results_deg[[idx]][ , 17:21]
 results_deg[[idx]] <- results_deg[[idx]][
   order(results_deg[[idx]]$F, decreasing = TRUE),
@@ -1138,7 +1211,7 @@ for (i in seq_along(gse_corrections)) {
 
 rownames(results_gse[[idx]]) <- results_gse[[idx]]$X
 results_gse[[idx]] <- results_gse[[idx]][ , -1]
-results_gse[[idx]] <- results_gse[[idx]][ , 1:22]
+results_gse[[idx]] <- results_gse[[idx]][ , 1:23]
 tests <- results_gse[[idx]][ , 17:21]
 results_gse[[idx]] <- results_gse[[idx]][
   order(results_gse[[idx]]$F, decreasing = TRUE),
@@ -1482,6 +1555,76 @@ renderPlot(
 </div>
 </div>
 
+### Gene Connectivity
+
+```{r}
+selectizeInput(
+  paste0("deg_conn", idx),
+  label = "Select Genes:",
+  choices = results_deg[[idx]]$Gene,
+  selected = rownames(sig_uniq_deg[[idx]])[1:2],
+  multiple = TRUE,
+  width = "100%"
+)
+
+renderSankeyNetwork(
+  {
+    idx <- 2
+
+    links_list <- vector(
+      "list", length = length(input[[paste0("deg_conn", idx)]])
+    )
+    for (i in seq_along(input[[paste0("deg_conn", idx)]])) {
+      gse_sub <- results_gse[[idx]][results_gse[[idx]]$F.p.value < 0.05, ]
+      gene_ids <- geneIds(gene_sets)[names(gene_sets) %in% gse_sub$GeneSet]
+      gene_ids <- gene_ids[order(names(gene_ids))]
+
+      links_orig <- data.frame(
+        source = rep(names(gene_ids), times = lengths(gene_ids)),
+        target = gene_ids %>% map_dfr(as_tibble)
+      )
+      links <- links_orig
+      links_orig[] <- map[unlist(links_orig)]
+      links$value <- links_orig$value
+      colnames(links) <- c("source", "target")
+      links <- links[links$target %in% input[[paste0("deg_conn", idx)]][i], ]
+      links$value <- rep(1, times = nrow(links))
+      links_list[[i]] <- links
+    }
+    links_comb <- do.call(rbind, args = links_list)
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    if (nrow(nodes) > 0) {
+      select_length <- length(
+        which(input[[paste0("deg_conn", idx)]] %in% nodes$name)
+      )
+      nodes$group <- c(
+        rep("target", times = nrow(nodes) - select_length),
+        nodes$name[(nrow(nodes) - (select_length - 1)):nrow(nodes)]
+      )
+      colour <- c(hue_pal()(select_length), "#D3D3D3")
+      colour <- paste0(
+        'd3.scaleOrdinal().range(["', paste(colour, collapse = '", "'), '"])'
+      )
+
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20, NodeGroup = "group",
+        LinkGroup = "target", colourScale = colour, margin = list(bottom = 100)
+      )
+    }
+  }
+)
+```
+
 Microglia
 ===
 
@@ -1540,7 +1683,7 @@ for (i in seq_along(deg_corrections)) {
 
 rownames(results_deg[[idx]]) <- results_deg[[idx]]$X
 results_deg[[idx]] <- results_deg[[idx]][ , -1]
-results_deg[[idx]] <- results_deg[[idx]][ , 1:22]
+results_deg[[idx]] <- results_deg[[idx]][ , 1:23]
 tests <- results_deg[[idx]][ , 17:21]
 results_deg[[idx]] <- results_deg[[idx]][
   order(results_deg[[idx]]$F, decreasing = TRUE),
@@ -1790,7 +1933,7 @@ for (i in seq_along(gse_corrections)) {
 
 rownames(results_gse[[idx]]) <- results_gse[[idx]]$X
 results_gse[[idx]] <- results_gse[[idx]][ , -1]
-results_gse[[idx]] <- results_gse[[idx]][ , 1:22]
+results_gse[[idx]] <- results_gse[[idx]][ , 1:23]
 tests <- results_gse[[idx]][ , 17:21]
 results_gse[[idx]] <- results_gse[[idx]][
   order(results_gse[[idx]]$F, decreasing = TRUE),
@@ -2134,6 +2277,76 @@ renderPlot(
 </div>
 </div>
 
+### Gene Connectivity
+
+```{r}
+selectizeInput(
+  paste0("deg_conn", idx),
+  label = "Select Genes:",
+  choices = results_deg[[idx]]$Gene,
+  selected = rownames(sig_uniq_deg[[idx]])[1:2],
+  multiple = TRUE,
+  width = "100%"
+)
+
+renderSankeyNetwork(
+  {
+    idx <- 3
+
+    links_list <- vector(
+      "list", length = length(input[[paste0("deg_conn", idx)]])
+    )
+    for (i in seq_along(input[[paste0("deg_conn", idx)]])) {
+      gse_sub <- results_gse[[idx]][results_gse[[idx]]$F.p.value < 0.05, ]
+      gene_ids <- geneIds(gene_sets)[names(gene_sets) %in% gse_sub$GeneSet]
+      gene_ids <- gene_ids[order(names(gene_ids))]
+
+      links_orig <- data.frame(
+        source = rep(names(gene_ids), times = lengths(gene_ids)),
+        target = gene_ids %>% map_dfr(as_tibble)
+      )
+      links <- links_orig
+      links_orig[] <- map[unlist(links_orig)]
+      links$value <- links_orig$value
+      colnames(links) <- c("source", "target")
+      links <- links[links$target %in% input[[paste0("deg_conn", idx)]][i], ]
+      links$value <- rep(1, times = nrow(links))
+      links_list[[i]] <- links
+    }
+    links_comb <- do.call(rbind, args = links_list)
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    if (nrow(nodes) > 0) {
+      select_length <- length(
+        which(input[[paste0("deg_conn", idx)]] %in% nodes$name)
+      )
+      nodes$group <- c(
+        rep("target", times = nrow(nodes) - select_length),
+        nodes$name[(nrow(nodes) - (select_length - 1)):nrow(nodes)]
+      )
+      colour <- c(hue_pal()(select_length), "#D3D3D3")
+      colour <- paste0(
+        'd3.scaleOrdinal().range(["', paste(colour, collapse = '", "'), '"])'
+      )
+
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20, NodeGroup = "group",
+        LinkGroup = "target", colourScale = colour, margin = list(bottom = 100)
+      )
+    }
+  }
+)
+```
+
 Glutamatergic CA3
 ===
 
@@ -2193,7 +2406,7 @@ for (i in seq_along(deg_corrections)) {
 
 rownames(results_deg[[idx]]) <- results_deg[[idx]]$X
 results_deg[[idx]] <- results_deg[[idx]][ , -1]
-results_deg[[idx]] <- results_deg[[idx]][ , 1:22]
+results_deg[[idx]] <- results_deg[[idx]][ , 1:23]
 tests <- results_deg[[idx]][ , 17:21]
 results_deg[[idx]] <- results_deg[[idx]][
   order(results_deg[[idx]]$F, decreasing = TRUE),
@@ -2444,7 +2657,7 @@ for (i in seq_along(gse_corrections)) {
 
 rownames(results_gse[[idx]]) <- results_gse[[idx]]$X
 results_gse[[idx]] <- results_gse[[idx]][ , -1]
-results_gse[[idx]] <- results_gse[[idx]][ , 1:22]
+results_gse[[idx]] <- results_gse[[idx]][ , 1:23]
 tests <- results_gse[[idx]][ , 17:21]
 results_gse[[idx]] <- results_gse[[idx]][
   order(results_gse[[idx]]$F, decreasing = TRUE),
@@ -2788,6 +3001,76 @@ renderPlot(
 </div>
 </div>
 
+### Gene Connectivity
+
+```{r}
+selectizeInput(
+  paste0("deg_conn", idx),
+  label = "Select Genes:",
+  choices = results_deg[[idx]]$Gene,
+  selected = rownames(sig_uniq_deg[[idx]])[1:2],
+  multiple = TRUE,
+  width = "100%"
+)
+
+renderSankeyNetwork(
+  {
+    idx <- 4
+
+    links_list <- vector(
+      "list", length = length(input[[paste0("deg_conn", idx)]])
+    )
+    for (i in seq_along(input[[paste0("deg_conn", idx)]])) {
+      gse_sub <- results_gse[[idx]][results_gse[[idx]]$F.p.value < 0.05, ]
+      gene_ids <- geneIds(gene_sets)[names(gene_sets) %in% gse_sub$GeneSet]
+      gene_ids <- gene_ids[order(names(gene_ids))]
+
+      links_orig <- data.frame(
+        source = rep(names(gene_ids), times = lengths(gene_ids)),
+        target = gene_ids %>% map_dfr(as_tibble)
+      )
+      links <- links_orig
+      links_orig[] <- map[unlist(links_orig)]
+      links$value <- links_orig$value
+      colnames(links) <- c("source", "target")
+      links <- links[links$target %in% input[[paste0("deg_conn", idx)]][i], ]
+      links$value <- rep(1, times = nrow(links))
+      links_list[[i]] <- links
+    }
+    links_comb <- do.call(rbind, args = links_list)
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    if (nrow(nodes) > 0) {
+      select_length <- length(
+        which(input[[paste0("deg_conn", idx)]] %in% nodes$name)
+      )
+      nodes$group <- c(
+        rep("target", times = nrow(nodes) - select_length),
+        nodes$name[(nrow(nodes) - (select_length - 1)):nrow(nodes)]
+      )
+      colour <- c(hue_pal()(select_length), "#D3D3D3")
+      colour <- paste0(
+        'd3.scaleOrdinal().range(["', paste(colour, collapse = '", "'), '"])'
+      )
+
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20, NodeGroup = "group",
+        LinkGroup = "target", colourScale = colour, margin = list(bottom = 100)
+      )
+    }
+  }
+)
+```
+
 Glutamatergic CA1
 ===
 
@@ -2848,7 +3131,7 @@ for (i in seq_along(deg_corrections)) {
 
 rownames(results_deg[[idx]]) <- results_deg[[idx]]$X
 results_deg[[idx]] <- results_deg[[idx]][ , -1]
-results_deg[[idx]] <- results_deg[[idx]][ , 1:22]
+results_deg[[idx]] <- results_deg[[idx]][ , 1:23]
 tests <- results_deg[[idx]][ , 17:21]
 results_deg[[idx]] <- results_deg[[idx]][
   order(results_deg[[idx]]$F, decreasing = TRUE),
@@ -3100,7 +3383,7 @@ for (i in seq_along(gse_corrections)) {
 
 rownames(results_gse[[idx]]) <- results_gse[[idx]]$X
 results_gse[[idx]] <- results_gse[[idx]][ , -1]
-results_gse[[idx]] <- results_gse[[idx]][ , 1:22]
+results_gse[[idx]] <- results_gse[[idx]][ , 1:23]
 tests <- results_gse[[idx]][ , 17:21]
 results_gse[[idx]] <- results_gse[[idx]][
   order(results_gse[[idx]]$F, decreasing = TRUE),
@@ -3444,6 +3727,76 @@ renderPlot(
 </div>
 </div>
 
+### Gene Connectivity
+
+```{r}
+selectizeInput(
+  paste0("deg_conn", idx),
+  label = "Select Genes:",
+  choices = results_deg[[idx]]$Gene,
+  selected = rownames(sig_uniq_deg[[idx]])[1:2],
+  multiple = TRUE,
+  width = "100%"
+)
+
+renderSankeyNetwork(
+  {
+    idx <- 5
+
+    links_list <- vector(
+      "list", length = length(input[[paste0("deg_conn", idx)]])
+    )
+    for (i in seq_along(input[[paste0("deg_conn", idx)]])) {
+      gse_sub <- results_gse[[idx]][results_gse[[idx]]$F.p.value < 0.05, ]
+      gene_ids <- geneIds(gene_sets)[names(gene_sets) %in% gse_sub$GeneSet]
+      gene_ids <- gene_ids[order(names(gene_ids))]
+
+      links_orig <- data.frame(
+        source = rep(names(gene_ids), times = lengths(gene_ids)),
+        target = gene_ids %>% map_dfr(as_tibble)
+      )
+      links <- links_orig
+      links_orig[] <- map[unlist(links_orig)]
+      links$value <- links_orig$value
+      colnames(links) <- c("source", "target")
+      links <- links[links$target %in% input[[paste0("deg_conn", idx)]][i], ]
+      links$value <- rep(1, times = nrow(links))
+      links_list[[i]] <- links
+    }
+    links_comb <- do.call(rbind, args = links_list)
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    if (nrow(nodes) > 0) {
+      select_length <- length(
+        which(input[[paste0("deg_conn", idx)]] %in% nodes$name)
+      )
+      nodes$group <- c(
+        rep("target", times = nrow(nodes) - select_length),
+        nodes$name[(nrow(nodes) - (select_length - 1)):nrow(nodes)]
+      )
+      colour <- c(hue_pal()(select_length), "#D3D3D3")
+      colour <- paste0(
+        'd3.scaleOrdinal().range(["', paste(colour, collapse = '", "'), '"])'
+      )
+
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20, NodeGroup = "group",
+        LinkGroup = "target", colourScale = colour, margin = list(bottom = 100)
+      )
+    }
+  }
+)
+```
+
 Glutamatergic L2/3 ENT
 ===
 
@@ -3504,7 +3857,7 @@ for (i in seq_along(deg_corrections)) {
 
 rownames(results_deg[[idx]]) <- results_deg[[idx]]$X
 results_deg[[idx]] <- results_deg[[idx]][ , -1]
-results_deg[[idx]] <- results_deg[[idx]][ , 1:22]
+results_deg[[idx]] <- results_deg[[idx]][ , 1:23]
 tests <- results_deg[[idx]][ , 17:21]
 results_deg[[idx]] <- results_deg[[idx]][
   order(results_deg[[idx]]$F, decreasing = TRUE),
@@ -3756,7 +4109,7 @@ for (i in seq_along(gse_corrections)) {
 
 rownames(results_gse[[idx]]) <- results_gse[[idx]]$X
 results_gse[[idx]] <- results_gse[[idx]][ , -1]
-results_gse[[idx]] <- results_gse[[idx]][ , 1:22]
+results_gse[[idx]] <- results_gse[[idx]][ , 1:23]
 tests <- results_gse[[idx]][ , 17:21]
 results_gse[[idx]] <- results_gse[[idx]][
   order(results_gse[[idx]]$F, decreasing = TRUE),
@@ -4100,6 +4453,76 @@ renderPlot(
 </div>
 </div>
 
+### Gene Connectivity
+
+```{r}
+selectizeInput(
+  paste0("deg_conn", idx),
+  label = "Select Genes:",
+  choices = results_deg[[idx]]$Gene,
+  selected = rownames(sig_uniq_deg[[idx]])[1:2],
+  multiple = TRUE,
+  width = "100%"
+)
+
+renderSankeyNetwork(
+  {
+    idx <- 6
+
+    links_list <- vector(
+      "list", length = length(input[[paste0("deg_conn", idx)]])
+    )
+    for (i in seq_along(input[[paste0("deg_conn", idx)]])) {
+      gse_sub <- results_gse[[idx]][results_gse[[idx]]$F.p.value < 0.05, ]
+      gene_ids <- geneIds(gene_sets)[names(gene_sets) %in% gse_sub$GeneSet]
+      gene_ids <- gene_ids[order(names(gene_ids))]
+
+      links_orig <- data.frame(
+        source = rep(names(gene_ids), times = lengths(gene_ids)),
+        target = gene_ids %>% map_dfr(as_tibble)
+      )
+      links <- links_orig
+      links_orig[] <- map[unlist(links_orig)]
+      links$value <- links_orig$value
+      colnames(links) <- c("source", "target")
+      links <- links[links$target %in% input[[paste0("deg_conn", idx)]][i], ]
+      links$value <- rep(1, times = nrow(links))
+      links_list[[i]] <- links
+    }
+    links_comb <- do.call(rbind, args = links_list)
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    if (nrow(nodes) > 0) {
+      select_length <- length(
+        which(input[[paste0("deg_conn", idx)]] %in% nodes$name)
+      )
+      nodes$group <- c(
+        rep("target", times = nrow(nodes) - select_length),
+        nodes$name[(nrow(nodes) - (select_length - 1)):nrow(nodes)]
+      )
+      colour <- c(hue_pal()(select_length), "#D3D3D3")
+      colour <- paste0(
+        'd3.scaleOrdinal().range(["', paste(colour, collapse = '", "'), '"])'
+      )
+
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20, NodeGroup = "group",
+        LinkGroup = "target", colourScale = colour, margin = list(bottom = 100)
+      )
+    }
+  }
+)
+```
+
 GABAergic Sst
 ===
 
@@ -4161,7 +4584,7 @@ for (i in seq_along(deg_corrections)) {
 
 rownames(results_deg[[idx]]) <- results_deg[[idx]]$X
 results_deg[[idx]] <- results_deg[[idx]][ , -1]
-results_deg[[idx]] <- results_deg[[idx]][ , 1:22]
+results_deg[[idx]] <- results_deg[[idx]][ , 1:23]
 tests <- results_deg[[idx]][ , 17:21]
 results_deg[[idx]] <- results_deg[[idx]][
   order(results_deg[[idx]]$F, decreasing = TRUE),
@@ -4414,7 +4837,7 @@ for (i in seq_along(gse_corrections)) {
 
 rownames(results_gse[[idx]]) <- results_gse[[idx]]$X
 results_gse[[idx]] <- results_gse[[idx]][ , -1]
-results_gse[[idx]] <- results_gse[[idx]][ , 1:22]
+results_gse[[idx]] <- results_gse[[idx]][ , 1:23]
 tests <- results_gse[[idx]][ , 17:21]
 results_gse[[idx]] <- results_gse[[idx]][
   order(results_gse[[idx]]$F, decreasing = TRUE),
@@ -4756,6 +5179,78 @@ renderPlot(
 ```
 
 </div>
+</div>
+
+### Gene Connectivity
+
+```{r}
+selectizeInput(
+  paste0("deg_conn", idx),
+  label = "Select Genes:",
+  choices = results_deg[[idx]]$Gene,
+  selected = rownames(sig_uniq_deg[[idx]])[1:2],
+  multiple = TRUE,
+  width = "100%"
+)
+
+renderSankeyNetwork(
+  {
+    idx <- 7
+
+    links_list <- vector(
+      "list", length = length(input[[paste0("deg_conn", idx)]])
+    )
+    for (i in seq_along(input[[paste0("deg_conn", idx)]])) {
+      gse_sub <- results_gse[[idx]][results_gse[[idx]]$F.p.value < 0.05, ]
+      gene_ids <- geneIds(gene_sets)[names(gene_sets) %in% gse_sub$GeneSet]
+      gene_ids <- gene_ids[order(names(gene_ids))]
+
+      links_orig <- data.frame(
+        source = rep(names(gene_ids), times = lengths(gene_ids)),
+        target = gene_ids %>% map_dfr(as_tibble)
+      )
+      links <- links_orig
+      links_orig[] <- map[unlist(links_orig)]
+      links$value <- links_orig$value
+      colnames(links) <- c("source", "target")
+      links <- links[links$target %in% input[[paste0("deg_conn", idx)]][i], ]
+      links$value <- rep(1, times = nrow(links))
+      links_list[[i]] <- links
+    }
+    links_comb <- do.call(rbind, args = links_list)
+
+    nodes <- data.frame(
+      name = c(
+        as.character(links_comb$source), as.character(links_comb$target)
+      ) %>% unique()
+    )
+    links_comb$IDsource <- match(links_comb$source, nodes$name) - 1
+    links_comb$IDtarget <- match(links_comb$target, nodes$name) - 1
+
+    if (nrow(nodes) > 0) {
+      select_length <- length(
+        which(input[[paste0("deg_conn", idx)]] %in% nodes$name)
+      )
+      nodes$group <- c(
+        rep("target", times = nrow(nodes) - select_length),
+        nodes$name[(nrow(nodes) - (select_length - 1)):nrow(nodes)]
+      )
+      colour <- c(hue_pal()(select_length), "#D3D3D3")
+      colour <- paste0(
+        'd3.scaleOrdinal().range(["', paste(colour, collapse = '", "'), '"])'
+      )
+
+      sankeyNetwork(
+        Links = links_comb, Nodes = nodes, Source = "IDsource",
+        Target = "IDtarget", Value = "value", NodeID = "name",
+        sinksRight = FALSE, fontSize = 20, NodeGroup = "group",
+        LinkGroup = "target", colourScale = colour, margin = list(bottom = 100)
+      )
+    }
+  }
+)
+```
+
 </div>
 
 ```{r, include = FALSE}
