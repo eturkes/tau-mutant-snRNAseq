@@ -1,0 +1,335 @@
+---
+title: "Combined Samples - 05 CellChat"
+author:
+  - name: "Emir Turkes"
+date: '`r strftime(Sys.time(), format = "%B %d, %Y")`'
+link-citations: true
+output:
+  html_document:
+    code_folding: hide
+    number_sections: true
+    theme: lumen
+    highlight: haddock
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(
+    inputFile, encoding = encoding,
+    output_file = file.path(
+      "..", "..", "results", "comb", "comb_05cellchat.html"
+    ))})
+---
+
+<style type="text/css">
+body {font-size: 16px;}
+h1.title {font-size: 35px;}
+h1 {font-size: 24px;}
+h2 {font-size: 22px;}
+.toc-content {padding-left: 0px; padding-right: 0px;}
+div.tocify {width: 100%;}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em; padding-left: 25px; text-indent: 0;
+}
+.tocify-subheader .tocify-subheader .tocify-item {
+  font-size: 0.95em; padding-left: 35px; text-indent: 0;
+}
+div.main-container {max-width: none; width: 100%;}
+</style>
+
+*This file is a part of [tau-mutant-snRNAseq](https://github.com/eturkes/tau-mutant-snRNAseq).*
+
+The table of contents in the top left is clickable and can be used to quickly navigate the document.
+To toggle the visibility of code, use the `CODE` toggles at the top right of chunks.
+The toggle at the start of the document controls the visibility of all chunks.
+
+```{r}
+#    This file is part of tau-mutant-snRNAseq.
+#    Copyright (C) 2024  Emir Turkes, Naoto Watamura, UK DRI at UCL
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#    Emir Turkes can be contacted at emir.turkes@eturkes.com
+
+# Load required packages, suppressing startup messages.
+# -----------------------------------------------------
+library(conflicted)
+packages <- c(
+  "Seurat", "parallelly", "ggplot2", "dplyr", "ggrepel", "viridis", "DT",
+  "CellChat"
+)
+invisible(
+  suppressPackageStartupMessages(
+    lapply(packages, FUN = library, character.only = TRUE)
+  )
+)
+# -----------------------------------------------------
+
+# Define global settings.
+# -----------------------
+knitr::opts_chunk$set(fig.width = 10, fig.height = 7, dpi = 150)
+# -----------------------
+
+# Define functions.
+# -----------------
+source(file.path("..", "utils.R"))
+# -----------------
+
+# Useful variables.
+# -----------------
+step <- 2
+
+data_dir <- file.path("..", "..", "data")
+cache_dir <- file.path("..", "..", "cache", "comb", paste0("step", "0", step))
+if (!dir.exists(cache_dir)) {
+  dir.create(cache_dir, recursive = TRUE)
+}
+
+protocol <- c("mouse", "droplet", "single-nuc", "umis")
+vars_to_regress <- NULL
+parallel_override <- NULL
+# -----------------
+
+# Metadata to plot after dimensionality reduction and clustering.
+# Values in list can include "no_legend and/or "no_label" to exclude those.
+# -------------------------------------------------------------------------
+metadata_to_plot <- vector("list", length = 8)
+names(metadata_to_plot) <- c(
+  "subcluster_annotations", "allen_labels", "seurat_clusters", "genotype",
+  "batch", "genotype_batch", "sex", "Phase"
+)
+metadata_to_plot[[4]] <- "no_label"
+metadata_to_plot[[5]] <- "no_label"
+metadata_to_plot[[6]] <- "no_label"
+metadata_to_plot[[7]] <- "no_label"
+metadata_to_plot[[8]] <- "no_label"
+# -------------------------------------------------------------------------
+```
+
+# Microglia
+
+```{r}
+ctype <- "Microglia"
+sub_name <- "micro"
+
+seurat <- cluster_pipeline(
+  seurat, cache_dir = cache_dir,
+  sub_name = sub_name, protocol = protocol,
+  vars_to_regress = vars_to_regress, parallel_override = parallel_override,
+  cc = FALSE, res_divider = 800000, dims = 1:24
+)
+seurat
+
+seurat <- RenameIdents(
+  object = seurat, "0" = "Microglia 01",
+  "1" = "Microglia 03", "2" = "Microglia 04",
+  "3" = "Microglia 02"
+)
+seurat$subcluster_annotations <- factor(as.character(seurat@active.ident))
+seurat@active.ident <- seurat$subcluster_annotations
+
+gene_anno <- data.frame(
+  symbol = unlist(seurat@misc), ensembl = rownames(seurat[["RNA"]])
+)
+```
+
+## MAPT KI
+
+```{r, fig.height = 5, fig.width = 5}
+seurat_object <- seurat
+seurat_object@active.ident <- seurat_object$genotype
+seurat_object <- subset(seurat_object, idents = "MAPTKI")
+seurat_object$genotype_ctype <- factor(paste(seurat_object$genotype, sub(" ", "", seurat_object$subcluster_annotations), sep = "_"))
+
+data.input <- seurat_object[["SCT"]]$data # normalized data matrix
+
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(data.input), ]
+rownames(data.input) <- gene_anno_sub$symbol
+
+labels <- seurat_object$genotype_ctype
+samples <- seurat_object$genotype
+meta <- data.frame(labels = labels, row.names = names(labels), samples = samples) # create a dataframe of the cell labels
+
+cellchat <- createCellChat(object = data.input, meta = meta, group.by = "labels")
+
+CellChatDB <- CellChatDB.mouse # use CellChatDB.mouse if running on mouse data
+CellChatDB.use <- subsetDB(CellChatDB)
+cellchat@DB <- CellChatDB.use
+cellchat <- subsetData(cellchat) # This step is necessary even if using the whole database
+future::plan("multisession", workers = 8) # do parallel
+cellchat <- identifyOverExpressedGenes(cellchat)
+cellchat <- identifyOverExpressedInteractions(cellchat)
+cellchat <- smoothData(cellchat, adj = PPI.mouse)
+cellchat <- computeCommunProb(cellchat, type = "triMean")
+cellchat <- filterCommunication(cellchat, min.cells = 10)
+cellchat <- computeCommunProbPathway(cellchat)
+cellchat <- aggregateNet(cellchat)
+
+# groupSize <- as.numeric(table(cellchat@idents))
+# par(mfrow = c(2,3))
+# netVisual_circle(cellchat@net$count, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Number of interactions")
+# netVisual_circle(cellchat@net$weight, vertex.weight = groupSize, weight.scale = T, label.edge= T, title.name = "Interaction weights/strength")
+
+for (pathways.show in cellchat@netP$pathways) {
+# par(mfrow=c(1,1))
+  pairLR <- extractEnrichedLR(cellchat, signaling = pathways.show, geneLR.return = FALSE)
+  LR.show <- pairLR[1,] # show one ligand-receptor pair
+netVisual_individual(cellchat, signaling = pathways.show, big.gap = 0, small.gap = 0, pairLR.use = LR.show)
+}
+```
+
+## P301S+3
+
+```{r, fig.height = 5, fig.width = 5}
+seurat_object <- seurat
+seurat_object@active.ident <- seurat_object$genotype
+seurat_object <- subset(seurat_object, idents = "P301S")
+seurat_object$genotype_ctype <- factor(paste(seurat_object$genotype, sub(" ", "", seurat_object$subcluster_annotations), sep = "_"))
+
+data.input <- seurat_object[["SCT"]]$data # normalized data matrix
+
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(data.input), ]
+rownames(data.input) <- gene_anno_sub$symbol
+
+labels <- seurat_object$genotype_ctype
+samples <- seurat_object$genotype
+meta <- data.frame(labels = labels, row.names = names(labels), samples = samples) # create a dataframe of the cell labels
+
+cellchat <- createCellChat(object = data.input, meta = meta, group.by = "labels")
+
+CellChatDB <- CellChatDB.mouse # use CellChatDB.mouse if running on mouse data
+CellChatDB.use <- subsetDB(CellChatDB)
+cellchat@DB <- CellChatDB.use
+cellchat <- subsetData(cellchat) # This step is necessary even if using the whole database
+future::plan("multisession", workers = 8) # do parallel
+cellchat <- identifyOverExpressedGenes(cellchat)
+cellchat <- identifyOverExpressedInteractions(cellchat)
+cellchat <- smoothData(cellchat, adj = PPI.mouse)
+cellchat <- computeCommunProb(cellchat, type = "triMean")
+cellchat <- filterCommunication(cellchat, min.cells = 10)
+cellchat <- computeCommunProbPathway(cellchat)
+cellchat <- aggregateNet(cellchat)
+
+# groupSize <- as.numeric(table(cellchat@idents))
+# par(mfrow = c(2,3))
+# netVisual_circle(cellchat@net$count, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Number of interactions")
+# netVisual_circle(cellchat@net$weight, vertex.weight = groupSize, weight.scale = T, label.edge= T, title.name = "Interaction weights/strength")
+
+for (pathways.show in cellchat@netP$pathways) {
+# par(mfrow=c(1,1))
+  pairLR <- extractEnrichedLR(cellchat, signaling = pathways.show, geneLR.return = FALSE)
+  LR.show <- pairLR[1,] # show one ligand-receptor pair
+netVisual_individual(cellchat, signaling = pathways.show, big.gap = 0, small.gap = 0, pairLR.use = LR.show)
+}
+```
+
+## NLGF MAPT KI
+
+```{r, fig.height = 5, fig.width = 5}
+seurat_object <- seurat
+seurat_object@active.ident <- seurat_object$genotype
+seurat_object <- subset(seurat_object, idents = "NLGF_MAPTKI")
+seurat_object$genotype_ctype <- factor(paste(seurat_object$genotype, sub(" ", "", seurat_object$subcluster_annotations), sep = "_"))
+
+data.input <- seurat_object[["SCT"]]$data # normalized data matrix
+
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(data.input), ]
+rownames(data.input) <- gene_anno_sub$symbol
+
+labels <- seurat_object$genotype_ctype
+samples <- seurat_object$genotype
+meta <- data.frame(labels = labels, row.names = names(labels), samples = samples) # create a dataframe of the cell labels
+
+cellchat <- createCellChat(object = data.input, meta = meta, group.by = "labels")
+
+CellChatDB <- CellChatDB.mouse # use CellChatDB.mouse if running on mouse data
+CellChatDB.use <- subsetDB(CellChatDB)
+cellchat@DB <- CellChatDB.use
+cellchat <- subsetData(cellchat) # This step is necessary even if using the whole database
+future::plan("multisession", workers = 8) # do parallel
+cellchat <- identifyOverExpressedGenes(cellchat)
+cellchat <- identifyOverExpressedInteractions(cellchat)
+cellchat <- smoothData(cellchat, adj = PPI.mouse)
+cellchat <- computeCommunProb(cellchat, type = "triMean")
+cellchat <- filterCommunication(cellchat, min.cells = 10)
+cellchat <- computeCommunProbPathway(cellchat)
+cellchat <- aggregateNet(cellchat)
+
+# groupSize <- as.numeric(table(cellchat@idents))
+# par(mfrow = c(2,3))
+# netVisual_circle(cellchat@net$count, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Number of interactions")
+# netVisual_circle(cellchat@net$weight, vertex.weight = groupSize, weight.scale = T, label.edge= T, title.name = "Interaction weights/strength")
+
+for (pathways.show in cellchat@netP$pathways) {
+# par(mfrow=c(1,1))
+  pairLR <- extractEnrichedLR(cellchat, signaling = pathways.show, geneLR.return = FALSE)
+  LR.show <- pairLR[1,] # show one ligand-receptor pair
+netVisual_individual(cellchat, signaling = pathways.show, big.gap = 0, small.gap = 0, pairLR.use = LR.show)
+}
+```
+
+## NLGF P301S+3
+
+```{r, fig.height = 5, fig.width = 5}
+seurat_object <- seurat
+seurat_object@active.ident <- seurat_object$genotype
+seurat_object <- subset(seurat_object, idents = "NLGF_P301S")
+seurat_object$genotype_ctype <- factor(paste(seurat_object$genotype, sub(" ", "", seurat_object$subcluster_annotations), sep = "_"))
+
+data.input <- seurat_object[["SCT"]]$data # normalized data matrix
+
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(data.input), ]
+rownames(data.input) <- gene_anno_sub$symbol
+
+labels <- seurat_object$genotype_ctype
+samples <- seurat_object$genotype
+meta <- data.frame(labels = labels, row.names = names(labels), samples = samples) # create a dataframe of the cell labels
+
+cellchat <- createCellChat(object = data.input, meta = meta, group.by = "labels")
+
+CellChatDB <- CellChatDB.mouse # use CellChatDB.mouse if running on mouse data
+CellChatDB.use <- subsetDB(CellChatDB)
+cellchat@DB <- CellChatDB.use
+cellchat <- subsetData(cellchat) # This step is necessary even if using the whole database
+future::plan("multisession", workers = 8) # do parallel
+cellchat <- identifyOverExpressedGenes(cellchat)
+cellchat <- identifyOverExpressedInteractions(cellchat)
+cellchat <- smoothData(cellchat, adj = PPI.mouse)
+cellchat <- computeCommunProb(cellchat, type = "triMean")
+cellchat <- filterCommunication(cellchat, min.cells = 10)
+cellchat <- computeCommunProbPathway(cellchat)
+cellchat <- aggregateNet(cellchat)
+
+# groupSize <- as.numeric(table(cellchat@idents))
+# par(mfrow = c(2,3))
+# netVisual_circle(cellchat@net$count, vertex.weight = groupSize, weight.scale = T, label.edge= F, title.name = "Number of interactions")
+# netVisual_circle(cellchat@net$weight, vertex.weight = groupSize, weight.scale = T, label.edge= T, title.name = "Interaction weights/strength")
+
+for (pathways.show in cellchat@netP$pathways) {
+# par(mfrow=c(1,1))
+  pairLR <- extractEnrichedLR(cellchat, signaling = pathways.show, geneLR.return = FALSE)
+  LR.show <- pairLR[1,] # show one ligand-receptor pair
+netVisual_individual(cellchat, signaling = pathways.show, big.gap = 0, small.gap = 0, pairLR.use = LR.show)
+}
+```
+
+# References
+
+This is the concluding section of the document, where we output the `sessionInfo`, and create a bibliography for works cited.
+
+```{r}
+sessionInfo()
+```
