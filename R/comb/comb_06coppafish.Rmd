@@ -98,7 +98,7 @@ if (!dir.exists(cache_dir)) {
 
 # Read data.
 # ----------
-seurat_orig <- readRDS(file.path(cache_dir, "annotated_neuronal.rds"))
+seurat_orig <- readRDS(file.path(cache_dir, "annotated_seurat.rds"))
 seurat_orig <- seurat_orig[
   , seurat_orig$genotype == "MAPTKI" | seurat_orig$genotype == "S305N"
 ]
@@ -110,13 +110,150 @@ gene_anno <- data.frame(
 # ----------
 ```
 
+# MAPTKI vs. S305N All Cell-types
+
+```{r}
+seurat <- seurat_orig
+
+deg <- suppressWarnings(as.SingleCellExperiment(seurat, assay = "RNA"))
+deg <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype_batch"],
+    use_exprs_values = "counts", statistics = "sum"
+  )
+)
+
+dge_orig <- DGEList(counts(deg))
+keep <- filterByExpr(
+  dge_orig, group = deg$genotype,
+  min.count = 10, min.total.count = 15
+)
+dge_orig <- dge_orig[keep, ]
+dge_orig <- calcNormFactors(dge_orig)
+dge <- DGEList(counts(deg))
+dge$samples$norm.factors <- dge_orig$samples$norm.factors
+keep <- filterByExpr(
+  dge, group = deg$genotype,
+  min.count = 10, min.total.count = 15
+)
+dge <- dge[keep, , keep.lib.sizes = FALSE]
+dge <- calcNormFactors(dge)
+
+deg <- deg[rownames(deg) %in% rownames(dge)]
+logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE)
+
+design <- model.matrix(~ 0 + deg$genotype + deg$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  S305N_MAPTKI =
+    deg.genotypeS305N -
+    deg.genotypeMAPTKI,
+  levels = design
+)
+
+fit <- lmFit(logcounts(deg), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+write.fit(
+  fit, tests, file.path(cache_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(cache_dir, "results.tsv"))
+
+rownames(results) <- results$X
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results), gene_anno_sub$ensembl),
+]
+results$X <- gene_anno_sub$symbol
+
+colnames(results)[1] <- "Gene"
+colnames(results)[3] <- "Log2FC_positive_is_up_in_S305N_vs_MAPTKI"
+
+deg_counts <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype"],
+    use_exprs_values = "counts", statistics = "mean"
+  )
+)
+deg_logcounts <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype"],
+    use_exprs_values = "logcounts", statistics = "mean"
+  )
+)
+
+highlight <- c("Cryab", "Plp1")
+cat("Genes of Interest:", highlight)
+```
+
+## Pseudobulked log2 CPM Gene Expression
+
+```{r}
+df <- as.data.frame(logcounts(deg_logcounts))
+rownames(df) <- results$Gene
+df <- cbind(rownames(df), df)
+colnames(df)[1] <- "Gene"
+df <- melt(df, id.vars = "Gene")
+df <- pivot_wider(df, names_from = variable, values_from = value)
+df$`Gene of Interest` <- ifelse(df$Gene %in% highlight, yes = "Yes", "No")
+
+plot <- ggplot(df, aes(MAPTKI, S305N, label = Gene)) +
+  geom_point(aes(color = `Gene of Interest`)) +
+    geom_abline(intercept = 0, slope = 1) +
+  xlab("Normalised Expression in MAPTKI") +
+  ylab("Normalised Expression in S305N") +
+  ggtitle(
+    paste(
+      "MAPTKI vs. S305N All Cell-types", nrow(deg),
+      "Genes: Pseudobulked log2 CPM Expression", sep = " "
+    )
+  ) +
+  theme_light()
+ggplotly(plot)
+```
+
+## Pseudobulked Raw Gene Counts
+
+```{r}
+df <- as.data.frame(counts(deg_counts))
+rownames(df) <- results$Gene
+df <- cbind(rownames(df), df)
+colnames(df)[1] <- "Gene"
+df <- melt(df, id.vars = "Gene")
+df <- pivot_wider(df, names_from = variable, values_from = value)
+df$`Gene of Interest` <- ifelse(df$Gene %in% highlight, yes = "Yes", "No")
+
+plot <- ggplot(df, aes(MAPTKI, S305N, label = Gene)) +
+  geom_point(aes(color = `Gene of Interest`)) +
+    geom_abline(intercept = 0, slope = 1) +
+  xlab("Raw Counts in MAPTKI") +
+  ylab("Raw Counts in S305N") +
+  ggtitle(
+    paste(
+      "MAPTKI vs. S305N All Cell-types", nrow(deg),
+      "Genes: Pseudobulked Raw Counts", sep = " "
+    )
+  ) +
+  theme_light()
+ggplotly(plot)
+```
+
+## Differential Gene Expression Stats
+
+```{r}
+suppressWarnings(datatable_download_exp(results))
+```
+
 # MAPTKI vs. S305N Glutamatergic Neurons
 
 ```{r}
 seurat <- seurat_orig[
-  , grep("Glutamatergic", x = seurat_orig$subcluster_annotations)
+  , grep("Glutamatergic", x = seurat_orig$level1_subclusters)
 ]
-seurat$subcluster_annotations <- factor(seurat$subcluster_annotations)
+seurat$level1_subclusters <- factor(seurat$level1_subclusters)
 
 deg <- suppressWarnings(as.SingleCellExperiment(seurat, assay = "RNA"))
 deg <- suppressWarnings(
@@ -254,9 +391,9 @@ suppressWarnings(datatable_download_exp(results))
 
 ```{r}
 seurat <- seurat_orig[
-  , grep("GABAergic", x = seurat_orig$subcluster_annotations)
+  , grep("GABAergic", x = seurat_orig$level1_subclusters)
 ]
-seurat$subcluster_annotations <- factor(seurat$subcluster_annotations)
+seurat$level1_subclusters <- factor(seurat$level1_subclusters)
 
 deg <- suppressWarnings(as.SingleCellExperiment(seurat, assay = "RNA"))
 deg <- suppressWarnings(
@@ -377,6 +514,706 @@ plot <- ggplot(df, aes(MAPTKI, S305N, label = Gene)) +
   ggtitle(
     paste(
       "MAPTKI vs. S305N GABAergic Neurons", nrow(deg),
+      "Genes: Pseudobulked Raw Counts", sep = " "
+    )
+  ) +
+  theme_light()
+ggplotly(plot)
+```
+
+## Differential Gene Expression Stats
+
+```{r}
+suppressWarnings(datatable_download_exp(results))
+```
+
+# MAPTKI vs. S305N Microglia
+
+```{r}
+seurat <- seurat_orig[
+  , grep("Microglia", x = seurat_orig$level1_subclusters)
+]
+seurat$level1_subclusters <- factor(seurat$level1_subclusters)
+
+deg <- suppressWarnings(as.SingleCellExperiment(seurat, assay = "RNA"))
+deg <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype_batch"],
+    use_exprs_values = "counts", statistics = "sum"
+  )
+)
+
+dge_orig <- DGEList(counts(deg))
+keep <- filterByExpr(
+  dge_orig, group = deg$genotype,
+  min.count = 10, min.total.count = 15
+)
+dge_orig <- dge_orig[keep, ]
+dge_orig <- calcNormFactors(dge_orig)
+dge <- DGEList(counts(deg))
+dge$samples$norm.factors <- dge_orig$samples$norm.factors
+keep <- filterByExpr(
+  dge, group = deg$genotype,
+  min.count = 10, min.total.count = 15
+)
+dge <- dge[keep, , keep.lib.sizes = FALSE]
+dge <- calcNormFactors(dge)
+
+deg <- deg[rownames(deg) %in% rownames(dge)]
+logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE)
+
+design <- model.matrix(~ 0 + deg$genotype + deg$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  S305N_MAPTKI =
+    deg.genotypeS305N -
+    deg.genotypeMAPTKI,
+  levels = design
+)
+
+fit <- lmFit(logcounts(deg), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+write.fit(
+  fit, tests, file.path(cache_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(cache_dir, "results.tsv"))
+
+rownames(results) <- results$X
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results), gene_anno_sub$ensembl),
+]
+results$X <- gene_anno_sub$symbol
+
+colnames(results)[1] <- "Gene"
+colnames(results)[3] <- "Log2FC_positive_is_up_in_S305N_vs_MAPTKI"
+
+deg_counts <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype"],
+    use_exprs_values = "counts", statistics = "mean"
+  )
+)
+deg_logcounts <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype"],
+    use_exprs_values = "logcounts", statistics = "mean"
+  )
+)
+
+highlight <- c("Cryab", "Plp1")
+cat("Genes of Interest:", highlight)
+```
+
+## Pseudobulked log2 CPM Gene Expression
+
+```{r}
+df <- as.data.frame(logcounts(deg_logcounts))
+rownames(df) <- results$Gene
+df <- cbind(rownames(df), df)
+colnames(df)[1] <- "Gene"
+df <- melt(df, id.vars = "Gene")
+df <- pivot_wider(df, names_from = variable, values_from = value)
+df$`Gene of Interest` <- ifelse(df$Gene %in% highlight, yes = "Yes", "No")
+
+plot <- ggplot(df, aes(MAPTKI, S305N, label = Gene)) +
+  geom_point(aes(color = `Gene of Interest`)) +
+    geom_abline(intercept = 0, slope = 1) +
+  xlab("Normalised Expression in MAPTKI") +
+  ylab("Normalised Expression in S305N") +
+  ggtitle(
+    paste(
+      "MAPTKI vs. S305N Microglia", nrow(deg),
+      "Genes: Pseudobulked log2 CPM Expression", sep = " "
+    )
+  ) +
+  theme_light()
+ggplotly(plot)
+```
+
+## Pseudobulked Raw Gene Counts
+
+```{r}
+df <- as.data.frame(counts(deg_counts))
+rownames(df) <- results$Gene
+df <- cbind(rownames(df), df)
+colnames(df)[1] <- "Gene"
+df <- melt(df, id.vars = "Gene")
+df <- pivot_wider(df, names_from = variable, values_from = value)
+df$`Gene of Interest` <- ifelse(df$Gene %in% highlight, yes = "Yes", "No")
+
+plot <- ggplot(df, aes(MAPTKI, S305N, label = Gene)) +
+  geom_point(aes(color = `Gene of Interest`)) +
+    geom_abline(intercept = 0, slope = 1) +
+  xlab("Raw Counts in MAPTKI") +
+  ylab("Raw Counts in S305N") +
+  ggtitle(
+    paste(
+      "MAPTKI vs. S305N Microglia", nrow(deg),
+      "Genes: Pseudobulked Raw Counts", sep = " "
+    )
+  ) +
+  theme_light()
+ggplotly(plot)
+```
+
+## Differential Gene Expression Stats
+
+```{r}
+suppressWarnings(datatable_download_exp(results))
+```
+
+# MAPTKI vs. S305N Astrocytes
+
+```{r}
+seurat <- seurat_orig[
+  , grep("Astrocyte", x = seurat_orig$level1_subclusters)
+]
+seurat$level1_subclusters <- factor(seurat$level1_subclusters)
+
+deg <- suppressWarnings(as.SingleCellExperiment(seurat, assay = "RNA"))
+deg <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype_batch"],
+    use_exprs_values = "counts", statistics = "sum"
+  )
+)
+
+dge_orig <- DGEList(counts(deg))
+keep <- filterByExpr(
+  dge_orig, group = deg$genotype,
+  min.count = 10, min.total.count = 15
+)
+dge_orig <- dge_orig[keep, ]
+dge_orig <- calcNormFactors(dge_orig)
+dge <- DGEList(counts(deg))
+dge$samples$norm.factors <- dge_orig$samples$norm.factors
+keep <- filterByExpr(
+  dge, group = deg$genotype,
+  min.count = 10, min.total.count = 15
+)
+dge <- dge[keep, , keep.lib.sizes = FALSE]
+dge <- calcNormFactors(dge)
+
+deg <- deg[rownames(deg) %in% rownames(dge)]
+logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE)
+
+design <- model.matrix(~ 0 + deg$genotype + deg$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  S305N_MAPTKI =
+    deg.genotypeS305N -
+    deg.genotypeMAPTKI,
+  levels = design
+)
+
+fit <- lmFit(logcounts(deg), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+write.fit(
+  fit, tests, file.path(cache_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(cache_dir, "results.tsv"))
+
+rownames(results) <- results$X
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results), gene_anno_sub$ensembl),
+]
+results$X <- gene_anno_sub$symbol
+
+colnames(results)[1] <- "Gene"
+colnames(results)[3] <- "Log2FC_positive_is_up_in_S305N_vs_MAPTKI"
+
+deg_counts <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype"],
+    use_exprs_values = "counts", statistics = "mean"
+  )
+)
+deg_logcounts <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype"],
+    use_exprs_values = "logcounts", statistics = "mean"
+  )
+)
+
+highlight <- c("Cryab", "Plp1")
+cat("Genes of Interest:", highlight)
+```
+
+## Pseudobulked log2 CPM Gene Expression
+
+```{r}
+df <- as.data.frame(logcounts(deg_logcounts))
+rownames(df) <- results$Gene
+df <- cbind(rownames(df), df)
+colnames(df)[1] <- "Gene"
+df <- melt(df, id.vars = "Gene")
+df <- pivot_wider(df, names_from = variable, values_from = value)
+df$`Gene of Interest` <- ifelse(df$Gene %in% highlight, yes = "Yes", "No")
+
+plot <- ggplot(df, aes(MAPTKI, S305N, label = Gene)) +
+  geom_point(aes(color = `Gene of Interest`)) +
+    geom_abline(intercept = 0, slope = 1) +
+  xlab("Normalised Expression in MAPTKI") +
+  ylab("Normalised Expression in S305N") +
+  ggtitle(
+    paste(
+      "MAPTKI vs. S305N Astrocytes", nrow(deg),
+      "Genes: Pseudobulked log2 CPM Expression", sep = " "
+    )
+  ) +
+  theme_light()
+ggplotly(plot)
+```
+
+## Pseudobulked Raw Gene Counts
+
+```{r}
+df <- as.data.frame(counts(deg_counts))
+rownames(df) <- results$Gene
+df <- cbind(rownames(df), df)
+colnames(df)[1] <- "Gene"
+df <- melt(df, id.vars = "Gene")
+df <- pivot_wider(df, names_from = variable, values_from = value)
+df$`Gene of Interest` <- ifelse(df$Gene %in% highlight, yes = "Yes", "No")
+
+plot <- ggplot(df, aes(MAPTKI, S305N, label = Gene)) +
+  geom_point(aes(color = `Gene of Interest`)) +
+    geom_abline(intercept = 0, slope = 1) +
+  xlab("Raw Counts in MAPTKI") +
+  ylab("Raw Counts in S305N") +
+  ggtitle(
+    paste(
+      "MAPTKI vs. S305N Astrocytes", nrow(deg),
+      "Genes: Pseudobulked Raw Counts", sep = " "
+    )
+  ) +
+  theme_light()
+ggplotly(plot)
+```
+
+## Differential Gene Expression Stats
+
+```{r}
+suppressWarnings(datatable_download_exp(results))
+```
+
+# MAPTKI vs. S305N Vascular Cells
+
+```{r}
+seurat <- seurat_orig[
+  , grep("Vascular", x = seurat_orig$level1_subclusters)
+]
+seurat$level1_subclusters <- factor(seurat$level1_subclusters)
+
+deg <- suppressWarnings(as.SingleCellExperiment(seurat, assay = "RNA"))
+deg <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype_batch"],
+    use_exprs_values = "counts", statistics = "sum"
+  )
+)
+
+dge_orig <- DGEList(counts(deg))
+keep <- filterByExpr(
+  dge_orig, group = deg$genotype,
+  min.count = 10, min.total.count = 15
+)
+dge_orig <- dge_orig[keep, ]
+dge_orig <- calcNormFactors(dge_orig)
+dge <- DGEList(counts(deg))
+dge$samples$norm.factors <- dge_orig$samples$norm.factors
+keep <- filterByExpr(
+  dge, group = deg$genotype,
+  min.count = 10, min.total.count = 15
+)
+dge <- dge[keep, , keep.lib.sizes = FALSE]
+dge <- calcNormFactors(dge)
+
+deg <- deg[rownames(deg) %in% rownames(dge)]
+logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE)
+
+design <- model.matrix(~ 0 + deg$genotype + deg$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  S305N_MAPTKI =
+    deg.genotypeS305N -
+    deg.genotypeMAPTKI,
+  levels = design
+)
+
+fit <- lmFit(logcounts(deg), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+write.fit(
+  fit, tests, file.path(cache_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(cache_dir, "results.tsv"))
+
+rownames(results) <- results$X
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results), gene_anno_sub$ensembl),
+]
+results$X <- gene_anno_sub$symbol
+
+colnames(results)[1] <- "Gene"
+colnames(results)[3] <- "Log2FC_positive_is_up_in_S305N_vs_MAPTKI"
+
+deg_counts <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype"],
+    use_exprs_values = "counts", statistics = "mean"
+  )
+)
+deg_logcounts <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype"],
+    use_exprs_values = "logcounts", statistics = "mean"
+  )
+)
+
+highlight <- c("Cryab", "Plp1")
+cat("Genes of Interest:", highlight)
+```
+
+## Pseudobulked log2 CPM Gene Expression
+
+```{r}
+df <- as.data.frame(logcounts(deg_logcounts))
+rownames(df) <- results$Gene
+df <- cbind(rownames(df), df)
+colnames(df)[1] <- "Gene"
+df <- melt(df, id.vars = "Gene")
+df <- pivot_wider(df, names_from = variable, values_from = value)
+df$`Gene of Interest` <- ifelse(df$Gene %in% highlight, yes = "Yes", "No")
+
+plot <- ggplot(df, aes(MAPTKI, S305N, label = Gene)) +
+  geom_point(aes(color = `Gene of Interest`)) +
+    geom_abline(intercept = 0, slope = 1) +
+  xlab("Normalised Expression in MAPTKI") +
+  ylab("Normalised Expression in S305N") +
+  ggtitle(
+    paste(
+      "MAPTKI vs. S305N Vascular Cells", nrow(deg),
+      "Genes: Pseudobulked log2 CPM Expression", sep = " "
+    )
+  ) +
+  theme_light()
+ggplotly(plot)
+```
+
+## Pseudobulked Raw Gene Counts
+
+```{r}
+df <- as.data.frame(counts(deg_counts))
+rownames(df) <- results$Gene
+df <- cbind(rownames(df), df)
+colnames(df)[1] <- "Gene"
+df <- melt(df, id.vars = "Gene")
+df <- pivot_wider(df, names_from = variable, values_from = value)
+df$`Gene of Interest` <- ifelse(df$Gene %in% highlight, yes = "Yes", "No")
+
+plot <- ggplot(df, aes(MAPTKI, S305N, label = Gene)) +
+  geom_point(aes(color = `Gene of Interest`)) +
+    geom_abline(intercept = 0, slope = 1) +
+  xlab("Raw Counts in MAPTKI") +
+  ylab("Raw Counts in S305N") +
+  ggtitle(
+    paste(
+      "MAPTKI vs. S305N Vascular Cells", nrow(deg),
+      "Genes: Pseudobulked Raw Counts", sep = " "
+    )
+  ) +
+  theme_light()
+ggplotly(plot)
+```
+
+## Differential Gene Expression Stats
+
+```{r}
+suppressWarnings(datatable_download_exp(results))
+```
+
+# MAPTKI vs. S305N Oligodendrocytes
+
+```{r}
+seurat <- seurat_orig[
+  , grep("Oligodendrocyte", x = seurat_orig$level1_subclusters)
+]
+seurat$level1_subclusters <- factor(seurat$level1_subclusters)
+
+deg <- suppressWarnings(as.SingleCellExperiment(seurat, assay = "RNA"))
+deg <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype_batch"],
+    use_exprs_values = "counts", statistics = "sum"
+  )
+)
+
+dge_orig <- DGEList(counts(deg))
+keep <- filterByExpr(
+  dge_orig, group = deg$genotype,
+  min.count = 10, min.total.count = 15
+)
+dge_orig <- dge_orig[keep, ]
+dge_orig <- calcNormFactors(dge_orig)
+dge <- DGEList(counts(deg))
+dge$samples$norm.factors <- dge_orig$samples$norm.factors
+keep <- filterByExpr(
+  dge, group = deg$genotype,
+  min.count = 10, min.total.count = 15
+)
+dge <- dge[keep, , keep.lib.sizes = FALSE]
+dge <- calcNormFactors(dge)
+
+deg <- deg[rownames(deg) %in% rownames(dge)]
+logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE)
+
+design <- model.matrix(~ 0 + deg$genotype + deg$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  S305N_MAPTKI =
+    deg.genotypeS305N -
+    deg.genotypeMAPTKI,
+  levels = design
+)
+
+fit <- lmFit(logcounts(deg), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+write.fit(
+  fit, tests, file.path(cache_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(cache_dir, "results.tsv"))
+
+rownames(results) <- results$X
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results), gene_anno_sub$ensembl),
+]
+results$X <- gene_anno_sub$symbol
+
+colnames(results)[1] <- "Gene"
+colnames(results)[3] <- "Log2FC_positive_is_up_in_S305N_vs_MAPTKI"
+
+deg_counts <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype"],
+    use_exprs_values = "counts", statistics = "mean"
+  )
+)
+deg_logcounts <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype"],
+    use_exprs_values = "logcounts", statistics = "mean"
+  )
+)
+
+highlight <- c("Cryab", "Plp1")
+cat("Genes of Interest:", highlight)
+```
+
+## Pseudobulked log2 CPM Gene Expression
+
+```{r}
+df <- as.data.frame(logcounts(deg_logcounts))
+rownames(df) <- results$Gene
+df <- cbind(rownames(df), df)
+colnames(df)[1] <- "Gene"
+df <- melt(df, id.vars = "Gene")
+df <- pivot_wider(df, names_from = variable, values_from = value)
+df$`Gene of Interest` <- ifelse(df$Gene %in% highlight, yes = "Yes", "No")
+
+plot <- ggplot(df, aes(MAPTKI, S305N, label = Gene)) +
+  geom_point(aes(color = `Gene of Interest`)) +
+    geom_abline(intercept = 0, slope = 1) +
+  xlab("Normalised Expression in MAPTKI") +
+  ylab("Normalised Expression in S305N") +
+  ggtitle(
+    paste(
+      "MAPTKI vs. S305N Oligodendrocytes", nrow(deg),
+      "Genes: Pseudobulked log2 CPM Expression", sep = " "
+    )
+  ) +
+  theme_light()
+ggplotly(plot)
+```
+
+## Pseudobulked Raw Gene Counts
+
+```{r}
+df <- as.data.frame(counts(deg_counts))
+rownames(df) <- results$Gene
+df <- cbind(rownames(df), df)
+colnames(df)[1] <- "Gene"
+df <- melt(df, id.vars = "Gene")
+df <- pivot_wider(df, names_from = variable, values_from = value)
+df$`Gene of Interest` <- ifelse(df$Gene %in% highlight, yes = "Yes", "No")
+
+plot <- ggplot(df, aes(MAPTKI, S305N, label = Gene)) +
+  geom_point(aes(color = `Gene of Interest`)) +
+    geom_abline(intercept = 0, slope = 1) +
+  xlab("Raw Counts in MAPTKI") +
+  ylab("Raw Counts in S305N") +
+  ggtitle(
+    paste(
+      "MAPTKI vs. S305N Oligodendrocytes", nrow(deg),
+      "Genes: Pseudobulked Raw Counts", sep = " "
+    )
+  ) +
+  theme_light()
+ggplotly(plot)
+```
+
+## Differential Gene Expression Stats
+
+```{r}
+suppressWarnings(datatable_download_exp(results))
+```
+
+# MAPTKI vs. S305N OPCs
+
+```{r}
+seurat <- seurat_orig[
+  , grep("OPC", x = seurat_orig$level1_subclusters)
+]
+seurat$level1_subclusters <- factor(seurat$level1_subclusters)
+
+deg <- suppressWarnings(as.SingleCellExperiment(seurat, assay = "RNA"))
+deg <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype_batch"],
+    use_exprs_values = "counts", statistics = "sum"
+  )
+)
+
+dge_orig <- DGEList(counts(deg))
+keep <- filterByExpr(
+  dge_orig, group = deg$genotype,
+  min.count = 10, min.total.count = 15
+)
+dge_orig <- dge_orig[keep, ]
+dge_orig <- calcNormFactors(dge_orig)
+dge <- DGEList(counts(deg))
+dge$samples$norm.factors <- dge_orig$samples$norm.factors
+keep <- filterByExpr(
+  dge, group = deg$genotype,
+  min.count = 10, min.total.count = 15
+)
+dge <- dge[keep, , keep.lib.sizes = FALSE]
+dge <- calcNormFactors(dge)
+
+deg <- deg[rownames(deg) %in% rownames(dge)]
+logcounts(deg, withDimnames = FALSE) <- cpm(dge, log = TRUE)
+
+design <- model.matrix(~ 0 + deg$genotype + deg$batch)
+colnames(design) <- make.names(colnames(design))
+cont_mat <- makeContrasts(
+  S305N_MAPTKI =
+    deg.genotypeS305N -
+    deg.genotypeMAPTKI,
+  levels = design
+)
+
+fit <- lmFit(logcounts(deg), design)
+fit <- contrasts.fit(fit, cont_mat)
+fit <- eBayes(fit, trend = TRUE, robust = TRUE)
+
+tests <- decideTests(fit, method = "global")
+write.fit(
+  fit, tests, file.path(cache_dir, "results.tsv"),
+  adjust = "BH", F.adjust = "BH", method = "global"
+)
+results <- read.delim(file.path(cache_dir, "results.tsv"))
+
+rownames(results) <- results$X
+gene_anno_sub <- gene_anno[gene_anno$ensembl %in% rownames(results), ]
+gene_anno_sub <- gene_anno_sub[
+  match(rownames(results), gene_anno_sub$ensembl),
+]
+results$X <- gene_anno_sub$symbol
+
+colnames(results)[1] <- "Gene"
+colnames(results)[3] <- "Log2FC_positive_is_up_in_S305N_vs_MAPTKI"
+
+deg_counts <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype"],
+    use_exprs_values = "counts", statistics = "mean"
+  )
+)
+deg_logcounts <- suppressWarnings(
+  aggregateAcrossCells(
+    deg, colData(deg)[ , "genotype"],
+    use_exprs_values = "logcounts", statistics = "mean"
+  )
+)
+
+highlight <- c("Cryab", "Plp1")
+cat("Genes of Interest:", highlight)
+```
+
+## Pseudobulked log2 CPM Gene Expression
+
+```{r}
+df <- as.data.frame(logcounts(deg_logcounts))
+rownames(df) <- results$Gene
+df <- cbind(rownames(df), df)
+colnames(df)[1] <- "Gene"
+df <- melt(df, id.vars = "Gene")
+df <- pivot_wider(df, names_from = variable, values_from = value)
+df$`Gene of Interest` <- ifelse(df$Gene %in% highlight, yes = "Yes", "No")
+
+plot <- ggplot(df, aes(MAPTKI, S305N, label = Gene)) +
+  geom_point(aes(color = `Gene of Interest`)) +
+    geom_abline(intercept = 0, slope = 1) +
+  xlab("Normalised Expression in MAPTKI") +
+  ylab("Normalised Expression in S305N") +
+  ggtitle(
+    paste(
+      "MAPTKI vs. S305N OPCs", nrow(deg),
+      "Genes: Pseudobulked log2 CPM Expression", sep = " "
+    )
+  ) +
+  theme_light()
+ggplotly(plot)
+```
+
+## Pseudobulked Raw Gene Counts
+
+```{r}
+df <- as.data.frame(counts(deg_counts))
+rownames(df) <- results$Gene
+df <- cbind(rownames(df), df)
+colnames(df)[1] <- "Gene"
+df <- melt(df, id.vars = "Gene")
+df <- pivot_wider(df, names_from = variable, values_from = value)
+df$`Gene of Interest` <- ifelse(df$Gene %in% highlight, yes = "Yes", "No")
+
+plot <- ggplot(df, aes(MAPTKI, S305N, label = Gene)) +
+  geom_point(aes(color = `Gene of Interest`)) +
+    geom_abline(intercept = 0, slope = 1) +
+  xlab("Raw Counts in MAPTKI") +
+  ylab("Raw Counts in S305N") +
+  ggtitle(
+    paste(
+      "MAPTKI vs. S305N OPCs", nrow(deg),
       "Genes: Pseudobulked Raw Counts", sep = " "
     )
   ) +
