@@ -70,7 +70,7 @@ library(conflicted)
 conflicts_prefer(edgeR::cpm, .quiet = TRUE)
 packages <- c(
   "GSEABase", "Seurat", "scuttle", "edgeR", "DT", "GSVA", "Rcpp", "biomaRt",
-  "IHW"
+  "IHW", "BiocParallel", "parallelly"
 )
 invisible(
   suppressPackageStartupMessages(
@@ -340,13 +340,11 @@ if (file.exists(rds)) {
 
     gc()
     DefaultAssay(seurat) <- "RNA"
-    scores <- calculateScores(
-      GetAssayData(seurat, layer = "counts"), rownames(seurat),
-      geneIds(gene_sets)
+    scores <- genefunnel(
+      GetAssayData(seurat, layer = "counts"), geneIds(gene_sets),
+      BPPARAM = MulticoreParam(availableCores())
     )
     gc()
-    rownames(scores) <- names(gene_sets)
-    colnames(scores) <- colnames(seurat)
 
     seurat[["GF"]] <- CreateAssay5Object(scores, data = log1p(scores))
     DefaultAssay(seurat) <- "GF"
@@ -357,14 +355,11 @@ if (file.exists(rds)) {
 
     gc()
     DefaultAssay(seurat) <- "SCT"
-    scores <- calculateScores(
-      GetAssayData(seurat, layer = "counts"), rownames(seurat),
-      geneIds(gene_sets)
+    scores <- genefunnel(
+      GetAssayData(seurat, layer = "counts"), geneIds(gene_sets),
+      BPPARAM = MulticoreParam(availableCores())
     )
     gc()
-    rownames(scores) <- names(gene_sets)
-    colnames(scores) <- colnames(seurat)
-    saveRDS(scores, file = rds)
 
     seurat[["GF_SCT"]] <- CreateAssay5Object(scores, data = log1p(scores))
     DefaultAssay(seurat) <- "GF_SCT"
