@@ -171,7 +171,7 @@ if (file.exists(rds)) {
   gene_sets <- getGmt(
     file.path(
       "..", "..", "data",
-      "gprofiler_mmusculus_ENSG_2024_06_15", "mmusculus.GO.comb.ENSG.gmt"
+      "gprofiler_mmusculus_ENSG_2025_05_17", "mmusculus.GO.comb.ENSG.gmt"
     )
   )
   keep <- filterGeneSets(gene_sets, min.sz = 2)
