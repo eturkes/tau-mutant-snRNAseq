@@ -54,10 +54,18 @@ NumericMatrix calculateScores(
       for (size_t k = 0; k < indices.size(); ++k) {
         idx_values[k] = orig_mat(indices[k], j);
       }
-      double sum_values = mean(idx_values);
-      double var_values = mean(abs(idx_values - mean(idx_values))) / 2;
 
-      double score = sum_values - var_values;
+      double sum_values = sum(idx_values);
+      double var_values = sum(abs(idx_values - mean(idx_values)));
+
+      size_t size = idx_values.size();
+      double factor = static_cast<double>(size) / (2.0 * (size - 1));
+      double score = sum_values - (var_values * factor);
+
+      double epsilon = 1e-9;
+      if (fabs(score) < epsilon) {
+        score = 0.0;
+      }
 
       mat(i, j) = score;
     }
