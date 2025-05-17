@@ -257,10 +257,6 @@ if (file.exists(rds)) {
   gene_sets_keep[upper.tri(gene_sets_keep)] <- 0
   diag(gene_sets_keep) <- 0
   gene_sets_keep <- apply(gene_sets_keep, MARGIN = 1, FUN = max)
-  gene_sets_keep2 <- gene_sets[names(gene_sets) %in% names(gene_sets_keep)]
-  gene_sets_keep2 <- gene_sets_keep2[
-    match(names(gene_sets_keep), names(gene_sets_keep2))
-  ]
 
   rm(gene_sets_ordered)
   saveRDS(gene_sets_keep, file = rds)
