@@ -133,9 +133,6 @@ if (file.exists(rds)) {
   rm(files)
   gc()
 
-  seurat_orig <- PrepSCTFindMarkers(seurat_orig, verbose = FALSE)
-  gc()
-
   counts_mat <- GetAssayData(seurat_orig)
   counts_mat[is.na(counts_mat)] <- 0
   seurat_orig <- SetAssayData(seurat_orig, new.data = counts_mat)
