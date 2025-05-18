@@ -309,7 +309,7 @@ colnames(sig_deg[[idx]]) <- colnames(deg_corrected[[idx]])
 ```{r}
 checkboxGroupInput(
   paste0("genotype_deg", idx),
-  label = "Select Genotype:",
+  label = "Select Genotypes:",
   selected = c(
     "MAPTKI", "S305N", "P301S", "NLGF_MAPTKI", "NLGF_S305N", "NLGF_P301S"
   ),
