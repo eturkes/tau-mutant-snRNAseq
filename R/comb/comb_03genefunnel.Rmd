@@ -70,7 +70,7 @@ library(conflicted)
 conflicts_prefer(edgeR::cpm, .quiet = TRUE)
 packages <- c(
   "GSEABase", "Seurat", "scuttle", "edgeR", "DT", "GSVA", "Rcpp", "biomaRt",
-  "IHW", "BiocParallel", "parallelly"
+  "IHW", "BiocParallel", "parallelly", "Matrix"
 )
 invisible(
   suppressPackageStartupMessages(
