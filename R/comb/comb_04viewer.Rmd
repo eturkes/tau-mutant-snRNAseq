@@ -304,7 +304,6 @@ results_deg[[idx]] <- results_deg[[idx]][
 ]
 rownames(sig_deg[[idx]]) <- results_deg[[idx]]$Gene
 colnames(sig_deg[[idx]]) <- colnames(deg_corrected[[idx]])
-sig_uniq_deg[[idx]] <- unique(sig_deg[[idx]])
 ```
 
 ```{r}
@@ -327,14 +326,13 @@ selectizeInput(
   paste0("select_deg", idx),
   label = "Select Genes:",
   choices = results_deg[[idx]]$Gene,
-  selected = rownames(sig_uniq_deg[[idx]]),
   multiple = TRUE,
   width = "100%"
 )
 
 observeEvent(
   input[[paste0("genotype_deg", 1)]], {
-    sig_mat <- sig_uniq_deg[[1]][
+    sig_mat <- sig_deg[[1]][
       , sub("_batch.*", "", colnames(deg_corrected[[1]])) %in%
         input[[paste0("genotype_deg", 1)]]
     ]
@@ -342,11 +340,30 @@ observeEvent(
       apply(sig_mat, MARGIN = 1, FUN = function(x) any(x %in% c("↑", "↓"))), ,
       drop = FALSE
     ]
-    updateSelectizeInput(
-      session,
-      inputId = paste0("select_deg", 1),
-      selected = rownames(sig_mat)
-    )
+    if (nrow(sig_mat) > 30) {
+
+      sel <- c()
+      sig_mat_sub <- sig_mat
+      while (length(sel) < 30) {
+        sel <- c(sel, rownames(unique(sig_mat_sub)))
+        remove <- which(rownames(sig_mat_sub) %in% sel)
+        sig_mat_sub <- sig_mat_sub[-remove, ]
+      }
+      updateSelectizeInput(
+        session,
+        inputId = paste0("select_deg", 1),
+        choices = rownames(sig_mat),
+        selected = sel
+      )
+
+    } else {
+      updateSelectizeInput(
+        session,
+        inputId = paste0("select_deg", 1),
+        choices = rownames(sig_mat),
+        selected = rownames(sig_mat)
+      )
+    }
   }
 )
 ```
