@@ -351,7 +351,7 @@ selectizeInput(
   paste0("select_deg", idx),
   label = "Select Genes:",
   choices = rownames(sig_mat),
-  selected = sel,
+  selected = rownames(sig_mat)[rownames(sig_mat) %in% sel],
   multiple = TRUE,
   width = "100%"
 )
@@ -380,7 +380,7 @@ observeEvent(
         session,
         inputId = paste0("select_deg", idx),
         choices = rownames(sig_mat),
-        selected = sel
+        selected = rownames(sig_mat)[rownames(sig_mat) %in% sel]
       )
 
     } else {
@@ -1243,7 +1243,7 @@ selectizeInput(
   paste0("select_deg", idx),
   label = "Select Genes:",
   choices = rownames(sig_mat),
-  selected = sel,
+  selected = rownames(sig_mat)[rownames(sig_mat) %in% sel],
   multiple = TRUE,
   width = "100%"
 )
@@ -1272,7 +1272,7 @@ observeEvent(
         session,
         inputId = paste0("select_deg", idx),
         choices = rownames(sig_mat),
-        selected = sel
+        selected = rownames(sig_mat)[rownames(sig_mat) %in% sel]
       )
 
     } else {
@@ -2135,7 +2135,7 @@ selectizeInput(
   paste0("select_deg", idx),
   label = "Select Genes:",
   choices = rownames(sig_mat),
-  selected = sel,
+  selected = rownames(sig_mat)[rownames(sig_mat) %in% sel],
   multiple = TRUE,
   width = "100%"
 )
@@ -2164,7 +2164,7 @@ observeEvent(
         session,
         inputId = paste0("select_deg", idx),
         choices = rownames(sig_mat),
-        selected = sel
+        selected = rownames(sig_mat)[rownames(sig_mat) %in% sel]
       )
 
     } else {
@@ -3028,7 +3028,7 @@ selectizeInput(
   paste0("select_deg", idx),
   label = "Select Genes:",
   choices = rownames(sig_mat),
-  selected = sel,
+  selected = rownames(sig_mat)[rownames(sig_mat) %in% sel],
   multiple = TRUE,
   width = "100%"
 )
@@ -3057,7 +3057,7 @@ observeEvent(
         session,
         inputId = paste0("select_deg", idx),
         choices = rownames(sig_mat),
-        selected = sel
+        selected = rownames(sig_mat)[rownames(sig_mat) %in% sel]
       )
 
     } else {
@@ -3923,7 +3923,7 @@ selectizeInput(
   paste0("select_deg", idx),
   label = "Select Genes:",
   choices = rownames(sig_mat),
-  selected = sel,
+  selected = rownames(sig_mat)[rownames(sig_mat) %in% sel],
   multiple = TRUE,
   width = "100%"
 )
@@ -3952,7 +3952,7 @@ observeEvent(
         session,
         inputId = paste0("select_deg", idx),
         choices = rownames(sig_mat),
-        selected = sel
+        selected = rownames(sig_mat)[rownames(sig_mat) %in% sel]
       )
 
     } else {
@@ -4819,7 +4819,7 @@ selectizeInput(
   paste0("select_deg", idx),
   label = "Select Genes:",
   choices = rownames(sig_mat),
-  selected = sel,
+  selected = rownames(sig_mat)[rownames(sig_mat) %in% sel],
   multiple = TRUE,
   width = "100%"
 )
@@ -4848,7 +4848,7 @@ observeEvent(
         session,
         inputId = paste0("select_deg", idx),
         choices = rownames(sig_mat),
-        selected = sel
+        selected = rownames(sig_mat)[rownames(sig_mat) %in% sel]
       )
 
     } else {
@@ -5716,7 +5716,7 @@ selectizeInput(
   paste0("select_deg", idx),
   label = "Select Genes:",
   choices = rownames(sig_mat),
-  selected = sel,
+  selected = rownames(sig_mat)[rownames(sig_mat) %in% sel],
   multiple = TRUE,
   width = "100%"
 )
@@ -5745,7 +5745,7 @@ observeEvent(
         session,
         inputId = paste0("select_deg", idx),
         choices = rownames(sig_mat),
-        selected = sel
+        selected = rownames(sig_mat)[rownames(sig_mat) %in% sel]
       )
 
     } else {
