@@ -522,6 +522,37 @@ renderPlot(
     }
     rownames(mat) <- gene_anno_sub$symbol
 
+    mat <- mat[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+
+    top_anno2 <- HeatmapAnnotation(
+      Batch = deg_data[[1]]$batch[
+        sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]]
+      ],
+      cell_type = anno_block(
+        gp = gpar(fill = "lightgray", col = "lightgray"),
+        labels = sub(
+          pattern = "_", replacement = " ",
+          x = input[[paste0("genotype_deg", idx)]]
+        ),
+        labels_gp = gpar(col = "black", fontsize = 9),
+        height = unit(5, "mm")
+      ),
+      col = list(
+        Batch = c(
+          "batch01" = anno_color[1], "batch02" = anno_color[2],
+          "batch03" = anno_color[3], "batch04" = anno_color[4]
+        )
+      ),
+      simple_anno_size = unit(3, "mm"),
+      show_legend = c("Batch" = FALSE),
+      annotation_name_gp = gpar(fontsize = 8)
+    )
+
     mat <- t(
       apply(
         mat, MARGIN = 1,
@@ -535,16 +566,19 @@ renderPlot(
         column_title = ctype_name[[idx]],
         cluster_columns = FALSE,
         cluster_rows = FALSE,
-        column_split = rep(seq(6), each = 4),
+        column_split = rep(seq(ncol(mat) / 4), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
         row_names_gp = gpar(fontsize = 10),
         column_title_gp = gpar(fontsize = 10),
         row_title_rot = 0,
-        top_annotation = top_anno,
+        top_annotation = top_anno2,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(
+            sig_tmp[i, j], x = x, y = y,
+            gp = gpar(fontsize = (-0.25 * nrow(mat)) + 17.5)
+          )
         },
         heatmap_legend_param = list(
           title = "Scaled logCPM", direction = "horizontal",
