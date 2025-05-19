@@ -358,9 +358,10 @@ selectizeInput(
 
 observeEvent(
   input[[paste0("genotype_deg", 1)]], {
-    sig_mat <- sig_deg[[1]][
-      , sub("_batch.*", "", colnames(deg_corrected[[1]])) %in%
-        input[[paste0("genotype_deg", 1)]]
+    idx <- 1
+    sig_mat <- sig_deg[[idx]][
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+        input[[paste0("genotype_deg", idx)]]
     ]
     sig_mat <- sig_mat[
       apply(sig_mat, MARGIN = 1, FUN = function(x) any(x %in% c("↑", "↓"))), ,
@@ -377,7 +378,7 @@ observeEvent(
       }
       updateSelectizeInput(
         session,
-        inputId = paste0("select_deg", 1),
+        inputId = paste0("select_deg", idx),
         choices = rownames(sig_mat),
         selected = sel
       )
@@ -385,7 +386,7 @@ observeEvent(
     } else {
       updateSelectizeInput(
         session,
-        inputId = paste0("select_deg", 1),
+        inputId = paste0("select_deg", idx),
         choices = rownames(sig_mat),
         selected = rownames(sig_mat)
       )
@@ -395,9 +396,10 @@ observeEvent(
 
 observeEvent(
   input[[paste0("clear_deg", 1)]], {
+    idx <- 1
     updateSelectizeInput(
       session,
-      inputId = paste0("select_deg", 1),
+      inputId = paste0("select_deg", idx),
       selected = results_deg[[idx]]$Gene[1]
     )
   }
