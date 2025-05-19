@@ -566,12 +566,15 @@ renderPlot(
       annotation_name_gp = gpar(fontsize = 8)
     )
 
-    mat <- t(
-      apply(
-        mat, MARGIN = 1,
-        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+    if (nrow(mat) > 0) {
+      mat <- t(
+        apply(
+          mat, MARGIN = 1,
+          FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+        )
       )
-    )
+    }
+
     draw(
       Heatmap(
         mat,
