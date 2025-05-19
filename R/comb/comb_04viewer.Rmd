@@ -400,7 +400,7 @@ observeEvent(
     updateSelectizeInput(
       session,
       inputId = paste0("select_deg", idx),
-      selected = results_deg[[idx]]$Gene[1]
+      selected = ""
     )
   }
 )
