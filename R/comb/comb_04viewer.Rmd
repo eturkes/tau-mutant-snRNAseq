@@ -361,7 +361,7 @@ observeEvent(
     idx <- 1
     sig_mat <- sig_deg[[idx]][
       , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-        c("MAPTKI", input[[paste0("genotype_deg", idx)]])
+        input[[paste0("genotype_deg", idx)]]
     ]
     sig_mat <- sig_mat[
       apply(sig_mat, MARGIN = 1, FUN = function(x) any(x %in% c("↑", "↓"))), ,
@@ -440,23 +440,25 @@ renderPlot(
 
     mat <- mat[
       , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]]),
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+    sig_tmp <- sig_tmp[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
       drop = FALSE
     ]
 
     top_anno <- HeatmapAnnotation(
-      Batch = deg_data[[idx]]$batch[
+       Batch = deg_data[[idx]]$batch[
         sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]])
+          input[[paste0("genotype_deg", idx)]]
       ],
       cell_type = anno_block(
         gp = gpar(fill = "lightgray", col = "lightgray"),
         labels = sub(
           pattern = "_", replacement = " ",
-          x = levels(deg_data[[idx]]$genotype)[
-            levels(deg_data[[idx]]$genotype) %in%
-              c("MAPTKI", input[[paste0("genotype_deg", idx)]])
-          ]
+          x = input[[paste0("genotype_deg", idx)]]
         ),
         labels_gp = gpar(col = "black", fontsize = 9),
         height = unit(5, "mm")
@@ -542,23 +544,25 @@ renderPlot(
 
     mat <- mat[
       , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]]),
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+    sig_tmp <- sig_tmp[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
       drop = FALSE
     ]
 
     top_anno <- HeatmapAnnotation(
-      Batch = deg_data[[idx]]$batch[
+       Batch = deg_data[[idx]]$batch[
         sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]])
+          input[[paste0("genotype_deg", idx)]]
       ],
       cell_type = anno_block(
         gp = gpar(fill = "lightgray", col = "lightgray"),
         labels = sub(
           pattern = "_", replacement = " ",
-          x = levels(deg_data[[idx]]$genotype)[
-            levels(deg_data[[idx]]$genotype) %in%
-              c("MAPTKI", input[[paste0("genotype_deg", idx)]])
-          ]
+          x = input[[paste0("genotype_deg", idx)]]
         ),
         labels_gp = gpar(col = "black", fontsize = 9),
         height = unit(5, "mm")
@@ -1249,7 +1253,7 @@ observeEvent(
     idx <- 2
     sig_mat <- sig_deg[[idx]][
       , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-        c("MAPTKI", input[[paste0("genotype_deg", idx)]])
+        input[[paste0("genotype_deg", idx)]]
     ]
     sig_mat <- sig_mat[
       apply(sig_mat, MARGIN = 1, FUN = function(x) any(x %in% c("↑", "↓"))), ,
@@ -1328,23 +1332,25 @@ renderPlot(
 
     mat <- mat[
       , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]]),
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+    sig_tmp <- sig_tmp[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
       drop = FALSE
     ]
 
     top_anno <- HeatmapAnnotation(
-      Batch = deg_data[[idx]]$batch[
+       Batch = deg_data[[idx]]$batch[
         sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]])
+          input[[paste0("genotype_deg", idx)]]
       ],
       cell_type = anno_block(
         gp = gpar(fill = "lightgray", col = "lightgray"),
         labels = sub(
           pattern = "_", replacement = " ",
-          x = levels(deg_data[[idx]]$genotype)[
-            levels(deg_data[[idx]]$genotype) %in%
-              c("MAPTKI", input[[paste0("genotype_deg", idx)]])
-          ]
+          x = input[[paste0("genotype_deg", idx)]]
         ),
         labels_gp = gpar(col = "black", fontsize = 9),
         height = unit(5, "mm")
@@ -1430,23 +1436,25 @@ renderPlot(
 
     mat <- mat[
       , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]]),
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+    sig_tmp <- sig_tmp[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
       drop = FALSE
     ]
 
     top_anno <- HeatmapAnnotation(
-      Batch = deg_data[[idx]]$batch[
+       Batch = deg_data[[idx]]$batch[
         sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]])
+          input[[paste0("genotype_deg", idx)]]
       ],
       cell_type = anno_block(
         gp = gpar(fill = "lightgray", col = "lightgray"),
         labels = sub(
           pattern = "_", replacement = " ",
-          x = levels(deg_data[[idx]]$genotype)[
-            levels(deg_data[[idx]]$genotype) %in%
-              c("MAPTKI", input[[paste0("genotype_deg", idx)]])
-          ]
+          x = input[[paste0("genotype_deg", idx)]]
         ),
         labels_gp = gpar(col = "black", fontsize = 9),
         height = unit(5, "mm")
@@ -2137,7 +2145,7 @@ observeEvent(
     idx <- 3
     sig_mat <- sig_deg[[idx]][
       , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-        c("MAPTKI", input[[paste0("genotype_deg", idx)]])
+        input[[paste0("genotype_deg", idx)]]
     ]
     sig_mat <- sig_mat[
       apply(sig_mat, MARGIN = 1, FUN = function(x) any(x %in% c("↑", "↓"))), ,
@@ -2216,23 +2224,25 @@ renderPlot(
 
     mat <- mat[
       , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]]),
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+    sig_tmp <- sig_tmp[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
       drop = FALSE
     ]
 
     top_anno <- HeatmapAnnotation(
-      Batch = deg_data[[idx]]$batch[
+       Batch = deg_data[[idx]]$batch[
         sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]])
+          input[[paste0("genotype_deg", idx)]]
       ],
       cell_type = anno_block(
         gp = gpar(fill = "lightgray", col = "lightgray"),
         labels = sub(
           pattern = "_", replacement = " ",
-          x = levels(deg_data[[idx]]$genotype)[
-            levels(deg_data[[idx]]$genotype) %in%
-              c("MAPTKI", input[[paste0("genotype_deg", idx)]])
-          ]
+          x = input[[paste0("genotype_deg", idx)]]
         ),
         labels_gp = gpar(col = "black", fontsize = 9),
         height = unit(5, "mm")
@@ -2318,23 +2328,25 @@ renderPlot(
 
     mat <- mat[
       , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]]),
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+    sig_tmp <- sig_tmp[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
       drop = FALSE
     ]
 
     top_anno <- HeatmapAnnotation(
-      Batch = deg_data[[idx]]$batch[
+       Batch = deg_data[[idx]]$batch[
         sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]])
+          input[[paste0("genotype_deg", idx)]]
       ],
       cell_type = anno_block(
         gp = gpar(fill = "lightgray", col = "lightgray"),
         labels = sub(
           pattern = "_", replacement = " ",
-          x = levels(deg_data[[idx]]$genotype)[
-            levels(deg_data[[idx]]$genotype) %in%
-              c("MAPTKI", input[[paste0("genotype_deg", idx)]])
-          ]
+          x = input[[paste0("genotype_deg", idx)]]
         ),
         labels_gp = gpar(col = "black", fontsize = 9),
         height = unit(5, "mm")
@@ -3026,7 +3038,7 @@ observeEvent(
     idx <- 4
     sig_mat <- sig_deg[[idx]][
       , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-        c("MAPTKI", input[[paste0("genotype_deg", idx)]])
+        input[[paste0("genotype_deg", idx)]]
     ]
     sig_mat <- sig_mat[
       apply(sig_mat, MARGIN = 1, FUN = function(x) any(x %in% c("↑", "↓"))), ,
@@ -3105,23 +3117,25 @@ renderPlot(
 
     mat <- mat[
       , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]]),
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+    sig_tmp <- sig_tmp[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
       drop = FALSE
     ]
 
     top_anno <- HeatmapAnnotation(
-      Batch = deg_data[[idx]]$batch[
+       Batch = deg_data[[idx]]$batch[
         sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]])
+          input[[paste0("genotype_deg", idx)]]
       ],
       cell_type = anno_block(
         gp = gpar(fill = "lightgray", col = "lightgray"),
         labels = sub(
           pattern = "_", replacement = " ",
-          x = levels(deg_data[[idx]]$genotype)[
-            levels(deg_data[[idx]]$genotype) %in%
-              c("MAPTKI", input[[paste0("genotype_deg", idx)]])
-          ]
+          x = input[[paste0("genotype_deg", idx)]]
         ),
         labels_gp = gpar(col = "black", fontsize = 9),
         height = unit(5, "mm")
@@ -3207,23 +3221,25 @@ renderPlot(
 
     mat <- mat[
       , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]]),
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+    sig_tmp <- sig_tmp[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
       drop = FALSE
     ]
 
     top_anno <- HeatmapAnnotation(
-      Batch = deg_data[[idx]]$batch[
+       Batch = deg_data[[idx]]$batch[
         sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]])
+          input[[paste0("genotype_deg", idx)]]
       ],
       cell_type = anno_block(
         gp = gpar(fill = "lightgray", col = "lightgray"),
         labels = sub(
           pattern = "_", replacement = " ",
-          x = levels(deg_data[[idx]]$genotype)[
-            levels(deg_data[[idx]]$genotype) %in%
-              c("MAPTKI", input[[paste0("genotype_deg", idx)]])
-          ]
+          x = input[[paste0("genotype_deg", idx)]]
         ),
         labels_gp = gpar(col = "black", fontsize = 9),
         height = unit(5, "mm")
@@ -3917,7 +3933,7 @@ observeEvent(
     idx <- 5
     sig_mat <- sig_deg[[idx]][
       , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-        c("MAPTKI", input[[paste0("genotype_deg", idx)]])
+        input[[paste0("genotype_deg", idx)]]
     ]
     sig_mat <- sig_mat[
       apply(sig_mat, MARGIN = 1, FUN = function(x) any(x %in% c("↑", "↓"))), ,
@@ -3996,23 +4012,25 @@ renderPlot(
 
     mat <- mat[
       , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]]),
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+    sig_tmp <- sig_tmp[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
       drop = FALSE
     ]
 
     top_anno <- HeatmapAnnotation(
-      Batch = deg_data[[idx]]$batch[
+       Batch = deg_data[[idx]]$batch[
         sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]])
+          input[[paste0("genotype_deg", idx)]]
       ],
       cell_type = anno_block(
         gp = gpar(fill = "lightgray", col = "lightgray"),
         labels = sub(
           pattern = "_", replacement = " ",
-          x = levels(deg_data[[idx]]$genotype)[
-            levels(deg_data[[idx]]$genotype) %in%
-              c("MAPTKI", input[[paste0("genotype_deg", idx)]])
-          ]
+          x = input[[paste0("genotype_deg", idx)]]
         ),
         labels_gp = gpar(col = "black", fontsize = 9),
         height = unit(5, "mm")
@@ -4098,23 +4116,25 @@ renderPlot(
 
     mat <- mat[
       , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]]),
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+    sig_tmp <- sig_tmp[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
       drop = FALSE
     ]
 
     top_anno <- HeatmapAnnotation(
-      Batch = deg_data[[idx]]$batch[
+       Batch = deg_data[[idx]]$batch[
         sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]])
+          input[[paste0("genotype_deg", idx)]]
       ],
       cell_type = anno_block(
         gp = gpar(fill = "lightgray", col = "lightgray"),
         labels = sub(
           pattern = "_", replacement = " ",
-          x = levels(deg_data[[idx]]$genotype)[
-            levels(deg_data[[idx]]$genotype) %in%
-              c("MAPTKI", input[[paste0("genotype_deg", idx)]])
-          ]
+          x = input[[paste0("genotype_deg", idx)]]
         ),
         labels_gp = gpar(col = "black", fontsize = 9),
         height = unit(5, "mm")
@@ -4809,7 +4829,7 @@ observeEvent(
     idx <- 6
     sig_mat <- sig_deg[[idx]][
       , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-        c("MAPTKI", input[[paste0("genotype_deg", idx)]])
+        input[[paste0("genotype_deg", idx)]]
     ]
     sig_mat <- sig_mat[
       apply(sig_mat, MARGIN = 1, FUN = function(x) any(x %in% c("↑", "↓"))), ,
@@ -4888,23 +4908,25 @@ renderPlot(
 
     mat <- mat[
       , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]]),
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+    sig_tmp <- sig_tmp[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
       drop = FALSE
     ]
 
     top_anno <- HeatmapAnnotation(
-      Batch = deg_data[[idx]]$batch[
+       Batch = deg_data[[idx]]$batch[
         sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]])
+          input[[paste0("genotype_deg", idx)]]
       ],
       cell_type = anno_block(
         gp = gpar(fill = "lightgray", col = "lightgray"),
         labels = sub(
           pattern = "_", replacement = " ",
-          x = levels(deg_data[[idx]]$genotype)[
-            levels(deg_data[[idx]]$genotype) %in%
-              c("MAPTKI", input[[paste0("genotype_deg", idx)]])
-          ]
+          x = input[[paste0("genotype_deg", idx)]]
         ),
         labels_gp = gpar(col = "black", fontsize = 9),
         height = unit(5, "mm")
@@ -4990,23 +5012,25 @@ renderPlot(
 
     mat <- mat[
       , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]]),
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+    sig_tmp <- sig_tmp[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
       drop = FALSE
     ]
 
     top_anno <- HeatmapAnnotation(
-      Batch = deg_data[[idx]]$batch[
+       Batch = deg_data[[idx]]$batch[
         sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]])
+          input[[paste0("genotype_deg", idx)]]
       ],
       cell_type = anno_block(
         gp = gpar(fill = "lightgray", col = "lightgray"),
         labels = sub(
           pattern = "_", replacement = " ",
-          x = levels(deg_data[[idx]]$genotype)[
-            levels(deg_data[[idx]]$genotype) %in%
-              c("MAPTKI", input[[paste0("genotype_deg", idx)]])
-          ]
+          x = input[[paste0("genotype_deg", idx)]]
         ),
         labels_gp = gpar(col = "black", fontsize = 9),
         height = unit(5, "mm")
@@ -5702,7 +5726,7 @@ observeEvent(
     idx <- 7
     sig_mat <- sig_deg[[idx]][
       , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-        c("MAPTKI", input[[paste0("genotype_deg", idx)]])
+        input[[paste0("genotype_deg", idx)]]
     ]
     sig_mat <- sig_mat[
       apply(sig_mat, MARGIN = 1, FUN = function(x) any(x %in% c("↑", "↓"))), ,
@@ -5781,23 +5805,25 @@ renderPlot(
 
     mat <- mat[
       , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]]),
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+    sig_tmp <- sig_tmp[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
       drop = FALSE
     ]
 
     top_anno <- HeatmapAnnotation(
-      Batch = deg_data[[idx]]$batch[
+       Batch = deg_data[[idx]]$batch[
         sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]])
+          input[[paste0("genotype_deg", idx)]]
       ],
       cell_type = anno_block(
         gp = gpar(fill = "lightgray", col = "lightgray"),
         labels = sub(
           pattern = "_", replacement = " ",
-          x = levels(deg_data[[idx]]$genotype)[
-            levels(deg_data[[idx]]$genotype) %in%
-              c("MAPTKI", input[[paste0("genotype_deg", idx)]])
-          ]
+          x = input[[paste0("genotype_deg", idx)]]
         ),
         labels_gp = gpar(col = "black", fontsize = 9),
         height = unit(5, "mm")
@@ -5883,23 +5909,25 @@ renderPlot(
 
     mat <- mat[
       , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]]),
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+    sig_tmp <- sig_tmp[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
       drop = FALSE
     ]
 
     top_anno <- HeatmapAnnotation(
-      Batch = deg_data[[idx]]$batch[
+       Batch = deg_data[[idx]]$batch[
         sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
-          c("MAPTKI", input[[paste0("genotype_deg", idx)]])
+          input[[paste0("genotype_deg", idx)]]
       ],
       cell_type = anno_block(
         gp = gpar(fill = "lightgray", col = "lightgray"),
         labels = sub(
           pattern = "_", replacement = " ",
-          x = levels(deg_data[[idx]]$genotype)[
-            levels(deg_data[[idx]]$genotype) %in%
-              c("MAPTKI", input[[paste0("genotype_deg", idx)]])
-          ]
+          x = input[[paste0("genotype_deg", idx)]]
         ),
         labels_gp = gpar(col = "black", fontsize = 9),
         height = unit(5, "mm")
