@@ -470,7 +470,10 @@ renderPlot(
         top_annotation = top_anno2,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(
+            sig_tmp[i, j], x = x, y = y,
+            gp = gpar(fontsize = (-0.25 * nrow(mat)) + 17.5)
+          )
         },
         heatmap_legend_param = list(
           title = "logCPM", direction = "horizontal",
