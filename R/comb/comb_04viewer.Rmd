@@ -1185,17 +1185,106 @@ results_deg[[idx]] <- results_deg[[idx]][
   match(rownames(sig_deg[[idx]]), rownames(results_deg[[idx]])),
 ]
 rownames(sig_deg[[idx]]) <- results_deg[[idx]]$Gene
-sig_uniq_deg[[idx]] <- unique(sig_deg[[idx]])
+colnames(sig_deg[[idx]]) <- colnames(deg_corrected[[idx]])
+
+sig_mat <- sig_deg[[idx]]
+sig_mat <- sig_mat[
+  apply(sig_mat, MARGIN = 1, FUN = function(x) any(x %in% c("↑", "↓"))), ,
+  drop = FALSE
+]
+sel <- c()
+sig_mat_sub <- sig_mat
+while (length(sel) < 30) {
+  sel <- c(sel, rownames(unique(sig_mat_sub)))
+  remove <- which(rownames(sig_mat_sub) %in% sel)
+  sig_mat_sub <- sig_mat_sub[-remove, ]
+}
 ```
 
 ```{r}
+fluidRow(
+  column(
+    width = 4,
+    checkboxGroupInput(
+      paste0("genotype_deg", idx),
+      label = "Select Genotypes:",
+      selected = c(
+        "MAPTKI", "S305N", "P301S", "NLGF_MAPTKI", "NLGF_S305N", "NLGF_P301S"
+      ),
+      inline = TRUE,
+      choiceNames = c(
+        "MAPTKI", "S305N", "P301S", "NLGF MAPTKI", "NLGF S305N", "NLGF P301S"
+      ),
+      choiceValues = c(
+        "MAPTKI", "S305N", "P301S", "NLGF_MAPTKI", "NLGF_S305N", "NLGF_P301S"
+      )
+    )
+  ),
+  column(
+    width = 1,
+    actionButton(
+      paste0("clear_deg", idx), label = "Clear Genes", class = "btn-primary"
+    ),
+    style = "padding-top: 10px;"
+  )
+)
+
 selectizeInput(
   paste0("select_deg", idx),
   label = "Select Genes:",
-  choices = results_deg[[idx]]$Gene,
-  selected = rownames(sig_uniq_deg[[idx]]),
+  choices = rownames(sig_mat),
+  selected = sel,
   multiple = TRUE,
   width = "100%"
+)
+
+observeEvent(
+  input[[paste0("genotype_deg", 2)]], {
+    idx <- 2
+    sig_mat <- sig_deg[[idx]][
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+        input[[paste0("genotype_deg", idx)]]
+    ]
+    sig_mat <- sig_mat[
+      apply(sig_mat, MARGIN = 1, FUN = function(x) any(x %in% c("↑", "↓"))), ,
+      drop = FALSE
+    ]
+    if (nrow(sig_mat) > 30) {
+
+      sel <- c()
+      sig_mat_sub <- sig_mat
+      while (length(sel) < 30) {
+        sel <- c(sel, rownames(unique(sig_mat_sub)))
+        remove <- which(rownames(sig_mat_sub) %in% sel)
+        sig_mat_sub <- sig_mat_sub[-remove, ]
+      }
+      updateSelectizeInput(
+        session,
+        inputId = paste0("select_deg", idx),
+        choices = rownames(sig_mat),
+        selected = sel
+      )
+
+    } else {
+      updateSelectizeInput(
+        session,
+        inputId = paste0("select_deg", idx),
+        choices = rownames(sig_mat),
+        selected = rownames(sig_mat)
+      )
+    }
+  }
+)
+
+observeEvent(
+  input[[paste0("clear_deg", 2)]], {
+    idx <- 2
+    updateSelectizeInput(
+      session,
+      inputId = paste0("select_deg", idx),
+      selected = ""
+    )
+  }
 )
 ```
 
@@ -1231,6 +1320,37 @@ renderPlot(
     }
     rownames(mat) <- gene_anno_sub$symbol
 
+    mat <- mat[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+
+    top_anno <- HeatmapAnnotation(
+      Batch = deg_data[[1]]$batch[
+        sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]]
+      ],
+      cell_type = anno_block(
+        gp = gpar(fill = "lightgray", col = "lightgray"),
+        labels = sub(
+          pattern = "_", replacement = " ",
+          x = input[[paste0("genotype_deg", idx)]]
+        ),
+        labels_gp = gpar(col = "black", fontsize = 9),
+        height = unit(5, "mm")
+      ),
+      col = list(
+        Batch = c(
+          "batch01" = anno_color[1], "batch02" = anno_color[2],
+          "batch03" = anno_color[3], "batch04" = anno_color[4]
+        )
+      ),
+      simple_anno_size = unit(3, "mm"),
+      show_legend = c("Batch" = FALSE),
+      annotation_name_gp = gpar(fontsize = 8)
+    )
+
     draw(
       Heatmap(
         mat,
@@ -1238,7 +1358,7 @@ renderPlot(
         column_title = ctype_name[[idx]],
         cluster_columns = FALSE,
         cluster_rows = FALSE,
-        column_split = rep(seq(6), each = 4),
+        column_split = rep(seq(ncol(mat) / 4), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
         row_names_gp = gpar(fontsize = 10),
@@ -1247,7 +1367,10 @@ renderPlot(
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(
+            sig_tmp[i, j], x = x, y = y,
+            gp = gpar(fontsize = (-0.25 * nrow(mat)) + 17.5)
+          )
         },
         heatmap_legend_param = list(
           title = "logCPM", direction = "horizontal",
@@ -1296,12 +1419,46 @@ renderPlot(
     }
     rownames(mat) <- gene_anno_sub$symbol
 
-    mat <- t(
-      apply(
-        mat, MARGIN = 1,
-        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
-      )
+    mat <- mat[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+
+    top_anno <- HeatmapAnnotation(
+      Batch = deg_data[[1]]$batch[
+        sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]]
+      ],
+      cell_type = anno_block(
+        gp = gpar(fill = "lightgray", col = "lightgray"),
+        labels = sub(
+          pattern = "_", replacement = " ",
+          x = input[[paste0("genotype_deg", idx)]]
+        ),
+        labels_gp = gpar(col = "black", fontsize = 9),
+        height = unit(5, "mm")
+      ),
+      col = list(
+        Batch = c(
+          "batch01" = anno_color[1], "batch02" = anno_color[2],
+          "batch03" = anno_color[3], "batch04" = anno_color[4]
+        )
+      ),
+      simple_anno_size = unit(3, "mm"),
+      show_legend = c("Batch" = FALSE),
+      annotation_name_gp = gpar(fontsize = 8)
     )
+
+    if (nrow(mat) > 0) {
+      mat <- t(
+        apply(
+          mat, MARGIN = 1,
+          FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+        )
+      )
+    }
+
     draw(
       Heatmap(
         mat,
@@ -1309,7 +1466,7 @@ renderPlot(
         column_title = ctype_name[[idx]],
         cluster_columns = FALSE,
         cluster_rows = FALSE,
-        column_split = rep(seq(6), each = 4),
+        column_split = rep(seq(ncol(mat) / 4), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
         row_names_gp = gpar(fontsize = 10),
@@ -1318,7 +1475,10 @@ renderPlot(
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(
+            sig_tmp[i, j], x = x, y = y,
+            gp = gpar(fontsize = (-0.25 * nrow(mat)) + 17.5)
+          )
         },
         heatmap_legend_param = list(
           title = "Scaled logCPM", direction = "horizontal",
@@ -1907,17 +2067,106 @@ results_deg[[idx]] <- results_deg[[idx]][
   match(rownames(sig_deg[[idx]]), rownames(results_deg[[idx]])),
 ]
 rownames(sig_deg[[idx]]) <- results_deg[[idx]]$Gene
-sig_uniq_deg[[idx]] <- unique(sig_deg[[idx]])
+colnames(sig_deg[[idx]]) <- colnames(deg_corrected[[idx]])
+
+sig_mat <- sig_deg[[idx]]
+sig_mat <- sig_mat[
+  apply(sig_mat, MARGIN = 1, FUN = function(x) any(x %in% c("↑", "↓"))), ,
+  drop = FALSE
+]
+sel <- c()
+sig_mat_sub <- sig_mat
+while (length(sel) < 30) {
+  sel <- c(sel, rownames(unique(sig_mat_sub)))
+  remove <- which(rownames(sig_mat_sub) %in% sel)
+  sig_mat_sub <- sig_mat_sub[-remove, ]
+}
 ```
 
 ```{r}
+fluidRow(
+  column(
+    width = 4,
+    checkboxGroupInput(
+      paste0("genotype_deg", idx),
+      label = "Select Genotypes:",
+      selected = c(
+        "MAPTKI", "S305N", "P301S", "NLGF_MAPTKI", "NLGF_S305N", "NLGF_P301S"
+      ),
+      inline = TRUE,
+      choiceNames = c(
+        "MAPTKI", "S305N", "P301S", "NLGF MAPTKI", "NLGF S305N", "NLGF P301S"
+      ),
+      choiceValues = c(
+        "MAPTKI", "S305N", "P301S", "NLGF_MAPTKI", "NLGF_S305N", "NLGF_P301S"
+      )
+    )
+  ),
+  column(
+    width = 1,
+    actionButton(
+      paste0("clear_deg", idx), label = "Clear Genes", class = "btn-primary"
+    ),
+    style = "padding-top: 10px;"
+  )
+)
+
 selectizeInput(
   paste0("select_deg", idx),
   label = "Select Genes:",
-  choices = results_deg[[idx]]$Gene,
-  selected = rownames(sig_uniq_deg[[idx]]),
+  choices = rownames(sig_mat),
+  selected = sel,
   multiple = TRUE,
   width = "100%"
+)
+
+observeEvent(
+  input[[paste0("genotype_deg", 3)]], {
+    idx <- 3
+    sig_mat <- sig_deg[[idx]][
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+        input[[paste0("genotype_deg", idx)]]
+    ]
+    sig_mat <- sig_mat[
+      apply(sig_mat, MARGIN = 1, FUN = function(x) any(x %in% c("↑", "↓"))), ,
+      drop = FALSE
+    ]
+    if (nrow(sig_mat) > 30) {
+
+      sel <- c()
+      sig_mat_sub <- sig_mat
+      while (length(sel) < 30) {
+        sel <- c(sel, rownames(unique(sig_mat_sub)))
+        remove <- which(rownames(sig_mat_sub) %in% sel)
+        sig_mat_sub <- sig_mat_sub[-remove, ]
+      }
+      updateSelectizeInput(
+        session,
+        inputId = paste0("select_deg", idx),
+        choices = rownames(sig_mat),
+        selected = sel
+      )
+
+    } else {
+      updateSelectizeInput(
+        session,
+        inputId = paste0("select_deg", idx),
+        choices = rownames(sig_mat),
+        selected = rownames(sig_mat)
+      )
+    }
+  }
+)
+
+observeEvent(
+  input[[paste0("clear_deg", 3)]], {
+    idx <- 3
+    updateSelectizeInput(
+      session,
+      inputId = paste0("select_deg", idx),
+      selected = ""
+    )
+  }
 )
 ```
 
@@ -1953,6 +2202,37 @@ renderPlot(
     }
     rownames(mat) <- gene_anno_sub$symbol
 
+    mat <- mat[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+
+    top_anno <- HeatmapAnnotation(
+      Batch = deg_data[[1]]$batch[
+        sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]]
+      ],
+      cell_type = anno_block(
+        gp = gpar(fill = "lightgray", col = "lightgray"),
+        labels = sub(
+          pattern = "_", replacement = " ",
+          x = input[[paste0("genotype_deg", idx)]]
+        ),
+        labels_gp = gpar(col = "black", fontsize = 9),
+        height = unit(5, "mm")
+      ),
+      col = list(
+        Batch = c(
+          "batch01" = anno_color[1], "batch02" = anno_color[2],
+          "batch03" = anno_color[3], "batch04" = anno_color[4]
+        )
+      ),
+      simple_anno_size = unit(3, "mm"),
+      show_legend = c("Batch" = FALSE),
+      annotation_name_gp = gpar(fontsize = 8)
+    )
+
     draw(
       Heatmap(
         mat,
@@ -1960,7 +2240,7 @@ renderPlot(
         column_title = ctype_name[[idx]],
         cluster_columns = FALSE,
         cluster_rows = FALSE,
-        column_split = rep(seq(6), each = 4),
+        column_split = rep(seq(ncol(mat) / 4), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
         row_names_gp = gpar(fontsize = 10),
@@ -1969,7 +2249,10 @@ renderPlot(
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(
+            sig_tmp[i, j], x = x, y = y,
+            gp = gpar(fontsize = (-0.25 * nrow(mat)) + 17.5)
+          )
         },
         heatmap_legend_param = list(
           title = "logCPM", direction = "horizontal",
@@ -2018,12 +2301,46 @@ renderPlot(
     }
     rownames(mat) <- gene_anno_sub$symbol
 
-    mat <- t(
-      apply(
-        mat, MARGIN = 1,
-        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
-      )
+    mat <- mat[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+
+    top_anno <- HeatmapAnnotation(
+      Batch = deg_data[[1]]$batch[
+        sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]]
+      ],
+      cell_type = anno_block(
+        gp = gpar(fill = "lightgray", col = "lightgray"),
+        labels = sub(
+          pattern = "_", replacement = " ",
+          x = input[[paste0("genotype_deg", idx)]]
+        ),
+        labels_gp = gpar(col = "black", fontsize = 9),
+        height = unit(5, "mm")
+      ),
+      col = list(
+        Batch = c(
+          "batch01" = anno_color[1], "batch02" = anno_color[2],
+          "batch03" = anno_color[3], "batch04" = anno_color[4]
+        )
+      ),
+      simple_anno_size = unit(3, "mm"),
+      show_legend = c("Batch" = FALSE),
+      annotation_name_gp = gpar(fontsize = 8)
     )
+
+    if (nrow(mat) > 0) {
+      mat <- t(
+        apply(
+          mat, MARGIN = 1,
+          FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+        )
+      )
+    }
+
     draw(
       Heatmap(
         mat,
@@ -2031,7 +2348,7 @@ renderPlot(
         column_title = ctype_name[[idx]],
         cluster_columns = FALSE,
         cluster_rows = FALSE,
-        column_split = rep(seq(6), each = 4),
+        column_split = rep(seq(ncol(mat) / 4), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
         row_names_gp = gpar(fontsize = 10),
@@ -2040,7 +2357,10 @@ renderPlot(
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(
+            sig_tmp[i, j], x = x, y = y,
+            gp = gpar(fontsize = (-0.25 * nrow(mat)) + 17.5)
+          )
         },
         heatmap_legend_param = list(
           title = "Scaled logCPM", direction = "horizontal",
@@ -2630,17 +2950,106 @@ results_deg[[idx]] <- results_deg[[idx]][
   match(rownames(sig_deg[[idx]]), rownames(results_deg[[idx]])),
 ]
 rownames(sig_deg[[idx]]) <- results_deg[[idx]]$Gene
-sig_uniq_deg[[idx]] <- unique(sig_deg[[idx]])
+colnames(sig_deg[[idx]]) <- colnames(deg_corrected[[idx]])
+
+sig_mat <- sig_deg[[idx]]
+sig_mat <- sig_mat[
+  apply(sig_mat, MARGIN = 1, FUN = function(x) any(x %in% c("↑", "↓"))), ,
+  drop = FALSE
+]
+sel <- c()
+sig_mat_sub <- sig_mat
+while (length(sel) < 30) {
+  sel <- c(sel, rownames(unique(sig_mat_sub)))
+  remove <- which(rownames(sig_mat_sub) %in% sel)
+  sig_mat_sub <- sig_mat_sub[-remove, ]
+}
 ```
 
 ```{r}
+fluidRow(
+  column(
+    width = 4,
+    checkboxGroupInput(
+      paste0("genotype_deg", idx),
+      label = "Select Genotypes:",
+      selected = c(
+        "MAPTKI", "S305N", "P301S", "NLGF_MAPTKI", "NLGF_S305N", "NLGF_P301S"
+      ),
+      inline = TRUE,
+      choiceNames = c(
+        "MAPTKI", "S305N", "P301S", "NLGF MAPTKI", "NLGF S305N", "NLGF P301S"
+      ),
+      choiceValues = c(
+        "MAPTKI", "S305N", "P301S", "NLGF_MAPTKI", "NLGF_S305N", "NLGF_P301S"
+      )
+    )
+  ),
+  column(
+    width = 1,
+    actionButton(
+      paste0("clear_deg", idx), label = "Clear Genes", class = "btn-primary"
+    ),
+    style = "padding-top: 10px;"
+  )
+)
+
 selectizeInput(
   paste0("select_deg", idx),
   label = "Select Genes:",
-  choices = results_deg[[idx]]$Gene,
-  selected = rownames(sig_uniq_deg[[idx]]),
+  choices = rownames(sig_mat),
+  selected = sel,
   multiple = TRUE,
   width = "100%"
+)
+
+observeEvent(
+  input[[paste0("genotype_deg", 4)]], {
+    idx <- 4
+    sig_mat <- sig_deg[[idx]][
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+        input[[paste0("genotype_deg", idx)]]
+    ]
+    sig_mat <- sig_mat[
+      apply(sig_mat, MARGIN = 1, FUN = function(x) any(x %in% c("↑", "↓"))), ,
+      drop = FALSE
+    ]
+    if (nrow(sig_mat) > 30) {
+
+      sel <- c()
+      sig_mat_sub <- sig_mat
+      while (length(sel) < 30) {
+        sel <- c(sel, rownames(unique(sig_mat_sub)))
+        remove <- which(rownames(sig_mat_sub) %in% sel)
+        sig_mat_sub <- sig_mat_sub[-remove, ]
+      }
+      updateSelectizeInput(
+        session,
+        inputId = paste0("select_deg", idx),
+        choices = rownames(sig_mat),
+        selected = sel
+      )
+
+    } else {
+      updateSelectizeInput(
+        session,
+        inputId = paste0("select_deg", idx),
+        choices = rownames(sig_mat),
+        selected = rownames(sig_mat)
+      )
+    }
+  }
+)
+
+observeEvent(
+  input[[paste0("clear_deg", 4)]], {
+    idx <- 4
+    updateSelectizeInput(
+      session,
+      inputId = paste0("select_deg", idx),
+      selected = ""
+    )
+  }
 )
 ```
 
@@ -2676,6 +3085,37 @@ renderPlot(
     }
     rownames(mat) <- gene_anno_sub$symbol
 
+    mat <- mat[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+
+    top_anno <- HeatmapAnnotation(
+      Batch = deg_data[[1]]$batch[
+        sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]]
+      ],
+      cell_type = anno_block(
+        gp = gpar(fill = "lightgray", col = "lightgray"),
+        labels = sub(
+          pattern = "_", replacement = " ",
+          x = input[[paste0("genotype_deg", idx)]]
+        ),
+        labels_gp = gpar(col = "black", fontsize = 9),
+        height = unit(5, "mm")
+      ),
+      col = list(
+        Batch = c(
+          "batch01" = anno_color[1], "batch02" = anno_color[2],
+          "batch03" = anno_color[3], "batch04" = anno_color[4]
+        )
+      ),
+      simple_anno_size = unit(3, "mm"),
+      show_legend = c("Batch" = FALSE),
+      annotation_name_gp = gpar(fontsize = 8)
+    )
+
     draw(
       Heatmap(
         mat,
@@ -2683,7 +3123,7 @@ renderPlot(
         column_title = ctype_name[[idx]],
         cluster_columns = FALSE,
         cluster_rows = FALSE,
-        column_split = rep(seq(6), each = 4),
+        column_split = rep(seq(ncol(mat) / 4), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
         row_names_gp = gpar(fontsize = 10),
@@ -2692,7 +3132,10 @@ renderPlot(
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(
+            sig_tmp[i, j], x = x, y = y,
+            gp = gpar(fontsize = (-0.25 * nrow(mat)) + 17.5)
+          )
         },
         heatmap_legend_param = list(
           title = "logCPM", direction = "horizontal",
@@ -2741,12 +3184,46 @@ renderPlot(
     }
     rownames(mat) <- gene_anno_sub$symbol
 
-    mat <- t(
-      apply(
-        mat, MARGIN = 1,
-        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
-      )
+    mat <- mat[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+
+    top_anno <- HeatmapAnnotation(
+      Batch = deg_data[[1]]$batch[
+        sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]]
+      ],
+      cell_type = anno_block(
+        gp = gpar(fill = "lightgray", col = "lightgray"),
+        labels = sub(
+          pattern = "_", replacement = " ",
+          x = input[[paste0("genotype_deg", idx)]]
+        ),
+        labels_gp = gpar(col = "black", fontsize = 9),
+        height = unit(5, "mm")
+      ),
+      col = list(
+        Batch = c(
+          "batch01" = anno_color[1], "batch02" = anno_color[2],
+          "batch03" = anno_color[3], "batch04" = anno_color[4]
+        )
+      ),
+      simple_anno_size = unit(3, "mm"),
+      show_legend = c("Batch" = FALSE),
+      annotation_name_gp = gpar(fontsize = 8)
     )
+
+    if (nrow(mat) > 0) {
+      mat <- t(
+        apply(
+          mat, MARGIN = 1,
+          FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+        )
+      )
+    }
+
     draw(
       Heatmap(
         mat,
@@ -2754,7 +3231,7 @@ renderPlot(
         column_title = ctype_name[[idx]],
         cluster_columns = FALSE,
         cluster_rows = FALSE,
-        column_split = rep(seq(6), each = 4),
+        column_split = rep(seq(ncol(mat) / 4), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
         row_names_gp = gpar(fontsize = 10),
@@ -2763,7 +3240,10 @@ renderPlot(
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(
+            sig_tmp[i, j], x = x, y = y,
+            gp = gpar(fontsize = (-0.25 * nrow(mat)) + 17.5)
+          )
         },
         heatmap_legend_param = list(
           title = "Scaled logCPM", direction = "horizontal",
@@ -3355,17 +3835,106 @@ results_deg[[idx]] <- results_deg[[idx]][
   match(rownames(sig_deg[[idx]]), rownames(results_deg[[idx]])),
 ]
 rownames(sig_deg[[idx]]) <- results_deg[[idx]]$Gene
-sig_uniq_deg[[idx]] <- unique(sig_deg[[idx]])
+colnames(sig_deg[[idx]]) <- colnames(deg_corrected[[idx]])
+
+sig_mat <- sig_deg[[idx]]
+sig_mat <- sig_mat[
+  apply(sig_mat, MARGIN = 1, FUN = function(x) any(x %in% c("↑", "↓"))), ,
+  drop = FALSE
+]
+sel <- c()
+sig_mat_sub <- sig_mat
+while (length(sel) < 30) {
+  sel <- c(sel, rownames(unique(sig_mat_sub)))
+  remove <- which(rownames(sig_mat_sub) %in% sel)
+  sig_mat_sub <- sig_mat_sub[-remove, ]
+}
 ```
 
 ```{r}
+fluidRow(
+  column(
+    width = 4,
+    checkboxGroupInput(
+      paste0("genotype_deg", idx),
+      label = "Select Genotypes:",
+      selected = c(
+        "MAPTKI", "S305N", "P301S", "NLGF_MAPTKI", "NLGF_S305N", "NLGF_P301S"
+      ),
+      inline = TRUE,
+      choiceNames = c(
+        "MAPTKI", "S305N", "P301S", "NLGF MAPTKI", "NLGF S305N", "NLGF P301S"
+      ),
+      choiceValues = c(
+        "MAPTKI", "S305N", "P301S", "NLGF_MAPTKI", "NLGF_S305N", "NLGF_P301S"
+      )
+    )
+  ),
+  column(
+    width = 1,
+    actionButton(
+      paste0("clear_deg", idx), label = "Clear Genes", class = "btn-primary"
+    ),
+    style = "padding-top: 10px;"
+  )
+)
+
 selectizeInput(
   paste0("select_deg", idx),
   label = "Select Genes:",
-  choices = results_deg[[idx]]$Gene,
-  selected = rownames(sig_uniq_deg[[idx]]),
+  choices = rownames(sig_mat),
+  selected = sel,
   multiple = TRUE,
   width = "100%"
+)
+
+observeEvent(
+  input[[paste0("genotype_deg", 5)]], {
+    idx <- 5
+    sig_mat <- sig_deg[[idx]][
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+        input[[paste0("genotype_deg", idx)]]
+    ]
+    sig_mat <- sig_mat[
+      apply(sig_mat, MARGIN = 1, FUN = function(x) any(x %in% c("↑", "↓"))), ,
+      drop = FALSE
+    ]
+    if (nrow(sig_mat) > 30) {
+
+      sel <- c()
+      sig_mat_sub <- sig_mat
+      while (length(sel) < 30) {
+        sel <- c(sel, rownames(unique(sig_mat_sub)))
+        remove <- which(rownames(sig_mat_sub) %in% sel)
+        sig_mat_sub <- sig_mat_sub[-remove, ]
+      }
+      updateSelectizeInput(
+        session,
+        inputId = paste0("select_deg", idx),
+        choices = rownames(sig_mat),
+        selected = sel
+      )
+
+    } else {
+      updateSelectizeInput(
+        session,
+        inputId = paste0("select_deg", idx),
+        choices = rownames(sig_mat),
+        selected = rownames(sig_mat)
+      )
+    }
+  }
+)
+
+observeEvent(
+  input[[paste0("clear_deg", 5)]], {
+    idx <- 5
+    updateSelectizeInput(
+      session,
+      inputId = paste0("select_deg", idx),
+      selected = ""
+    )
+  }
 )
 ```
 
@@ -3401,6 +3970,37 @@ renderPlot(
     }
     rownames(mat) <- gene_anno_sub$symbol
 
+    mat <- mat[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+
+    top_anno <- HeatmapAnnotation(
+      Batch = deg_data[[1]]$batch[
+        sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]]
+      ],
+      cell_type = anno_block(
+        gp = gpar(fill = "lightgray", col = "lightgray"),
+        labels = sub(
+          pattern = "_", replacement = " ",
+          x = input[[paste0("genotype_deg", idx)]]
+        ),
+        labels_gp = gpar(col = "black", fontsize = 9),
+        height = unit(5, "mm")
+      ),
+      col = list(
+        Batch = c(
+          "batch01" = anno_color[1], "batch02" = anno_color[2],
+          "batch03" = anno_color[3], "batch04" = anno_color[4]
+        )
+      ),
+      simple_anno_size = unit(3, "mm"),
+      show_legend = c("Batch" = FALSE),
+      annotation_name_gp = gpar(fontsize = 8)
+    )
+
     draw(
       Heatmap(
         mat,
@@ -3408,7 +4008,7 @@ renderPlot(
         column_title = ctype_name[[idx]],
         cluster_columns = FALSE,
         cluster_rows = FALSE,
-        column_split = rep(seq(6), each = 4),
+        column_split = rep(seq(ncol(mat) / 4), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
         row_names_gp = gpar(fontsize = 10),
@@ -3417,7 +4017,10 @@ renderPlot(
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(
+            sig_tmp[i, j], x = x, y = y,
+            gp = gpar(fontsize = (-0.25 * nrow(mat)) + 17.5)
+          )
         },
         heatmap_legend_param = list(
           title = "logCPM", direction = "horizontal",
@@ -3466,12 +4069,46 @@ renderPlot(
     }
     rownames(mat) <- gene_anno_sub$symbol
 
-    mat <- t(
-      apply(
-        mat, MARGIN = 1,
-        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
-      )
+    mat <- mat[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+
+    top_anno <- HeatmapAnnotation(
+      Batch = deg_data[[1]]$batch[
+        sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]]
+      ],
+      cell_type = anno_block(
+        gp = gpar(fill = "lightgray", col = "lightgray"),
+        labels = sub(
+          pattern = "_", replacement = " ",
+          x = input[[paste0("genotype_deg", idx)]]
+        ),
+        labels_gp = gpar(col = "black", fontsize = 9),
+        height = unit(5, "mm")
+      ),
+      col = list(
+        Batch = c(
+          "batch01" = anno_color[1], "batch02" = anno_color[2],
+          "batch03" = anno_color[3], "batch04" = anno_color[4]
+        )
+      ),
+      simple_anno_size = unit(3, "mm"),
+      show_legend = c("Batch" = FALSE),
+      annotation_name_gp = gpar(fontsize = 8)
     )
+
+    if (nrow(mat) > 0) {
+      mat <- t(
+        apply(
+          mat, MARGIN = 1,
+          FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+        )
+      )
+    }
+
     draw(
       Heatmap(
         mat,
@@ -3479,7 +4116,7 @@ renderPlot(
         column_title = ctype_name[[idx]],
         cluster_columns = FALSE,
         cluster_rows = FALSE,
-        column_split = rep(seq(6), each = 4),
+        column_split = rep(seq(ncol(mat) / 4), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
         row_names_gp = gpar(fontsize = 10),
@@ -3488,7 +4125,10 @@ renderPlot(
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(
+            sig_tmp[i, j], x = x, y = y,
+            gp = gpar(fontsize = (-0.25 * nrow(mat)) + 17.5)
+          )
         },
         heatmap_legend_param = list(
           title = "Scaled logCPM", direction = "horizontal",
@@ -4081,17 +4721,106 @@ results_deg[[idx]] <- results_deg[[idx]][
   match(rownames(sig_deg[[idx]]), rownames(results_deg[[idx]])),
 ]
 rownames(sig_deg[[idx]]) <- results_deg[[idx]]$Gene
-sig_uniq_deg[[idx]] <- unique(sig_deg[[idx]])
+colnames(sig_deg[[idx]]) <- colnames(deg_corrected[[idx]])
+
+sig_mat <- sig_deg[[idx]]
+sig_mat <- sig_mat[
+  apply(sig_mat, MARGIN = 1, FUN = function(x) any(x %in% c("↑", "↓"))), ,
+  drop = FALSE
+]
+sel <- c()
+sig_mat_sub <- sig_mat
+while (length(sel) < 30) {
+  sel <- c(sel, rownames(unique(sig_mat_sub)))
+  remove <- which(rownames(sig_mat_sub) %in% sel)
+  sig_mat_sub <- sig_mat_sub[-remove, ]
+}
 ```
 
 ```{r}
+fluidRow(
+  column(
+    width = 4,
+    checkboxGroupInput(
+      paste0("genotype_deg", idx),
+      label = "Select Genotypes:",
+      selected = c(
+        "MAPTKI", "S305N", "P301S", "NLGF_MAPTKI", "NLGF_S305N", "NLGF_P301S"
+      ),
+      inline = TRUE,
+      choiceNames = c(
+        "MAPTKI", "S305N", "P301S", "NLGF MAPTKI", "NLGF S305N", "NLGF P301S"
+      ),
+      choiceValues = c(
+        "MAPTKI", "S305N", "P301S", "NLGF_MAPTKI", "NLGF_S305N", "NLGF_P301S"
+      )
+    )
+  ),
+  column(
+    width = 1,
+    actionButton(
+      paste0("clear_deg", idx), label = "Clear Genes", class = "btn-primary"
+    ),
+    style = "padding-top: 10px;"
+  )
+)
+
 selectizeInput(
   paste0("select_deg", idx),
   label = "Select Genes:",
-  choices = results_deg[[idx]]$Gene,
-  selected = rownames(sig_uniq_deg[[idx]]),
+  choices = rownames(sig_mat),
+  selected = sel,
   multiple = TRUE,
   width = "100%"
+)
+
+observeEvent(
+  input[[paste0("genotype_deg", 6)]], {
+    idx <- 6
+    sig_mat <- sig_deg[[idx]][
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+        input[[paste0("genotype_deg", idx)]]
+    ]
+    sig_mat <- sig_mat[
+      apply(sig_mat, MARGIN = 1, FUN = function(x) any(x %in% c("↑", "↓"))), ,
+      drop = FALSE
+    ]
+    if (nrow(sig_mat) > 30) {
+
+      sel <- c()
+      sig_mat_sub <- sig_mat
+      while (length(sel) < 30) {
+        sel <- c(sel, rownames(unique(sig_mat_sub)))
+        remove <- which(rownames(sig_mat_sub) %in% sel)
+        sig_mat_sub <- sig_mat_sub[-remove, ]
+      }
+      updateSelectizeInput(
+        session,
+        inputId = paste0("select_deg", idx),
+        choices = rownames(sig_mat),
+        selected = sel
+      )
+
+    } else {
+      updateSelectizeInput(
+        session,
+        inputId = paste0("select_deg", idx),
+        choices = rownames(sig_mat),
+        selected = rownames(sig_mat)
+      )
+    }
+  }
+)
+
+observeEvent(
+  input[[paste0("clear_deg", 6)]], {
+    idx <- 6
+    updateSelectizeInput(
+      session,
+      inputId = paste0("select_deg", idx),
+      selected = ""
+    )
+  }
 )
 ```
 
@@ -4127,6 +4856,37 @@ renderPlot(
     }
     rownames(mat) <- gene_anno_sub$symbol
 
+    mat <- mat[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+
+    top_anno <- HeatmapAnnotation(
+      Batch = deg_data[[1]]$batch[
+        sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]]
+      ],
+      cell_type = anno_block(
+        gp = gpar(fill = "lightgray", col = "lightgray"),
+        labels = sub(
+          pattern = "_", replacement = " ",
+          x = input[[paste0("genotype_deg", idx)]]
+        ),
+        labels_gp = gpar(col = "black", fontsize = 9),
+        height = unit(5, "mm")
+      ),
+      col = list(
+        Batch = c(
+          "batch01" = anno_color[1], "batch02" = anno_color[2],
+          "batch03" = anno_color[3], "batch04" = anno_color[4]
+        )
+      ),
+      simple_anno_size = unit(3, "mm"),
+      show_legend = c("Batch" = FALSE),
+      annotation_name_gp = gpar(fontsize = 8)
+    )
+
     draw(
       Heatmap(
         mat,
@@ -4134,7 +4894,7 @@ renderPlot(
         column_title = ctype_name[[idx]],
         cluster_columns = FALSE,
         cluster_rows = FALSE,
-        column_split = rep(seq(6), each = 4),
+        column_split = rep(seq(ncol(mat) / 4), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
         row_names_gp = gpar(fontsize = 10),
@@ -4143,7 +4903,10 @@ renderPlot(
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(
+            sig_tmp[i, j], x = x, y = y,
+            gp = gpar(fontsize = (-0.25 * nrow(mat)) + 17.5)
+          )
         },
         heatmap_legend_param = list(
           title = "logCPM", direction = "horizontal",
@@ -4192,12 +4955,46 @@ renderPlot(
     }
     rownames(mat) <- gene_anno_sub$symbol
 
-    mat <- t(
-      apply(
-        mat, MARGIN = 1,
-        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
-      )
+    mat <- mat[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+
+    top_anno <- HeatmapAnnotation(
+      Batch = deg_data[[1]]$batch[
+        sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]]
+      ],
+      cell_type = anno_block(
+        gp = gpar(fill = "lightgray", col = "lightgray"),
+        labels = sub(
+          pattern = "_", replacement = " ",
+          x = input[[paste0("genotype_deg", idx)]]
+        ),
+        labels_gp = gpar(col = "black", fontsize = 9),
+        height = unit(5, "mm")
+      ),
+      col = list(
+        Batch = c(
+          "batch01" = anno_color[1], "batch02" = anno_color[2],
+          "batch03" = anno_color[3], "batch04" = anno_color[4]
+        )
+      ),
+      simple_anno_size = unit(3, "mm"),
+      show_legend = c("Batch" = FALSE),
+      annotation_name_gp = gpar(fontsize = 8)
     )
+
+    if (nrow(mat) > 0) {
+      mat <- t(
+        apply(
+          mat, MARGIN = 1,
+          FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+        )
+      )
+    }
+
     draw(
       Heatmap(
         mat,
@@ -4205,7 +5002,7 @@ renderPlot(
         column_title = ctype_name[[idx]],
         cluster_columns = FALSE,
         cluster_rows = FALSE,
-        column_split = rep(seq(6), each = 4),
+        column_split = rep(seq(ncol(mat) / 4), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
         row_names_gp = gpar(fontsize = 10),
@@ -4214,7 +5011,10 @@ renderPlot(
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(
+            sig_tmp[i, j], x = x, y = y,
+            gp = gpar(fontsize = (-0.25 * nrow(mat)) + 17.5)
+          )
         },
         heatmap_legend_param = list(
           title = "Scaled logCPM", direction = "horizontal",
@@ -4808,17 +5608,106 @@ results_deg[[idx]] <- results_deg[[idx]][
   match(rownames(sig_deg[[idx]]), rownames(results_deg[[idx]])),
 ]
 rownames(sig_deg[[idx]]) <- results_deg[[idx]]$Gene
-sig_uniq_deg[[idx]] <- unique(sig_deg[[idx]])
+colnames(sig_deg[[idx]]) <- colnames(deg_corrected[[idx]])
+
+sig_mat <- sig_deg[[idx]]
+sig_mat <- sig_mat[
+  apply(sig_mat, MARGIN = 1, FUN = function(x) any(x %in% c("↑", "↓"))), ,
+  drop = FALSE
+]
+sel <- c()
+sig_mat_sub <- sig_mat
+while (length(sel) < 30) {
+  sel <- c(sel, rownames(unique(sig_mat_sub)))
+  remove <- which(rownames(sig_mat_sub) %in% sel)
+  sig_mat_sub <- sig_mat_sub[-remove, ]
+}
 ```
 
 ```{r}
+fluidRow(
+  column(
+    width = 4,
+    checkboxGroupInput(
+      paste0("genotype_deg", idx),
+      label = "Select Genotypes:",
+      selected = c(
+        "MAPTKI", "S305N", "P301S", "NLGF_MAPTKI", "NLGF_S305N", "NLGF_P301S"
+      ),
+      inline = TRUE,
+      choiceNames = c(
+        "MAPTKI", "S305N", "P301S", "NLGF MAPTKI", "NLGF S305N", "NLGF P301S"
+      ),
+      choiceValues = c(
+        "MAPTKI", "S305N", "P301S", "NLGF_MAPTKI", "NLGF_S305N", "NLGF_P301S"
+      )
+    )
+  ),
+  column(
+    width = 1,
+    actionButton(
+      paste0("clear_deg", idx), label = "Clear Genes", class = "btn-primary"
+    ),
+    style = "padding-top: 10px;"
+  )
+)
+
 selectizeInput(
   paste0("select_deg", idx),
   label = "Select Genes:",
-  choices = results_deg[[idx]]$Gene,
-  selected = rownames(sig_uniq_deg[[idx]]),
+  choices = rownames(sig_mat),
+  selected = sel,
   multiple = TRUE,
   width = "100%"
+)
+
+observeEvent(
+  input[[paste0("genotype_deg", 7)]], {
+    idx <- 7
+    sig_mat <- sig_deg[[idx]][
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+        input[[paste0("genotype_deg", idx)]]
+    ]
+    sig_mat <- sig_mat[
+      apply(sig_mat, MARGIN = 1, FUN = function(x) any(x %in% c("↑", "↓"))), ,
+      drop = FALSE
+    ]
+    if (nrow(sig_mat) > 30) {
+
+      sel <- c()
+      sig_mat_sub <- sig_mat
+      while (length(sel) < 30) {
+        sel <- c(sel, rownames(unique(sig_mat_sub)))
+        remove <- which(rownames(sig_mat_sub) %in% sel)
+        sig_mat_sub <- sig_mat_sub[-remove, ]
+      }
+      updateSelectizeInput(
+        session,
+        inputId = paste0("select_deg", idx),
+        choices = rownames(sig_mat),
+        selected = sel
+      )
+
+    } else {
+      updateSelectizeInput(
+        session,
+        inputId = paste0("select_deg", idx),
+        choices = rownames(sig_mat),
+        selected = rownames(sig_mat)
+      )
+    }
+  }
+)
+
+observeEvent(
+  input[[paste0("clear_deg", 7)]], {
+    idx <- 7
+    updateSelectizeInput(
+      session,
+      inputId = paste0("select_deg", idx),
+      selected = ""
+    )
+  }
 )
 ```
 
@@ -4854,6 +5743,37 @@ renderPlot(
     }
     rownames(mat) <- gene_anno_sub$symbol
 
+    mat <- mat[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+
+    top_anno <- HeatmapAnnotation(
+      Batch = deg_data[[1]]$batch[
+        sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]]
+      ],
+      cell_type = anno_block(
+        gp = gpar(fill = "lightgray", col = "lightgray"),
+        labels = sub(
+          pattern = "_", replacement = " ",
+          x = input[[paste0("genotype_deg", idx)]]
+        ),
+        labels_gp = gpar(col = "black", fontsize = 9),
+        height = unit(5, "mm")
+      ),
+      col = list(
+        Batch = c(
+          "batch01" = anno_color[1], "batch02" = anno_color[2],
+          "batch03" = anno_color[3], "batch04" = anno_color[4]
+        )
+      ),
+      simple_anno_size = unit(3, "mm"),
+      show_legend = c("Batch" = FALSE),
+      annotation_name_gp = gpar(fontsize = 8)
+    )
+
     draw(
       Heatmap(
         mat,
@@ -4861,7 +5781,7 @@ renderPlot(
         column_title = ctype_name[[idx]],
         cluster_columns = FALSE,
         cluster_rows = FALSE,
-        column_split = rep(seq(6), each = 4),
+        column_split = rep(seq(ncol(mat) / 4), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
         row_names_gp = gpar(fontsize = 10),
@@ -4870,7 +5790,10 @@ renderPlot(
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(
+            sig_tmp[i, j], x = x, y = y,
+            gp = gpar(fontsize = (-0.25 * nrow(mat)) + 17.5)
+          )
         },
         heatmap_legend_param = list(
           title = "logCPM", direction = "horizontal",
@@ -4919,12 +5842,46 @@ renderPlot(
     }
     rownames(mat) <- gene_anno_sub$symbol
 
-    mat <- t(
-      apply(
-        mat, MARGIN = 1,
-        FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
-      )
+    mat <- mat[
+      , sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]],
+      drop = FALSE
+    ]
+
+    top_anno <- HeatmapAnnotation(
+      Batch = deg_data[[1]]$batch[
+        sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
+          input[[paste0("genotype_deg", idx)]]
+      ],
+      cell_type = anno_block(
+        gp = gpar(fill = "lightgray", col = "lightgray"),
+        labels = sub(
+          pattern = "_", replacement = " ",
+          x = input[[paste0("genotype_deg", idx)]]
+        ),
+        labels_gp = gpar(col = "black", fontsize = 9),
+        height = unit(5, "mm")
+      ),
+      col = list(
+        Batch = c(
+          "batch01" = anno_color[1], "batch02" = anno_color[2],
+          "batch03" = anno_color[3], "batch04" = anno_color[4]
+        )
+      ),
+      simple_anno_size = unit(3, "mm"),
+      show_legend = c("Batch" = FALSE),
+      annotation_name_gp = gpar(fontsize = 8)
     )
+
+    if (nrow(mat) > 0) {
+      mat <- t(
+        apply(
+          mat, MARGIN = 1,
+          FUN = function (x) ((2 * (x - min(x)) / (max(x) - min(x))) - 1)
+        )
+      )
+    }
+
     draw(
       Heatmap(
         mat,
@@ -4932,7 +5889,7 @@ renderPlot(
         column_title = ctype_name[[idx]],
         cluster_columns = FALSE,
         cluster_rows = FALSE,
-        column_split = rep(seq(6), each = 4),
+        column_split = rep(seq(ncol(mat) / 4), each = 4),
         column_gap = unit(1.5, units = "mm"),
         rect_gp = gpar(col = "black", lwd = 0.25),
         row_names_gp = gpar(fontsize = 10),
@@ -4941,7 +5898,10 @@ renderPlot(
         top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
-          grid.text(sig_tmp[i, j], x = x, y = y, gp = gpar(fontsize = 10))
+          grid.text(
+            sig_tmp[i, j], x = x, y = y,
+            gp = gpar(fontsize = (-0.25 * nrow(mat)) + 17.5)
+          )
         },
         heatmap_legend_param = list(
           title = "Scaled logCPM", direction = "horizontal",
