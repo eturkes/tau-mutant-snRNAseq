@@ -307,20 +307,33 @@ colnames(sig_deg[[idx]]) <- colnames(deg_corrected[[idx]])
 ```
 
 ```{r}
-checkboxGroupInput(
-  paste0("genotype_deg", idx),
-  label = "Select Genotypes:",
-  selected = c(
-    "MAPTKI", "S305N", "P301S", "NLGF_MAPTKI", "NLGF_S305N", "NLGF_P301S"
+fluidRow(
+  column(
+    width = 4,
+    checkboxGroupInput(
+      paste0("genotype_deg", idx),
+      label = "Select Genotypes:",
+      selected = c(
+        "MAPTKI", "S305N", "P301S", "NLGF_MAPTKI", "NLGF_S305N", "NLGF_P301S"
+      ),
+      inline = TRUE,
+      choiceNames = c(
+        "MAPTKI", "S305N", "P301S", "NLGF MAPTKI", "NLGF S305N", "NLGF P301S"
+      ),
+      choiceValues = c(
+        "MAPTKI", "S305N", "P301S", "NLGF_MAPTKI", "NLGF_S305N", "NLGF_P301S"
+      )
+    )
   ),
-  inline = TRUE,
-  choiceNames = c(
-    "MAPTKI", "S305N", "P301S", "NLGF MAPTKI", "NLGF S305N", "NLGF P301S"
-  ),
-  choiceValues = c(
-    "MAPTKI", "S305N", "P301S", "NLGF_MAPTKI", "NLGF_S305N", "NLGF_P301S"
+  column(
+    width = 1,
+    actionButton(
+      paste0("clear_deg", idx), label = "Clear Genes", class = "btn-primary"
+    ),
+    style = "padding-top: 10px;"
   )
 )
+
 
 selectizeInput(
   paste0("select_deg", idx),
@@ -364,6 +377,16 @@ observeEvent(
         selected = rownames(sig_mat)
       )
     }
+  }
+)
+
+observeEvent(
+  input[[paste0("clear_deg", 1)]], {
+    updateSelectizeInput(
+      session,
+      inputId = paste0("select_deg", 1),
+      selected = results_deg[[idx]]$Gene[1]
+    )
   }
 )
 ```
