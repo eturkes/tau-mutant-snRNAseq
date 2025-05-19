@@ -304,6 +304,19 @@ results_deg[[idx]] <- results_deg[[idx]][
 ]
 rownames(sig_deg[[idx]]) <- results_deg[[idx]]$Gene
 colnames(sig_deg[[idx]]) <- colnames(deg_corrected[[idx]])
+
+sig_mat <- sig_deg[[idx]]
+sig_mat <- sig_mat[
+  apply(sig_mat, MARGIN = 1, FUN = function(x) any(x %in% c("↑", "↓"))), ,
+  drop = FALSE
+]
+sel <- c()
+sig_mat_sub <- sig_mat
+while (length(sel) < 30) {
+  sel <- c(sel, rownames(unique(sig_mat_sub)))
+  remove <- which(rownames(sig_mat_sub) %in% sel)
+  sig_mat_sub <- sig_mat_sub[-remove, ]
+}
 ```
 
 ```{r}
@@ -334,11 +347,11 @@ fluidRow(
   )
 )
 
-
 selectizeInput(
   paste0("select_deg", idx),
   label = "Select Genes:",
-  choices = results_deg[[idx]]$Gene,
+  choices = rownames(sig_mat),
+  selected = sel,
   multiple = TRUE,
   width = "100%"
 )
