@@ -444,7 +444,7 @@ renderPlot(
       drop = FALSE
     ]
 
-    top_anno2 <- HeatmapAnnotation(
+    top_anno <- HeatmapAnnotation(
       Batch = deg_data[[1]]$batch[
         sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
           input[[paste0("genotype_deg", idx)]]
@@ -482,7 +482,7 @@ renderPlot(
         row_names_gp = gpar(fontsize = 10),
         column_title_gp = gpar(fontsize = 10),
         row_title_rot = 0,
-        top_annotation = top_anno2,
+        top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
           grid.text(
@@ -543,7 +543,7 @@ renderPlot(
       drop = FALSE
     ]
 
-    top_anno2 <- HeatmapAnnotation(
+    top_anno <- HeatmapAnnotation(
       Batch = deg_data[[1]]$batch[
         sub("_batch.*", "", colnames(deg_corrected[[idx]])) %in%
           input[[paste0("genotype_deg", idx)]]
@@ -590,7 +590,7 @@ renderPlot(
         row_names_gp = gpar(fontsize = 10),
         column_title_gp = gpar(fontsize = 10),
         row_title_rot = 0,
-        top_annotation = top_anno2,
+        top_annotation = top_anno,
         show_column_names = FALSE,
         cell_fun = function(j, i, x, y, width, height, fill) {
           grid.text(
