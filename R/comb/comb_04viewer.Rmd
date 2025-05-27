@@ -322,7 +322,7 @@ while (length(sel) < 30) {
 ```{r}
 fluidRow(
   column(
-    width = 4,
+    width = 5,
     checkboxGroupInput(
       paste0("genotype_deg", idx),
       label = "Select Genotypes:",
@@ -1214,7 +1214,7 @@ while (length(sel) < 30) {
 ```{r}
 fluidRow(
   column(
-    width = 4,
+    width = 5,
     checkboxGroupInput(
       paste0("genotype_deg", idx),
       label = "Select Genotypes:",
@@ -2106,7 +2106,7 @@ while (length(sel) < 30) {
 ```{r}
 fluidRow(
   column(
-    width = 4,
+    width = 5,
     checkboxGroupInput(
       paste0("genotype_deg", idx),
       label = "Select Genotypes:",
@@ -2999,7 +2999,7 @@ while (length(sel) < 30) {
 ```{r}
 fluidRow(
   column(
-    width = 4,
+    width = 5,
     checkboxGroupInput(
       paste0("genotype_deg", idx),
       label = "Select Genotypes:",
@@ -3894,7 +3894,7 @@ while (length(sel) < 30) {
 ```{r}
 fluidRow(
   column(
-    width = 4,
+    width = 5,
     checkboxGroupInput(
       paste0("genotype_deg", idx),
       label = "Select Genotypes:",
@@ -4790,7 +4790,7 @@ while (length(sel) < 30) {
 ```{r}
 fluidRow(
   column(
-    width = 4,
+    width = 5,
     checkboxGroupInput(
       paste0("genotype_deg", idx),
       label = "Select Genotypes:",
@@ -5687,7 +5687,7 @@ while (length(sel) < 30) {
 ```{r}
 fluidRow(
   column(
-    width = 4,
+    width = 5,
     checkboxGroupInput(
       paste0("genotype_deg", idx),
       label = "Select Genotypes:",
