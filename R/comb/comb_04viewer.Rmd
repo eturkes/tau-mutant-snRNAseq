@@ -312,8 +312,12 @@ sig_mat <- sig_mat[
 ]
 sel <- c()
 sig_mat_sub <- sig_mat
+cols <- seq(5, ncol(sig_mat_sub))
 while (length(sel) < 30) {
-  sel <- c(sel, rownames(unique(sig_mat_sub)))
+  tmp <- unique(sig_mat_sub)
+  tmp <- tmp[!apply(tmp[, cols, drop = FALSE], 1, function(x) all(x == x[1])), ]
+
+  sel <- c(sel, rownames(tmp))
   remove <- which(rownames(sig_mat_sub) %in% sel)
   sig_mat_sub <- sig_mat_sub[-remove, ]
 }
@@ -371,8 +375,12 @@ observeEvent(
 
       sel <- c()
       sig_mat_sub <- sig_mat
+      cols <- seq(5, ncol(sig_mat_sub))
       while (length(sel) < 30) {
-        sel <- c(sel, rownames(unique(sig_mat_sub)))
+        tmp <- unique(sig_mat_sub)
+        tmp <- tmp[!apply(tmp[, cols, drop = FALSE], 1, function(x) all(x == x[1])), ]
+
+        sel <- c(sel, rownames(tmp))
         remove <- which(rownames(sig_mat_sub) %in% sel)
         sig_mat_sub <- sig_mat_sub[-remove, ]
       }
@@ -1204,8 +1212,12 @@ sig_mat <- sig_mat[
 ]
 sel <- c()
 sig_mat_sub <- sig_mat
+cols <- seq(5, ncol(sig_mat_sub))
 while (length(sel) < 30) {
-  sel <- c(sel, rownames(unique(sig_mat_sub)))
+  tmp <- unique(sig_mat_sub)
+  tmp <- tmp[!apply(tmp[, cols, drop = FALSE], 1, function(x) all(x == x[1])), ]
+
+  sel <- c(sel, rownames(tmp))
   remove <- which(rownames(sig_mat_sub) %in% sel)
   sig_mat_sub <- sig_mat_sub[-remove, ]
 }
@@ -1263,8 +1275,12 @@ observeEvent(
 
       sel <- c()
       sig_mat_sub <- sig_mat
+      cols <- seq(5, ncol(sig_mat_sub))
       while (length(sel) < 30) {
-        sel <- c(sel, rownames(unique(sig_mat_sub)))
+        tmp <- unique(sig_mat_sub)
+        tmp <- tmp[!apply(tmp[, cols, drop = FALSE], 1, function(x) all(x == x[1])), ]
+
+        sel <- c(sel, rownames(tmp))
         remove <- which(rownames(sig_mat_sub) %in% sel)
         sig_mat_sub <- sig_mat_sub[-remove, ]
       }
@@ -2096,8 +2112,12 @@ sig_mat <- sig_mat[
 ]
 sel <- c()
 sig_mat_sub <- sig_mat
+cols <- seq(5, ncol(sig_mat_sub))
 while (length(sel) < 30) {
-  sel <- c(sel, rownames(unique(sig_mat_sub)))
+  tmp <- unique(sig_mat_sub)
+  tmp <- tmp[!apply(tmp[, cols, drop = FALSE], 1, function(x) all(x == x[1])), ]
+
+  sel <- c(sel, rownames(tmp))
   remove <- which(rownames(sig_mat_sub) %in% sel)
   sig_mat_sub <- sig_mat_sub[-remove, ]
 }
@@ -2155,8 +2175,12 @@ observeEvent(
 
       sel <- c()
       sig_mat_sub <- sig_mat
+      cols <- seq(5, ncol(sig_mat_sub))
       while (length(sel) < 30) {
-        sel <- c(sel, rownames(unique(sig_mat_sub)))
+        tmp <- unique(sig_mat_sub)
+        tmp <- tmp[!apply(tmp[, cols, drop = FALSE], 1, function(x) all(x == x[1])), ]
+
+        sel <- c(sel, rownames(tmp))
         remove <- which(rownames(sig_mat_sub) %in% sel)
         sig_mat_sub <- sig_mat_sub[-remove, ]
       }
@@ -2989,8 +3013,12 @@ sig_mat <- sig_mat[
 ]
 sel <- c()
 sig_mat_sub <- sig_mat
+cols <- seq(5, ncol(sig_mat_sub))
 while (length(sel) < 30) {
-  sel <- c(sel, rownames(unique(sig_mat_sub)))
+  tmp <- unique(sig_mat_sub)
+  tmp <- tmp[!apply(tmp[, cols, drop = FALSE], 1, function(x) all(x == x[1])), ]
+
+  sel <- c(sel, rownames(tmp))
   remove <- which(rownames(sig_mat_sub) %in% sel)
   sig_mat_sub <- sig_mat_sub[-remove, ]
 }
@@ -3048,8 +3076,12 @@ observeEvent(
 
       sel <- c()
       sig_mat_sub <- sig_mat
+      cols <- seq(5, ncol(sig_mat_sub))
       while (length(sel) < 30) {
-        sel <- c(sel, rownames(unique(sig_mat_sub)))
+        tmp <- unique(sig_mat_sub)
+        tmp <- tmp[!apply(tmp[, cols, drop = FALSE], 1, function(x) all(x == x[1])), ]
+
+        sel <- c(sel, rownames(tmp))
         remove <- which(rownames(sig_mat_sub) %in% sel)
         sig_mat_sub <- sig_mat_sub[-remove, ]
       }
@@ -3884,8 +3916,12 @@ sig_mat <- sig_mat[
 ]
 sel <- c()
 sig_mat_sub <- sig_mat
+cols <- seq(5, ncol(sig_mat_sub))
 while (length(sel) < 30) {
-  sel <- c(sel, rownames(unique(sig_mat_sub)))
+  tmp <- unique(sig_mat_sub)
+  tmp <- tmp[!apply(tmp[, cols, drop = FALSE], 1, function(x) all(x == x[1])), ]
+
+  sel <- c(sel, rownames(tmp))
   remove <- which(rownames(sig_mat_sub) %in% sel)
   sig_mat_sub <- sig_mat_sub[-remove, ]
 }
@@ -3943,8 +3979,12 @@ observeEvent(
 
       sel <- c()
       sig_mat_sub <- sig_mat
+      cols <- seq(5, ncol(sig_mat_sub))
       while (length(sel) < 30) {
-        sel <- c(sel, rownames(unique(sig_mat_sub)))
+        tmp <- unique(sig_mat_sub)
+        tmp <- tmp[!apply(tmp[, cols, drop = FALSE], 1, function(x) all(x == x[1])), ]
+
+        sel <- c(sel, rownames(tmp))
         remove <- which(rownames(sig_mat_sub) %in% sel)
         sig_mat_sub <- sig_mat_sub[-remove, ]
       }
@@ -4780,8 +4820,12 @@ sig_mat <- sig_mat[
 ]
 sel <- c()
 sig_mat_sub <- sig_mat
+cols <- seq(5, ncol(sig_mat_sub))
 while (length(sel) < 30) {
-  sel <- c(sel, rownames(unique(sig_mat_sub)))
+  tmp <- unique(sig_mat_sub)
+  tmp <- tmp[!apply(tmp[, cols, drop = FALSE], 1, function(x) all(x == x[1])), ]
+
+  sel <- c(sel, rownames(tmp))
   remove <- which(rownames(sig_mat_sub) %in% sel)
   sig_mat_sub <- sig_mat_sub[-remove, ]
 }
@@ -4839,8 +4883,12 @@ observeEvent(
 
       sel <- c()
       sig_mat_sub <- sig_mat
+      cols <- seq(5, ncol(sig_mat_sub))
       while (length(sel) < 30) {
-        sel <- c(sel, rownames(unique(sig_mat_sub)))
+        tmp <- unique(sig_mat_sub)
+        tmp <- tmp[!apply(tmp[, cols, drop = FALSE], 1, function(x) all(x == x[1])), ]
+
+        sel <- c(sel, rownames(tmp))
         remove <- which(rownames(sig_mat_sub) %in% sel)
         sig_mat_sub <- sig_mat_sub[-remove, ]
       }
@@ -5677,8 +5725,12 @@ sig_mat <- sig_mat[
 ]
 sel <- c()
 sig_mat_sub <- sig_mat
+cols <- seq(5, ncol(sig_mat_sub))
 while (length(sel) < 30) {
-  sel <- c(sel, rownames(unique(sig_mat_sub)))
+  tmp <- unique(sig_mat_sub)
+  tmp <- tmp[!apply(tmp[, cols, drop = FALSE], 1, function(x) all(x == x[1])), ]
+
+  sel <- c(sel, rownames(tmp))
   remove <- which(rownames(sig_mat_sub) %in% sel)
   sig_mat_sub <- sig_mat_sub[-remove, ]
 }
@@ -5736,8 +5788,12 @@ observeEvent(
 
       sel <- c()
       sig_mat_sub <- sig_mat
+      cols <- seq(5, ncol(sig_mat_sub))
       while (length(sel) < 30) {
-        sel <- c(sel, rownames(unique(sig_mat_sub)))
+        tmp <- unique(sig_mat_sub)
+        tmp <- tmp[!apply(tmp[, cols, drop = FALSE], 1, function(x) all(x == x[1])), ]
+
+        sel <- c(sel, rownames(tmp))
         remove <- which(rownames(sig_mat_sub) %in% sel)
         sig_mat_sub <- sig_mat_sub[-remove, ]
       }
