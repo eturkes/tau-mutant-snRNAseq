@@ -147,17 +147,6 @@ seurat <- cluster_pipeline(
 )
 seurat
 
-mmc <- read.csv(
-  file.path(
-    data_dir, "droplet_library_10xWholeMouseBrain",
-    "droplet_library_10xWholeMouseBrain(CCN20230722)_HierarchicalMapping_UTC_1749106642998.csv"
-  ),
-  skip = 4
-)
-seurat$mmc_class <- mmc$class_name
-seurat$mmc_subclass <- mmc$subclass_name
-seurat$mmc_supertype <- mmc$supertype_name
-
 seurat <- RenameIdents(
   object = seurat, "0" = "Glutamatergic 01",
   "1" = "Glutamatergic 01", "2" = "Glutamatergic 01",
@@ -232,12 +221,6 @@ for (i in seq_along(metadata_to_plot)) {
     )
   }
 }
-
-red_dim_plot(seurat, x = "umap1", y = "umap2", color = "mmc_class")
-red_dim_plot(seurat, x = "umap1", y = "umap2", color = "mmc_subclass") +
-  NoLegend()
-red_dim_plot(seurat, x = "umap1", y = "umap2", color = "mmc_supertype") +
-  NoLegend()
 
 if (protocol[4] == "umis") {
   print(
