@@ -35,6 +35,7 @@ RUN apt-get update \
         -e "install.packages('openxlsx')" \
         -e "install.packages('networkD3')" \
         -e "install.packages('flexdashboard')" \
+        -e "install.packages('pals')" \
         -e "install.packages('BiocManager')" \
         -e "install.packages('remotes')" \
         -e "BiocManager::install('DropletUtils')" \

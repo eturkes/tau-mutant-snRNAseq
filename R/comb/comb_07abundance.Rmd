@@ -1,0 +1,302 @@
+---
+title: "Combined Samples - 07 Cell-type Abundance"
+author:
+  - name: "Emir Turkes"
+date: '`r strftime(Sys.time(), format = "%B %d, %Y")`'
+link-citations: true
+output:
+  html_document:
+    code_folding: hide
+    number_sections: true
+    theme: lumen
+    highlight: haddock
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+knit: (function(inputFile, encoding) {
+  rmarkdown::render(
+    inputFile, encoding = encoding,
+    output_file = file.path(
+      "..", "..", "results", "comb", "comb_07abundance.html"
+    ))})
+---
+
+<style type="text/css">
+body {font-size: 16px;}
+h1.title {font-size: 35px;}
+h1 {font-size: 24px;}
+h2 {font-size: 22px;}
+.toc-content {padding-left: 0px; padding-right: 0px;}
+div.tocify {width: 100%;}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em; padding-left: 25px; text-indent: 0;
+}
+.tocify-subheader .tocify-subheader .tocify-item {
+  font-size: 0.95em; padding-left: 35px; text-indent: 0;
+}
+div.main-container {max-width: none; width: 100%;}
+</style>
+
+*This file is a part of [tau-mutant-snRNAseq](https://github.com/eturkes/tau-mutant-snRNAseq).*
+
+The table of contents in the top left is clickable and can be used to quickly navigate the document.
+To toggle the visibility of code, use the `CODE` toggles at the top right of chunks.
+The toggle at the start of the document controls the visibility of all chunks.
+
+```{r}
+#    This file is part of tau-mutant-snRNAseq.
+#    Copyright (C) 2024-2025  Emir Turkes, Naoto Watamura, UK DRI at UCL
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#    Emir Turkes can be contacted at emir.turkes@eturkes.com
+
+# Load required packages, suppressing startup messages.
+# -----------------------------------------------------
+library(conflicted)
+packages <- c("Seurat", "ggplot2", "scales", "pals")
+invisible(
+  suppressPackageStartupMessages(
+    lapply(packages, FUN = library, character.only = TRUE)
+  )
+)
+# -----------------------------------------------------
+
+# Define global settings.
+# -----------------------
+knitr::opts_chunk$set(fig.width = 10, fig.height = 7, dpi = 96)
+# -----------------------
+
+# Define functions.
+# -----------------
+source(file.path("..", "utils.R"))
+# -----------------
+
+# Useful variables.
+# -----------------
+step <- 2
+
+cache_dir <- file.path("..", "..", "cache", "comb", paste0("step", "0", step))
+if (!dir.exists(cache_dir)) {
+  dir.create(cache_dir, recursive = TRUE)
+}
+# -----------------
+
+# Read data.
+# ----------
+seurat_orig <- readRDS(file.path(cache_dir, "annotated_seurat.rds"))
+seurat_orig <- seurat_orig[
+  , seurat_orig$genotype == "MAPTKI" | seurat_orig$genotype == "S305N"
+]
+seurat_orig$genotype <- factor(seurat_orig$genotype)
+
+gene_anno <- data.frame(
+  symbol = unlist(seurat_orig@misc), ensembl = rownames(seurat_orig[["RNA"]])
+)
+# ----------
+```
+
+```{r}
+```{r}
+df <- as.data.frame(table(seurat$ctype, seurat$genotype))
+colnames(df) <- c("Celltype", "Genotype", "Proportion")
+ggplot(df, aes(Genotype, Proportion, fill = Celltype)) +
+  geom_bar(position = "fill", stat = "identity") +
+  scale_y_continuous(labels = percent, breaks = pretty_breaks(5)) +
+  ylab("Percent of Cells") +
+  coord_flip() +
+  theme_classic() +
+  scale_fill_manual(
+    breaks = levels(seurat$ctype),
+    values = as.vector(cols25(length(unique(df$Celltype))))
+  )
+ggplot(df, aes(Genotype, Proportion, fill = Celltype)) +
+  geom_bar(position = "stack", stat = "identity") +
+  scale_y_continuous(breaks = pretty_breaks(5)) +
+  ylab("Number of Cells") +
+  coord_flip() +
+  theme_classic() +
+  scale_fill_manual(
+    breaks = levels(seurat$ctype),
+    values = as.vector(cols25(length(unique(df$Celltype))))
+  )
+df <- as.data.frame(table(seurat$ctype, seurat$genotype_batch))
+colnames(df) <- c("Celltype", "Genotype", "Proportion")
+ggplot(df, aes(Genotype, Proportion, fill = Celltype)) +
+  geom_bar(position = "fill", stat = "identity") +
+  scale_y_continuous(labels = percent, breaks = pretty_breaks(5)) +
+  ylab("Percent of Cells") +
+  coord_flip() +
+  theme_classic() +
+  scale_fill_manual(
+    breaks = levels(seurat$ctype),
+    values = as.vector(cols25(length(unique(df$Celltype))))
+  )
+ggplot(df, aes(Genotype, Proportion, fill = Celltype)) +
+  geom_bar(position = "stack", stat = "identity") +
+  scale_y_continuous(breaks = pretty_breaks(5)) +
+  ylab("Number of Cells") +
+  coord_flip() +
+  theme_classic() +
+  scale_fill_manual(
+    breaks = levels(seurat$ctype),
+    values = as.vector(cols25(length(unique(df$Celltype))))
+  )
+
+df <- as.data.frame(table(seurat$broad_annotations, seurat$genotype))
+colnames(df) <- c("Celltype", "Genotype", "Proportion")
+ggplot(df, aes(Genotype, Proportion, fill = Celltype)) +
+  geom_bar(position = "fill", stat = "identity") +
+  scale_y_continuous(labels = percent, breaks = pretty_breaks(5)) +
+  ylab("Percent of Cells") +
+  coord_flip() +
+  theme_classic() +
+  scale_fill_manual(
+    breaks = levels(seurat$broad_annotations),
+    values = as.vector(cols25(length(unique(df$Celltype))))
+  )
+ggplot(df, aes(Genotype, Proportion, fill = Celltype)) +
+  geom_bar(position = "stack", stat = "identity") +
+  scale_y_continuous(breaks = pretty_breaks(5)) +
+  ylab("Number of Cells") +
+  coord_flip() +
+  theme_classic() +
+  scale_fill_manual(
+    breaks = levels(seurat$broad_annotations),
+    values = as.vector(cols25(length(unique(df$Celltype))))
+  )
+df <- as.data.frame(table(seurat$broad_annotations, seurat$genotype_batch))
+colnames(df) <- c("Celltype", "Genotype", "Proportion")
+ggplot(df, aes(Genotype, Proportion, fill = Celltype)) +
+  geom_bar(position = "fill", stat = "identity") +
+  scale_y_continuous(labels = percent, breaks = pretty_breaks(5)) +
+  ylab("Percent of Cells") +
+  coord_flip() +
+  theme_classic() +
+  scale_fill_manual(
+    breaks = levels(seurat$broad_annotations),
+    values = as.vector(cols25(length(unique(df$Celltype))))
+  )
+ggplot(df, aes(Genotype, Proportion, fill = Celltype)) +
+  geom_bar(position = "stack", stat = "identity") +
+  scale_y_continuous(breaks = pretty_breaks(5)) +
+  ylab("Number of Cells") +
+  coord_flip() +
+  theme_classic() +
+  scale_fill_manual(
+    breaks = levels(seurat$broad_annotations),
+    values = as.vector(cols25(length(unique(df$Celltype))))
+  )
+
+df <- as.data.frame(table(seurat$level1_subclusters, seurat$genotype))
+colnames(df) <- c("Celltype", "Genotype", "Proportion")
+ggplot(df, aes(Genotype, Proportion, fill = Celltype)) +
+  geom_bar(position = "fill", stat = "identity") +
+  scale_y_continuous(labels = percent, breaks = pretty_breaks(5)) +
+  ylab("Percent of Cells") +
+  coord_flip() +
+  theme_classic() +
+  scale_fill_manual(
+    breaks = levels(seurat$level1_subclusters),
+    values = as.vector(cols25(length(unique(df$Celltype))))
+  )
+ggplot(df, aes(Genotype, Proportion, fill = Celltype)) +
+  geom_bar(position = "stack", stat = "identity") +
+  scale_y_continuous(breaks = pretty_breaks(5)) +
+  ylab("Number of Cells") +
+  coord_flip() +
+  theme_classic() +
+  scale_fill_manual(
+    breaks = levels(seurat$level1_subclusters),
+    values = as.vector(cols25(length(unique(df$Celltype))))
+  )
+df <- as.data.frame(table(seurat$level1_subclusters, seurat$genotype_batch))
+colnames(df) <- c("Celltype", "Genotype", "Proportion")
+ggplot(df, aes(Genotype, Proportion, fill = Celltype)) +
+  geom_bar(position = "fill", stat = "identity") +
+  scale_y_continuous(labels = percent, breaks = pretty_breaks(5)) +
+  ylab("Percent of Cells") +
+  coord_flip() +
+  theme_classic() +
+  scale_fill_manual(
+    breaks = levels(seurat$level1_subclusters),
+    values = as.vector(cols25(length(unique(df$Celltype))))
+  )
+ggplot(df, aes(Genotype, Proportion, fill = Celltype)) +
+  geom_bar(position = "stack", stat = "identity") +
+  scale_y_continuous(breaks = pretty_breaks(5)) +
+  ylab("Number of Cells") +
+  coord_flip() +
+  theme_classic() +
+  scale_fill_manual(
+    breaks = levels(seurat$level1_subclusters),
+    values = as.vector(cols25(length(unique(df$Celltype))))
+  )
+
+df <- as.data.frame(table(seurat$level2_subclusters, seurat$genotype))
+colnames(df) <- c("Celltype", "Genotype", "Proportion")
+ggplot(df, aes(Genotype, Proportion, fill = Celltype)) +
+  geom_bar(position = "fill", stat = "identity") +
+  scale_y_continuous(labels = percent, breaks = pretty_breaks(5)) +
+  ylab("Percent of Cells") +
+  coord_flip() +
+  theme_classic() +
+  scale_fill_manual(
+    breaks = levels(seurat$level2_subclusters),
+    values = as.vector(cols25(length(unique(df$Celltype))))
+  )
+ggplot(df, aes(Genotype, Proportion, fill = Celltype)) +
+  geom_bar(position = "stack", stat = "identity") +
+  scale_y_continuous(breaks = pretty_breaks(5)) +
+  ylab("Number of Cells") +
+  coord_flip() +
+  theme_classic() +
+  scale_fill_manual(
+    breaks = levels(seurat$level2_subclusters),
+    values = as.vector(cols25(length(unique(df$Celltype))))
+  )
+df <- as.data.frame(table(seurat$level2_subclusters, seurat$genotype_batch))
+colnames(df) <- c("Celltype", "Genotype", "Proportion")
+ggplot(df, aes(Genotype, Proportion, fill = Celltype)) +
+  geom_bar(position = "fill", stat = "identity") +
+  scale_y_continuous(labels = percent, breaks = pretty_breaks(5)) +
+  ylab("Percent of Cells") +
+  coord_flip() +
+  theme_classic() +
+  scale_fill_manual(
+    breaks = levels(seurat$ctype),
+    values = as.vector(cols25(length(unique(df$Celltype))))
+  )
+ggplot(df, aes(Genotype, Proportion, fill = Celltype)) +
+  geom_bar(position = "stack", stat = "identity") +
+  scale_y_continuous(breaks = pretty_breaks(5)) +
+  ylab("Number of Cells") +
+  coord_flip() +
+  theme_classic() +
+  scale_fill_manual(
+    breaks = levels(seurat$ctype),
+    values = as.vector(cols25(length(unique(df$Celltype))))
+  )
+```
+```
+
+# References
+
+This is the concluding section of the document, where we output the `sessionInfo`, and create a bibliography for works cited.
+
+```{r}
+sessionInfo()
+```
