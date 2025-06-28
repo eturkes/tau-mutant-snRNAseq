@@ -120,8 +120,7 @@ if (file.exists(rds)) {
   )
   rownames(meta) <- meta$sample_name
 
-  set.seed(1)
-  use_samples  <- intersect(sample(rownames(meta), 100000), samples)
+  use_samples  <- intersect(rownames(meta), samples)
   read_samples <- sort(match(use_samples, samples))
 
   data <- as(
@@ -130,8 +129,7 @@ if (file.exists(rds)) {
         file.path(data_dir, "expression_matrix.hdf5"), "/data/counts",
         index = list(read_samples, NULL)
       )
-    ),
-    "dgCMatrix"
+    )
   )
 
   rownames(data) <- as.character(genes)
