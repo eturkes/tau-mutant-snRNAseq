@@ -143,7 +143,7 @@ if (file.exists(rds)) {
   data <- SCTransform(
     data, vst.flavor = "v2", conserve.memory = TRUE, verbose = FALSE
   )
-  data <- RunPCA(data, features = rownames(data), verbose = FALSE)
+  data <- RunPCA(data, verbose = FALSE)
   data <- RunUMAP(data, dims = 1:30, verbose = FALSE)
 
   saveRDS(data, rds)
