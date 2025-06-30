@@ -120,7 +120,8 @@ if (file.exists(rds)) {
   )
   rownames(meta) <- meta$sample_name
 
-  use_samples  <- intersect(rownames(meta), samples)
+  set.seed(1)
+  use_samples  <- intersect(sample(rownames(meta), 428868), samples)
   read_samples <- sort(match(use_samples, samples))
 
   data <- as(
@@ -144,7 +145,7 @@ if (file.exists(rds)) {
     data, vst.flavor = "v2", conserve.memory = TRUE, verbose = FALSE
   )
   data <- RunPCA(data, verbose = FALSE)
-  data <- RunUMAP(data, dims = 1:30, verbose = FALSE)
+  data <- RunUMAP(data, dims = 1:41, verbose = FALSE)
 
   saveRDS(data, rds)
 }
