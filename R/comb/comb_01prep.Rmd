@@ -309,12 +309,15 @@ if (file.exists(rds)) {
   )
   gc()
   anchors <- FindTransferAnchors(
-    ref, seurat_geneids, normalization.method = "SCT",
-    recompute.residuals = FALSE, reference.reduction = "pca", dims = 1:30
+    ref, seurat_geneids,
+    normalization.method = "SCT", recompute.residuals = FALSE,
+    reference.reduction = "pca", project.query = TRUE,
+    dims = 1:41, verbose = FALSE
   )
   predictions <- MapQuery(
     anchors, seurat_geneids, ref,
-    refdata = "subclass_label", reference.reduction = "umap"
+    refdata = "subclass_label", reference.dims = 1:41, query.dims = 1:44,
+    verbose = FALSE
   )
   seurat$allen_labels <- factor(predictions$predicted.id)
   rm(seurat_geneids, ref, predictions, anchors)
